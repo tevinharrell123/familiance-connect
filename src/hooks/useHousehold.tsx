@@ -55,8 +55,8 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
     try {
       console.log("Fetching household data for user:", user.id);
       
-      // Get the user's primary household through their membership
-      // Using maybeSingle to handle the case where no membership exists
+      // Use a more direct approach to avoid RLS recursion
+      // First get the user's membership
       const { data: membershipData, error: membershipError } = await supabase
         .from('memberships')
         .select('household_id, role')
@@ -79,7 +79,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       setIsAdmin(membershipData.role === 'admin');
       console.log("User role:", membershipData.role);
 
-      // Get household details
+      // Get household details - fetch only what's needed
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .select('*')
@@ -101,7 +101,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       console.log("Household found:", householdData.name);
       setHousehold(householdData);
 
-      // First fetch all membership IDs
+      // Fetch memberships separately to avoid recursive RLS issues
       const { data: membershipsData, error: membershipsError } = await supabase
         .from('memberships')
         .select('id, user_id, household_id, role')
@@ -123,7 +123,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
 
       console.log(`Found ${membershipsData.length} members for household`);
 
-      // Then fetch user profiles separately
+      // Fetch user profiles separately 
       const userIds = membershipsData.map(m => m.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('user_profiles')

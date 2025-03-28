@@ -61,13 +61,9 @@ const Onboarding = () => {
         description: `Welcome to ${data.householdName}`,
       });
       
-      // Set a flag in localStorage to indicate we need to reload the household data
-      // This helps prevent infinite recursion issues
-      localStorage.setItem('household_created', 'true');
-      
-      // Use replace: true to replace the current entry in the history stack
-      // and reload the page to ensure a clean state
-      window.location.href = '/';
+      // Navigate directly to the dashboard without attempting to fetch household data yet
+      navigate('/', { replace: true });
+
     } catch (error: any) {
       console.error("Error in onboarding:", error);
       toast({
