@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,7 +80,10 @@ export function useAuthProvider() {
       // Check if user is a member of any household
       const { data: memberData, error: memberError } = await supabase
         .from('household_members')
-        .select('*, households(*)')
+        .select(`
+          *,
+          households:household_id (*)
+        `)
         .eq('user_id', userId)
         .single();
 
