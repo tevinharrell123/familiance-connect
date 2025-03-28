@@ -86,28 +86,36 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
 
       setHousehold(householdData);
 
-      // Get all members of this household with their profiles
+      // Get all members of this household
       const { data: allMembers, error: membersError } = await supabase
         .from('memberships')
-        .select(`
-          id, user_id, household_id, role,
-          user_profiles:user_id (first_name, last_name, avatar_url)
-        `)
+        .select('id, user_id, household_id, role')
         .eq('household_id', membershipData.household_id);
 
       if (membersError) {
         console.error('Error fetching members:', membersError);
       } else {
-        // Format the members data
-        const formattedMembers = allMembers.map(member => ({
-          id: member.id,
-          user_id: member.user_id,
-          household_id: member.household_id,
-          role: member.role,
-          first_name: member.user_profiles?.first_name,
-          last_name: member.user_profiles?.last_name,
-          avatar_url: member.user_profiles?.avatar_url,
-        }));
+        // Fetch profile data for each member separately
+        const formattedMembers: Member[] = [];
+        
+        for (const member of allMembers) {
+          // Get user profile data
+          const { data: profileData } = await supabase
+            .from('user_profiles')
+            .select('first_name, last_name, avatar_url')
+            .eq('id', member.user_id)
+            .single();
+          
+          formattedMembers.push({
+            id: member.id,
+            user_id: member.user_id,
+            household_id: member.household_id,
+            role: member.role,
+            first_name: profileData?.first_name,
+            last_name: profileData?.last_name,
+            avatar_url: profileData?.avatar_url,
+          });
+        }
         
         setMembers(formattedMembers);
       }
