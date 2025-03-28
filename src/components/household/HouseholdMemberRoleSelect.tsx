@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Select, 
   SelectContent, 
@@ -26,14 +26,16 @@ export const HouseholdMemberRoleSelect: React.FC<HouseholdMemberRoleSelectProps>
   const [selectedRole, setSelectedRole] = useState<HouseholdRole>(currentRole);
   const { toast } = useToast();
 
-  // Update selectedRole when currentRole changes (e.g., from parent)
+  // Update local state only when props change and component is not in the middle of an update
   useEffect(() => {
-    setSelectedRole(currentRole);
-  }, [currentRole]);
+    if (!isChanging) {
+      setSelectedRole(currentRole);
+    }
+  }, [currentRole, isChanging]);
 
-  const handleRoleChange = async (newRole: HouseholdRole) => {
+  const handleRoleChange = useCallback(async (newRole: HouseholdRole) => {
     // Prevent unnecessary API calls if role hasn't changed
-    if (newRole === selectedRole) return;
+    if (newRole === selectedRole || isChanging) return;
     
     setIsChanging(true);
     
@@ -60,8 +62,9 @@ export const HouseholdMemberRoleSelect: React.FC<HouseholdMemberRoleSelectProps>
     } finally {
       setIsChanging(false);
     }
-  };
+  }, [userId, selectedRole, isChanging, onRoleChange, toast]);
 
+  // Memoize the render to prevent unnecessary re-renders
   return (
     <div className="relative">
       <Select 

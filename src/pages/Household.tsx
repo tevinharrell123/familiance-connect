@@ -26,11 +26,12 @@ const Household = () => {
   const [isLeaving, setIsLeaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Load household data only once when component mounts
   useEffect(() => {
-    if (household && user) {
+    if (household && user && !isRefreshing) {
       handleRefreshHousehold();
     }
-  }, [household, user]);
+  }, []);
 
   const handleCreateHousehold = async (name: string) => {
     try {
@@ -48,6 +49,7 @@ const Household = () => {
       setIsJoining(true);
       await joinHousehold(inviteCode);
       
+      // Only refresh once after joining
       setTimeout(() => {
         handleRefreshHousehold();
       }, 500);
@@ -70,6 +72,8 @@ const Household = () => {
   };
 
   const handleRefreshHousehold = async () => {
+    if (isRefreshing) return; // Prevent concurrent refreshes
+    
     try {
       setIsRefreshing(true);
       await refreshHousehold();
@@ -83,9 +87,11 @@ const Household = () => {
   const handleRoleChange = async (memberId: string, role: HouseholdRole) => {
     try {
       await updateMemberRole(memberId, role);
-      handleRefreshHousehold();
+      // We don't need to manually refresh here as the UI already shows the change
     } catch (error) {
       console.error('Error updating role:', error);
+      // Only refresh if there's an error to ensure UI is in sync
+      handleRefreshHousehold();
     }
   };
 

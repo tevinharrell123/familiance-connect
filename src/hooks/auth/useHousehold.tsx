@@ -23,16 +23,28 @@ export function useHousehold(
     updateMemberRole
   } = useHouseholdManagement(user, setIsLoading);
 
+  // Track the last fetch timestamp to prevent frequent refreshes
+  const [lastFetchTimestamp, setLastFetchTimestamp] = useState<number>(0);
+
   const fetchUserHouseholdData = async (userId: string) => {
     await fetchUserHousehold(userId, setHousehold, setUserRole, getHouseholdMembers);
+    setLastFetchTimestamp(Date.now());
   };
 
   const refreshHousehold = async (): Promise<void> => {
     if (!user) return;
     
+    // Prevent refreshing too frequently (throttle to once per second)
+    const now = Date.now();
+    if (now - lastFetchTimestamp < 1000) {
+      console.log('Skipping refresh - too soon after last refresh');
+      return;
+    }
+    
     try {
       setIsLoading(true);
       await fetchUserHouseholdData(user.id);
+      setLastFetchTimestamp(now);
       
       toast({
         title: "Refreshed",
