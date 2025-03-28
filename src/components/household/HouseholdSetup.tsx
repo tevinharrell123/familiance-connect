@@ -15,6 +15,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -38,6 +40,7 @@ type JoinHouseholdValues = z.infer<typeof joinHouseholdSchema>;
 const HouseholdSetup = () => {
   const { createHousehold, joinHousehold } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
 
   const createForm = useForm<CreateHouseholdValues>({
@@ -55,22 +58,26 @@ const HouseholdSetup = () => {
   });
 
   const handleCreateSubmit = async (values: CreateHouseholdValues) => {
+    setError(null);
     try {
       setIsSubmitting(true);
       await createHousehold(values.name);
     } catch (error) {
       console.error('Create household error:', error);
+      setError(error instanceof Error ? error.message : "Failed to create household. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleJoinSubmit = async (values: JoinHouseholdValues) => {
+    setError(null);
     try {
       setIsSubmitting(true);
       await joinHousehold(values.inviteCode);
     } catch (error) {
       console.error('Join household error:', error);
+      setError(error instanceof Error ? error.message : "Failed to join household. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,10 +92,20 @@ const HouseholdSetup = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <Tabs 
           defaultValue="create" 
           value={activeTab} 
-          onValueChange={(value) => setActiveTab(value as 'create' | 'join')}
+          onValueChange={(value) => {
+            setActiveTab(value as 'create' | 'join');
+            setError(null);
+          }}
         >
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="create">Create</TabsTrigger>
@@ -152,7 +169,10 @@ const HouseholdSetup = () => {
           <Button
             variant="link"
             className="p-0"
-            onClick={() => setActiveTab(activeTab === 'create' ? 'join' : 'create')}
+            onClick={() => {
+              setActiveTab(activeTab === 'create' ? 'join' : 'create');
+              setError(null);
+            }}
           >
             {activeTab === 'create' ? 'Join a household' : 'Create a household'}
           </Button>
