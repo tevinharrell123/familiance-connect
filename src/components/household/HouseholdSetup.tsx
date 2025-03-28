@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 import {
   Form,
   FormControl,
@@ -61,10 +62,22 @@ const HouseholdSetup = () => {
     setError(null);
     try {
       setIsSubmitting(true);
+      console.log("Attempting to create household:", values.name);
       await createHousehold(values.name);
+      
+      toast({
+        title: "Success!",
+        description: "Your household has been created successfully.",
+      });
     } catch (error) {
       console.error('Create household error:', error);
       setError(error instanceof Error ? error.message : "Failed to create household. Please try again.");
+      
+      toast({
+        variant: "destructive",
+        title: "Failed to create household",
+        description: error instanceof Error ? error.message : "An unknown error occurred. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -74,10 +87,22 @@ const HouseholdSetup = () => {
     setError(null);
     try {
       setIsSubmitting(true);
+      console.log("Attempting to join household with invite code:", values.inviteCode);
       await joinHousehold(values.inviteCode);
+      
+      toast({
+        title: "Success!",
+        description: "You've successfully joined the household.",
+      });
     } catch (error) {
       console.error('Join household error:', error);
       setError(error instanceof Error ? error.message : "Failed to join household. Please try again.");
+      
+      toast({
+        variant: "destructive",
+        title: "Failed to join household",
+        description: error instanceof Error ? error.message : "An unknown error occurred. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
