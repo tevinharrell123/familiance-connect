@@ -61,7 +61,7 @@ const Onboarding = () => {
         description: `Welcome to ${data.householdName}`,
       });
       
-      // Navigate directly to the dashboard without attempting to fetch household data yet
+      // Navigate directly to the dashboard without attempting to fetch household data
       navigate('/', { replace: true });
 
     } catch (error: any) {

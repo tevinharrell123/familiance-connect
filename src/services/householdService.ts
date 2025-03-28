@@ -20,7 +20,7 @@ export async function fetchMembershipData(userId: string) {
 export async function fetchHouseholdData(householdId: string) {
   const { data, error } = await supabase
     .from('households')
-    .select('*')
+    .select('id, name, owner_id')
     .eq('id', householdId)
     .maybeSingle();
 

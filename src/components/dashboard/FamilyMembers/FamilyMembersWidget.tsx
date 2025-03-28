@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus } from "lucide-react";
 import { useHousehold } from '@/hooks/useHousehold';
 import { MemberAvatar } from './MemberAvatar';
 import { RequestButtons } from './RequestButtons';
