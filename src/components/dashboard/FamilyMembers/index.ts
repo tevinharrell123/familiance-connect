@@ -1,2 +1,0 @@
-
-export { FamilyMembersWidget } from './FamilyMembersWidget';

@@ -5,16 +5,13 @@ import { CalendarWidget } from '@/components/dashboard/Calendar';
 import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards';
 import { QuickActions, TasksAndChores, WeeklyRoutines } from '@/components/dashboard/QuickActions';
 import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
-import { useHousehold } from '@/hooks/useHousehold';
 
 const Dashboard = () => {
-  const { household, members } = useHousehold();
-  
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome, {household?.name}</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome, Harrell Family</h1>
           <p className="text-lg text-muted-foreground">Here's your family dashboard for today</p>
         </div>
         
