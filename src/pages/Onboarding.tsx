@@ -61,8 +61,10 @@ const Onboarding = () => {
         description: `Welcome to ${data.householdName}`,
       });
       
-      // Navigate directly to the dashboard without attempting to fetch household data
-      navigate('/', { replace: true });
+      // Simple direct navigation - no data fetching attempts
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 500);
 
     } catch (error: any) {
       console.error("Error in onboarding:", error);

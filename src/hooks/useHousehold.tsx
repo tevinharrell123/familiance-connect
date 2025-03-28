@@ -29,18 +29,25 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
 
   const fetchHouseholdInfo = async () => {
     if (!user) {
+      setHousehold(null);
+      setMembers([]);
+      setIsAdmin(false);
       setIsLoading(false);
       return;
     }
 
     try {
       console.log("Fetching household data for user:", user.id);
+      setIsLoading(true);
       
-      // Step 1: Get the user's membership
+      // Step 1: Get the user's membership (simplified query)
       const membershipData = await fetchMembershipData(user.id);
 
       if (!membershipData) {
         console.log("No household membership found for user");
+        setHousehold(null);
+        setMembers([]);
+        setIsAdmin(false);
         setIsLoading(false);
         return;
       }
@@ -49,11 +56,13 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       setIsAdmin(membershipData.role === 'admin');
       console.log("User role:", membershipData.role);
 
-      // Step 3: Get household details
+      // Step 3: Get household details (flat query)
       const householdData = await fetchHouseholdData(membershipData.household_id);
 
       if (!householdData) {
         console.log("No household found with ID:", membershipData.household_id);
+        setHousehold(null);
+        setMembers([]);
         setIsLoading(false);
         return;
       }
@@ -61,8 +70,8 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       console.log("Household found:", householdData.name);
       setHousehold(householdData);
 
-      // Step 4: Fetch memberships
-      const membershipsData = await fetchHouseholdMembers(membershipData.household_id);
+      // Step 4: Fetch memberships (separate query)
+      const membershipsData = await fetchHouseholdMembers(user.id, membershipData.household_id);
 
       if (!membershipsData || membershipsData.length === 0) {
         console.log("No members found for household");
@@ -83,6 +92,11 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       setMembers(formattedMembers);
     } catch (error) {
       console.error('Error in household data fetch:', error);
+      toast({
+        title: "Error loading household data",
+        description: "Please try refreshing the page",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

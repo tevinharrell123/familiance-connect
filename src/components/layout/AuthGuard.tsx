@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useHousehold } from '@/hooks/useHousehold';
@@ -19,15 +19,17 @@ export function AuthGuard({
   const { household, isLoading: householdLoading } = useHousehold();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Don't do anything while still loading
-    if (authLoading) return;
+    // Don't do anything while still loading or already redirecting
+    if (authLoading || isRedirecting) return;
 
     // Handle authentication check
     if (requiresAuth && !user) {
       // If we're not on the auth page, redirect to it
       if (location.pathname !== '/auth') {
+        setIsRedirecting(true);
         navigate('/auth');
       }
       return;
@@ -35,6 +37,7 @@ export function AuthGuard({
 
     // If already authenticated and trying to access auth page, redirect to home
     if (user && location.pathname === '/auth') {
+      setIsRedirecting(true);
       navigate('/');
       return;
     }
@@ -44,6 +47,7 @@ export function AuthGuard({
 
     // Handle household check - make sure we're only redirecting if we need to
     if (user && !household && location.pathname !== '/onboarding') {
+      setIsRedirecting(true);
       navigate('/onboarding');
     }
   }, [
@@ -54,8 +58,14 @@ export function AuthGuard({
     location.pathname, 
     navigate, 
     requiresAuth,
-    requiresHousehold
+    requiresHousehold,
+    isRedirecting
   ]);
+
+  // Reset redirecting flag when pathname changes
+  useEffect(() => {
+    setIsRedirecting(false);
+  }, [location.pathname]);
 
   // If we're checking auth and we're still loading, show nothing
   if ((requiresAuth && authLoading) || (requiresHousehold && !authLoading && householdLoading)) {

@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Household, Member } from '@/types/household';
 
 export async function fetchMembershipData(userId: string) {
+  if (!userId) return null;
+
   const { data, error } = await supabase
     .from('memberships')
     .select('household_id, role')
@@ -18,6 +20,8 @@ export async function fetchMembershipData(userId: string) {
 }
 
 export async function fetchHouseholdData(householdId: string) {
+  if (!householdId) return null;
+
   const { data, error } = await supabase
     .from('households')
     .select('id, name, owner_id')
@@ -32,7 +36,9 @@ export async function fetchHouseholdData(householdId: string) {
   return data as Household | null;
 }
 
-export async function fetchHouseholdMembers(householdId: string) {
+export async function fetchHouseholdMembers(userId: string, householdId: string) {
+  if (!userId || !householdId) return [];
+  
   const { data, error } = await supabase
     .from('memberships')
     .select('id, user_id, household_id, role')
