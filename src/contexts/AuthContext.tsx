@@ -1,8 +1,8 @@
-
 import React, { createContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { HouseholdRole } from '@/types/household';
 
 // Define types for our context
 type Profile = {
@@ -25,7 +25,7 @@ type Membership = {
   id: string;
   user_id: string;
   household_id: string;
-  role: 'admin' | 'adult' | 'child';
+  role: HouseholdRole;
   created_at: string;
   household?: Household;
 };
@@ -50,7 +50,7 @@ type AuthContextType = {
   createHousehold: (name: string) => Promise<Household>;
   joinHousehold: (inviteCode: string) => Promise<void>;
   leaveHousehold: () => Promise<void>;
-  updateMemberRole: (userId: string, role: 'admin' | 'adult' | 'child') => Promise<void>;
+  updateMemberRole: (userId: string, role: HouseholdRole) => Promise<void>;
   refreshHousehold: () => Promise<void>;
 };
 
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: membershipData.id,
           user_id: membershipData.user_id,
           household_id: membershipData.household_id,
-          role: membershipData.role,
+          role: membershipData.role as HouseholdRole,
           created_at: membershipData.created_at
         };
         
@@ -360,7 +360,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Update a member's role
-  const updateMemberRole = async (userId: string, role: 'admin' | 'adult' | 'child'): Promise<void> => {
+  const updateMemberRole = async (userId: string, role: HouseholdRole): Promise<void> => {
     if (!user || !membership || !household) {
       throw new Error('You must be in a household to update member roles');
     }
@@ -452,7 +452,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Sign up new user - Fixed the line break issue here
+  // Sign up new user
   const signUp = async (email: string, password: string, userData: { full_name: string, birthday?: string, household_name?: string }) => {
     try {
       setIsLoading(true);
