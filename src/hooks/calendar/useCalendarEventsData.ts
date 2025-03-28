@@ -237,17 +237,38 @@ export function useSharedHouseholdMemberEvents() {
  * Hook to combine all event sources
  */
 export function useCalendarEventsData() {
-  const { data: householdEvents = [], isLoading: isLoadingHousehold, error: householdError } = useHouseholdEvents();
-  const { data: personalEvents = [], isLoading: isLoadingPersonal, error: personalError } = usePersonalEvents();
-  const { data: sharedEvents = [], isLoading: isLoadingShared, error: sharedError } = useSharedHouseholdMemberEvents();
+  const householdEventsQuery = useHouseholdEvents();
+  const personalEventsQuery = usePersonalEvents();
+  const sharedEventsQuery = useSharedHouseholdMemberEvents();
 
-  const isLoading = isLoadingHousehold || isLoadingPersonal || isLoadingShared;
-  const error = householdError || personalError || sharedError;
+  const { data: householdEvents = [] } = householdEventsQuery;
+  const { data: personalEvents = [] } = personalEventsQuery;
+  const { data: sharedEvents = [] } = sharedEventsQuery;
+
+  const isLoading = 
+    householdEventsQuery.isLoading || 
+    personalEventsQuery.isLoading || 
+    sharedEventsQuery.isLoading;
+    
+  const error = 
+    householdEventsQuery.error || 
+    personalEventsQuery.error || 
+    sharedEventsQuery.error;
+    
   const events = [...householdEvents, ...personalEvents, ...sharedEvents];
+
+  const refetch = () => {
+    return Promise.all([
+      householdEventsQuery.refetch(),
+      personalEventsQuery.refetch(),
+      sharedEventsQuery.refetch()
+    ]);
+  };
 
   return {
     events,
     isLoading,
-    error
+    error,
+    refetch
   };
 }

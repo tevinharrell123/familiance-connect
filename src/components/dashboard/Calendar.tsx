@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
@@ -31,7 +31,13 @@ export function CalendarWidget() {
     isCreating,
     isUpdating,
     isDeleting,
+    refetch
   } = useCalendarEvents();
+
+  // Ensure we have the latest data when the component mounts
+  useEffect(() => {
+    refetch();
+  }, []);
 
   // Prepare calendar data based on current date
   const monthStart = startOfMonth(currentDate);
@@ -55,8 +61,12 @@ export function CalendarWidget() {
   const calendarDays = [...previousMonthDays, ...days, ...nextMonthDays];
 
   const handleCreateEvent = (values: CalendarFormValues) => {
-    createEvent(values);
-    setDialogOpen(false);
+    createEvent(values, {
+      onSuccess: () => {
+        refetch();
+        setDialogOpen(false);
+      }
+    });
   };
 
   const handleUpdateEvent = (values: CalendarFormValues) => {
@@ -70,18 +80,25 @@ export function CalendarWidget() {
       end_date: values.end_date.toISOString(),
       color: values.color || null,
       is_household_event: values.is_household_event
+    }, {
+      onSuccess: () => {
+        refetch();
+        setEditingEvent(null);
+        setDialogOpen(false);
+      }
     });
-    
-    setEditingEvent(null);
-    setDialogOpen(false);
   };
 
   const handleDeleteEvent = () => {
     if (!editingEvent) return;
     
-    deleteEvent(editingEvent);
-    setEditingEvent(null);
-    setDialogOpen(false);
+    deleteEvent(editingEvent, {
+      onSuccess: () => {
+        refetch();
+        setEditingEvent(null);
+        setDialogOpen(false);
+      }
+    });
   };
 
   const handleEventClick = (event: CalendarEvent) => {

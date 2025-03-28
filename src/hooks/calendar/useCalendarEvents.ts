@@ -1,3 +1,4 @@
+
 import { useCalendarEventsData } from './useCalendarEventsData';
 import { 
   useCreateCalendarEvent,
@@ -10,7 +11,7 @@ import {
  */
 export function useCalendarEvents() {
   // Get event data
-  const { events, isLoading, error } = useCalendarEventsData();
+  const { events, isLoading, error, refetch: refetchData } = useCalendarEventsData();
   
   // Get mutation hooks
   const createEventMutation = useCreateCalendarEvent();
@@ -23,10 +24,7 @@ export function useCalendarEvents() {
     error,
     refetch: () => {
       // This will trigger a refetch of all event data
-      return Promise.all([
-        // We don't need to manually refetch as the invalidateQueries in mutations 
-        // will handle this, but keeping the API consistent with the original hook
-      ]);
+      return refetchData();
     },
     createEvent: createEventMutation.mutate,
     updateEvent: updateEventMutation.mutate,
