@@ -80,10 +80,7 @@ export function useAuthProvider() {
       // Check if user is a member of any household
       const { data: memberData, error: memberError } = await supabase
         .from('household_members')
-        .select(`
-          *,
-          households:household_id (*)
-        `)
+        .select('*, households:household_id(*)')
         .eq('user_id', userId)
         .single();
 
@@ -93,6 +90,7 @@ export function useAuthProvider() {
       }
 
       if (memberData) {
+        // Extract the household data and role
         setHousehold(memberData.households as Household);
         setUserRole(memberData.role as HouseholdRole);
         
