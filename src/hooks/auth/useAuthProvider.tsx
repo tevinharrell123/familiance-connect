@@ -4,7 +4,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from './useProfile';
-import { useHousehold } from './useHousehold';
+import { useHousehold } from '@/hooks/household';
 import { useSignIn } from './useSignIn';
 import { useSignUp } from './useSignUp';
 import { useSignOut } from './useSignOut';
