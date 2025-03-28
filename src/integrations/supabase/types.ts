@@ -152,6 +152,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_in_same_household: {
+        Args: {
+          profile_user_id: string
+        }
+        Returns: boolean
+      }
       is_member_of_household: {
         Args: {
           household_id: string

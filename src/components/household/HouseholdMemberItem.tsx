@@ -33,13 +33,12 @@ export const HouseholdMemberItem = ({
     if (member.user_profiles?.full_name) {
       return member.user_profiles.full_name;
     }
-    // Use user ID as fallback instead of generic "Household Member"
-    return `User ${member.user_id.substring(0, 6)}...`;
+    // Use user ID as fallback with clear indication it's a user ID
+    return `User ${member.user_id.substring(0, 8)}`;
   };
 
   const fullName = getDisplayName();
   const initials = getInitials(member.user_profiles?.full_name);
-  const isUnknownMember = !member.user_profiles?.full_name;
   
   return (
     <div className="flex items-center justify-between p-3 bg-card border rounded-lg">
