@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,17 +56,15 @@ const Onboarding = () => {
       }
 
       console.log("Household created with ID:", householdId);
-
-      // Refresh the household data to ensure context is updated
-      await refreshHousehold();
       
       toast({
         title: "Household created!",
         description: `Welcome to ${data.householdName}`,
       });
       
-      // Navigate to dashboard and force a reload to ensure all contexts are fresh
-      navigate("/", { replace: true });
+      // Force a complete page reload to reset all contexts
+      // This is more reliable than just refreshing the household data
+      window.location.href = '/';
     } catch (error: any) {
       console.error("Error in onboarding:", error);
       toast({
