@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('household_members')
         .select(`
           *,
-          profiles:user_id (*)
+          user_profiles:user_id (*)
         `)
         .eq('household_id', householdId);
 
@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: item.role as HouseholdRole,
           created_at: item.created_at
         },
-        profile: item.profiles
+        profile: item.user_profiles
       }));
 
       setHouseholdMembers(members);

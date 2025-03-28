@@ -26,7 +26,7 @@ export function useHouseholdMembers(
           user_id,
           role,
           created_at,
-          profiles(full_name, avatar_url)
+          user_profiles:user_id (full_name, avatar_url)
         `)
         .eq('household_id', finalHouseholdId);
         
@@ -43,20 +43,18 @@ export function useHouseholdMembers(
       
       console.log("Household members retrieved:", data);
       
-      // Need to properly type and handle the returned data
-      const typedMembers = data.map(member => {
-        return {
-          id: member.id,
-          household_id: member.household_id,
-          user_id: member.user_id,
-          role: member.role as HouseholdRole,
-          created_at: member.created_at,
-          profiles: member.profiles
-        };
-      });
+      // Properly type and handle the returned data
+      const typedMembers: HouseholdMember[] = data.map(member => ({
+        id: member.id,
+        household_id: member.household_id,
+        user_id: member.user_id,
+        role: member.role as HouseholdRole,
+        created_at: member.created_at,
+        user_profiles: member.user_profiles
+      }));
       
       setHouseholdMembers(typedMembers);
-      return typedMembers as HouseholdMember[];
+      return typedMembers;
     } catch (error: any) {
       console.error('Get household members error:', error);
       return [];
