@@ -120,7 +120,7 @@ const Household = () => {
           <div className="space-y-6">
             <HouseholdDetails 
               household={household}
-              householdMembers={householdMembers as HouseholdMember[]}
+              householdMembers={householdMembers as unknown as HouseholdMember[]}
               userRole={userRole}
               userId={user?.id || ''}
               onRefreshHousehold={handleRefreshHousehold}
