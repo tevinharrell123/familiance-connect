@@ -1,16 +1,18 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarIcon, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { CalendarFormValues, CalendarEvent, CalendarViewType } from '@/types/calendar';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addDays, isSameDay, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { AlertTriangle } from 'lucide-react';
+import { MonthView } from '@/components/calendar/MonthView';
+import { WeekView } from '@/components/calendar/WeekView';
+import { DayView } from '@/components/calendar/DayView';
+import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 
 export function CalendarWidget() {
   const { user, household } = useAuth();
@@ -31,10 +33,12 @@ export function CalendarWidget() {
     isDeleting,
   } = useCalendarEvents();
 
+  // Prepare calendar data based on current date
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
+  // Calculate days from previous and next month to fill the calendar
   const startDay = monthStart.getDay(); // 0 for Sunday, 1 for Monday, etc.
   const daysFromPreviousMonth = startDay === 0 ? 0 : startDay;
   const daysFromNextMonth = 42 - (days.length + daysFromPreviousMonth); // 42 = 6 rows of 7 days
@@ -47,20 +51,8 @@ export function CalendarWidget() {
     addDays(monthEnd, i + 1)
   );
   
+  // Combine all days for the calendar grid
   const calendarDays = [...previousMonthDays, ...days, ...nextMonthDays];
-  
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  const getEventsForDay = (day: Date): CalendarEvent[] => {
-    if (!events) return [];
-    
-    return events.filter(event => {
-      const eventStart = parseISO(event.start_date);
-      const eventEnd = parseISO(event.end_date);
-      
-      return day >= eventStart && day <= eventEnd;
-    });
-  };
 
   const handleCreateEvent = (values: CalendarFormValues) => {
     createEvent(values);
@@ -103,49 +95,22 @@ export function CalendarWidget() {
     return {
       title: editingEvent.title,
       description: editingEvent.description || '',
-      start_date: parseISO(editingEvent.start_date),
-      end_date: parseISO(editingEvent.end_date),
+      start_date: new Date(editingEvent.start_date),
+      end_date: new Date(editingEvent.end_date),
       color: editingEvent.color || '#7B68EE',
       is_household_event: editingEvent.is_household_event
     };
   };
 
-  const renderEventIndicator = (event: CalendarEvent) => {
-    const userInitials = event.user_profile?.full_name
-      ? event.user_profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-      : '?';
-      
-    return (
-      <div 
-        key={event.id} 
-        className="flex items-center text-xs rounded-full px-1 mt-1 truncate"
-        style={{ backgroundColor: `${event.color || '#7B68EE'}30` }}
-      >
-        <Avatar className="h-4 w-4 mr-1">
-          {event.user_profile?.avatar_url ? (
-            <AvatarImage src={event.user_profile.avatar_url} alt={event.user_profile.full_name || ''} />
-          ) : null}
-          <AvatarFallback className="text-[8px]">{userInitials}</AvatarFallback>
-        </Avatar>
-        <span className="truncate">{event.title}</span>
-      </div>
-    );
-  };
-
   return (
     <Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="h-5 w-5" />
-          <CardTitle>Family Calendar</CardTitle>
-        </div>
-        <Button size="sm" className="bg-primary" onClick={() => {
+      <CalendarHeader 
+        currentDate={currentDate}
+        onAddEvent={() => {
           setEditingEvent(null);
           setDialogOpen(true);
-        }}>
-          <Plus className="h-4 w-4 mr-1" /> Add Event
-        </Button>
-      </CardHeader>
+        }}
+      />
       <CardContent>
         <div className="mb-4">
           <h3 className="text-lg font-semibold mb-2">{format(currentDate, 'MMMM yyyy')}</h3>
@@ -168,42 +133,12 @@ export function CalendarWidget() {
                 </div>
               ) : (
                 <>
-                  <div className="calendar-grid">
-                    {weekDays.map((day, i) => (
-                      <div key={i} className="text-center py-2 font-medium text-sm">
-                        {day}
-                      </div>
-                    ))}
-                    
-                    {calendarDays.map((day, i) => {
-                      const dayEvents = getEventsForDay(day);
-                      const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-                      const isToday = isSameDay(day, new Date());
-                      
-                      return (
-                        <div 
-                          key={i} 
-                          className={`calendar-day border ${
-                            isCurrentMonth ? 'bg-white' : 'text-gray-300 bg-gray-50'
-                          } ${isToday ? 'border-primary' : ''}`}
-                        >
-                          <div className={`text-sm p-1 ${isToday ? 'font-bold text-primary' : ''}`}>
-                            {format(day, 'd')}
-                          </div>
-                          
-                          <div className="px-1 overflow-hidden">
-                            {dayEvents.slice(0, 2).map(event => renderEventIndicator(event))}
-                            
-                            {dayEvents.length > 2 && (
-                              <div className="text-xs text-center mt-1 text-muted-foreground">
-                                +{dayEvents.length - 2} more
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <MonthView 
+                    days={calendarDays} 
+                    events={events} 
+                    currentMonth={currentDate} 
+                    onEventClick={handleEventClick} 
+                  />
                   
                   <style>
                     {`
@@ -230,15 +165,11 @@ export function CalendarWidget() {
             </TabsContent>
             
             <TabsContent value="day">
-              <div className="p-4 text-center">
-                <p>Day view will be implemented in a future update.</p>
-              </div>
+              <DayView currentDate={currentDate} events={events} />
             </TabsContent>
             
             <TabsContent value="week">
-              <div className="p-4 text-center">
-                <p>Week view will be implemented in a future update.</p>
-              </div>
+              <WeekView currentDate={currentDate} events={events} />
             </TabsContent>
           </Tabs>
         </div>
