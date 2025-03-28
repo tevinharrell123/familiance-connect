@@ -27,6 +27,7 @@ const registerSchema = z.object({
   dob: z.date({ required_error: "Please select your date of birth" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters long" }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters long" }),
+  householdName: z.string().min(2, { message: "Household name must be at least 2 characters long" }).optional(),
   profileImage: z.instanceof(FileList).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
@@ -39,6 +40,7 @@ const RegisterForm = () => {
   const { signUp } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
+  const [createHousehold, setCreateHousehold] = useState(false);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -47,6 +49,7 @@ const RegisterForm = () => {
       password: '',
       confirmPassword: '',
       fullName: '',
+      householdName: '',
     },
   });
 
@@ -65,10 +68,14 @@ const RegisterForm = () => {
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       setIsSubmitting(true);
-      const userData: { full_name: string; dob?: string } = {
+      const userData: { full_name: string; dob?: string; household_name?: string } = {
         full_name: values.fullName,
         dob: values.dob ? format(values.dob, 'yyyy-MM-dd') : undefined,
       };
+      
+      if (createHousehold && values.householdName) {
+        userData.household_name = values.householdName;
+      }
       
       const profileImage = values.profileImage?.[0];
       
@@ -211,6 +218,37 @@ const RegisterForm = () => {
             </FormItem>
           )}
         />
+        
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="create-household"
+              className="rounded border-gray-300 text-primary focus:ring-primary"
+              checked={createHousehold}
+              onChange={(e) => setCreateHousehold(e.target.checked)}
+            />
+            <label htmlFor="create-household" className="text-sm font-medium">
+              Create a household for your family
+            </label>
+          </div>
+          
+          {createHousehold && (
+            <FormField
+              control={form.control}
+              name="householdName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Household Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="The Smith Family" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
         
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Creating account..." : "Create Account"}

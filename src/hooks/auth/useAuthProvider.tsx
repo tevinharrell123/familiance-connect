@@ -17,7 +17,6 @@ export function useAuthProvider() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -36,7 +35,6 @@ export function useAuthProvider() {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -65,7 +63,6 @@ export function useAuthProvider() {
 
       setProfile(data);
       
-      // Fetch the user's household membership
       fetchUserHousehold(userId);
       
       return data;
@@ -77,7 +74,6 @@ export function useAuthProvider() {
 
   const fetchUserHousehold = async (userId: string) => {
     try {
-      // Check if user is a member of any household
       const { data: memberData, error: memberError } = await supabase
         .from('household_members')
         .select(`
@@ -93,11 +89,9 @@ export function useAuthProvider() {
       }
 
       if (memberData) {
-        // Extract the household data and role
         setHousehold(memberData.households as Household);
         setUserRole(memberData.role as HouseholdRole);
         
-        // Fetch all members of the household
         getHouseholdMembers();
       } else {
         setHousehold(null);
@@ -122,10 +116,8 @@ export function useAuthProvider() {
     try {
       setIsLoading(true);
       
-      // Create a unique invite code
       const inviteCode = generateInviteCode();
       
-      // Insert the new household
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .insert({ name, invite_code: inviteCode })
@@ -134,7 +126,6 @@ export function useAuthProvider() {
         
       if (householdError) throw householdError;
       
-      // Add the current user as admin
       const { error: memberError } = await supabase
         .from('household_members')
         .insert({
@@ -145,11 +136,9 @@ export function useAuthProvider() {
         
       if (memberError) throw memberError;
       
-      // Update local state
       setHousehold(householdData);
       setUserRole('admin');
       
-      // Fetch members (just the admin at this point)
       getHouseholdMembers();
       
       toast({
@@ -177,7 +166,6 @@ export function useAuthProvider() {
     try {
       setIsLoading(true);
       
-      // Find the household by invite code
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .select('*')
@@ -193,7 +181,6 @@ export function useAuthProvider() {
         throw householdError;
       }
       
-      // Check if user is already a member
       const { data: existingMember, error: checkError } = await supabase
         .from('household_members')
         .select('*')
@@ -210,7 +197,6 @@ export function useAuthProvider() {
         return;
       }
       
-      // Add user as a guest initially
       const { error: memberError } = await supabase
         .from('household_members')
         .insert({
@@ -221,11 +207,9 @@ export function useAuthProvider() {
         
       if (memberError) throw memberError;
       
-      // Update local state
       setHousehold(householdData);
       setUserRole('guest');
       
-      // Fetch all members
       getHouseholdMembers();
       
       toast({
@@ -262,7 +246,6 @@ export function useAuthProvider() {
         
       if (error) throw error;
       
-      // Format the members data
       const members: HouseholdMember[] = data.map((member: any) => ({
         ...member,
         full_name: member.profiles.full_name,
@@ -293,7 +276,6 @@ export function useAuthProvider() {
         
       if (error) throw error;
       
-      // Refresh members list
       getHouseholdMembers();
       
       toast({
@@ -319,7 +301,6 @@ export function useAuthProvider() {
     try {
       setIsLoading(true);
       
-      // Admin can't leave unless they're the only member
       if (userRole === 'admin' && householdMembers && householdMembers.length > 1) {
         toast({
           title: "Cannot leave household",
@@ -329,7 +310,6 @@ export function useAuthProvider() {
         return;
       }
       
-      // Delete the membership
       const { error } = await supabase
         .from('household_members')
         .delete()
@@ -338,7 +318,6 @@ export function useAuthProvider() {
         
       if (error) throw error;
       
-      // If this was the last member, delete the household
       if (householdMembers && householdMembers.length === 1) {
         await supabase
           .from('households')
@@ -346,7 +325,6 @@ export function useAuthProvider() {
           .eq('id', household.id);
       }
       
-      // Update local state
       setHousehold(null);
       setHouseholdMembers(null);
       setUserRole(null);
@@ -456,7 +434,7 @@ function useSignUp(
     }
   };
 
-  const signUp = async (email: string, password: string, userData: { full_name?: string, dob?: string }, profileImage?: File) => {
+  const signUp = async (email: string, password: string, userData: { full_name?: string, dob?: string, household_name?: string }, profileImage?: File) => {
     try {
       setIsLoading(true);
       const { error, data } = await supabase.auth.signUp({
@@ -476,11 +454,9 @@ function useSignUp(
         throw error;
       }
 
-      // If we have a profile image and a user was created
       if (profileImage && data.user) {
         const avatarUrl = await uploadProfileImage(data.user.id, profileImage);
         
-        // Update the profile with the avatar URL
         if (avatarUrl) {
           const { error: profileError } = await supabase
             .from('profiles')
@@ -489,6 +465,35 @@ function useSignUp(
             
           if (profileError) {
             console.error('Error updating profile with avatar:', profileError);
+          }
+        }
+      }
+
+      if (userData.household_name && data.user) {
+        const inviteCode = generateInviteCode();
+        
+        const { data: householdData, error: householdError } = await supabase
+          .from('households')
+          .insert({ 
+            name: userData.household_name, 
+            invite_code: inviteCode 
+          })
+          .select()
+          .single();
+          
+        if (householdError) {
+          console.error('Error creating household:', householdError);
+        } else if (householdData) {
+          const { error: memberError } = await supabase
+            .from('household_members')
+            .insert({
+              household_id: householdData.id,
+              user_id: data.user.id,
+              role: 'admin'
+            });
+            
+          if (memberError) {
+            console.error('Error adding user to household:', memberError);
           }
         }
       }
