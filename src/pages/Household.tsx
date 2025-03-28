@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -119,7 +120,7 @@ const Household = () => {
           <div className="space-y-6">
             <HouseholdDetails 
               household={household}
-              householdMembers={householdMembers}
+              householdMembers={householdMembers as HouseholdMember[]}
               userRole={userRole}
               userId={user?.id || ''}
               onRefreshHousehold={handleRefreshHousehold}

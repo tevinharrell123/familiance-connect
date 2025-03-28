@@ -42,6 +42,7 @@ export function useHouseholdMembers(
 
       console.log("Fetched household members:", data);
       
+      // Map the fetched data to match the exact HouseholdMember type structure
       const members: HouseholdMember[] = data.map((member: any) => ({
         id: member.id,
         household_id: member.household_id,
