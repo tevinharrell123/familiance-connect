@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
@@ -26,7 +27,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
   const [isAdmin, setIsAdmin] = useState(false);
   const { user } = useAuth();
 
-  const fetchHouseholdData = async () => {
+  const fetchHouseholdInfo = async () => {
     if (!user) {
       setIsLoading(false);
       return;
@@ -89,7 +90,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
 
   useEffect(() => {
     if (user) {
-      fetchHouseholdData();
+      fetchHouseholdInfo();
     } else {
       setHousehold(null);
       setMembers([]);
@@ -110,7 +111,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
   };
 
   const refreshHousehold = async () => {
-    await fetchHouseholdData();
+    await fetchHouseholdInfo();
   };
 
   return (
