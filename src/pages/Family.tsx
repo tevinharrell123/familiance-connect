@@ -20,7 +20,7 @@ export default function Family() {
   const [error, setError] = useState<string | null>(null);
   const [pollingAttempt, setPollingAttempt] = useState(0);
   const [isPolling, setIsPolling] = useState(false);
-  const maxAttempts = 5;
+  const maxAttempts = 12; // Increased from 5 to 12 for more attempts
   const navigate = useNavigate();
 
   const fetchMemberships = async () => {
@@ -45,7 +45,8 @@ export default function Family() {
           setIsPolling(false);
           setLoading(false);
         } else {
-          setTimeout(fetchMemberships, 1000);
+          // Poll again after a delay
+          setTimeout(fetchMemberships, 1500); // Increased from 1000ms to 1500ms
         }
         return;
       }
@@ -62,7 +63,8 @@ export default function Family() {
         setIsPolling(false);
         setLoading(false);
       } else {
-        setTimeout(fetchMemberships, 1000);
+        // Poll again if no memberships found yet
+        setTimeout(fetchMemberships, 1500);
       }
     } catch (fetchError) {
       console.error('Error in fetch operation:', fetchError);
@@ -72,7 +74,8 @@ export default function Family() {
         setIsPolling(false);
         setLoading(false);
       } else {
-        setTimeout(fetchMemberships, 1000);
+        // Poll again after a delay
+        setTimeout(fetchMemberships, 1500);
       }
     }
   };

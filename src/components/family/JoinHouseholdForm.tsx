@@ -33,7 +33,7 @@ export function JoinHouseholdForm() {
       // Check if the household exists
       const { data: householdData, error: householdError } = await supabase
         .from('households')
-        .select('id')
+        .select('id, name')
         .eq('id', householdId)
         .single();
 
@@ -74,7 +74,8 @@ export function JoinHouseholdForm() {
         // Join the household
         const { error: joinError } = await supabase.rpc('join_household', {
           household_id: householdId,
-          user_id: authData.user.id
+          user_id: authData.user.id,
+          member_role: 'adult'
         });
 
         if (joinError) {
@@ -93,7 +94,8 @@ export function JoinHouseholdForm() {
         console.log("Joining household with user ID:", user.id);
         const { error: joinError } = await supabase.rpc('join_household', {
           household_id: householdId,
-          user_id: user.id
+          user_id: user.id,
+          member_role: 'adult'
         });
 
         if (joinError) {
@@ -102,7 +104,7 @@ export function JoinHouseholdForm() {
 
         toast({
           title: "Success",
-          description: "Joined household successfully!",
+          description: `Joined household "${householdData.name}" successfully!`,
         });
 
         // Navigate to the main page with hard refresh

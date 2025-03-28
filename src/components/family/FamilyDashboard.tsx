@@ -82,6 +82,18 @@ export function FamilyDashboard({
         throw new Error('Household not found');
       }
       
+      // Check if user is already a member of this household
+      const { data: existingMembership, error: membershipError } = await supabase
+        .from('memberships')
+        .select('id')
+        .eq('household_id', householdId)
+        .eq('user_id', user.id)
+        .single();
+        
+      if (existingMembership) {
+        throw new Error('You are already a member of this household');
+      }
+      
       // Use the join_household function
       const { data, error } = await supabase.rpc('join_household', {
         household_id: householdId,
