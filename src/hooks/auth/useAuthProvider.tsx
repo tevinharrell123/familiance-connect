@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,7 +58,6 @@ export function useAuthProvider() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Hook to handle profile fetching changes
   useEffect(() => {
     if (user && profile) {
       fetchUserHousehold(user.id);

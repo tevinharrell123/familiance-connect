@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -270,10 +269,19 @@ export function useHousehold(
       
       console.log("Household members retrieved:", data);
       
-      // Cast the data to ensure role is treated as HouseholdRole
+      // Transform the data to match our HouseholdMember type
       const typedMembers: HouseholdMember[] = data.map(member => ({
-        ...member,
-        role: member.role as HouseholdRole
+        id: member.id,
+        household_id: member.household_id,
+        user_id: member.user_id,
+        role: member.role as HouseholdRole,
+        created_at: member.created_at,
+        profile: member.profile && typeof member.profile === 'object' 
+          ? {
+              full_name: member.profile.full_name || 'Unknown User',
+              avatar_url: member.profile.avatar_url
+            }
+          : { full_name: 'Unknown User' }
       }));
       
       setHouseholdMembers(typedMembers);
