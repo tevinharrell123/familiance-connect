@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Select, 
   SelectContent, 
@@ -26,21 +26,32 @@ export const HouseholdMemberRoleSelect: React.FC<HouseholdMemberRoleSelectProps>
   const [selectedRole, setSelectedRole] = useState<HouseholdRole>(currentRole);
   const { toast } = useToast();
 
+  // Update selectedRole when currentRole changes (e.g., from parent)
+  useEffect(() => {
+    setSelectedRole(currentRole);
+  }, [currentRole]);
+
   const handleRoleChange = async (newRole: HouseholdRole) => {
-    if (newRole === currentRole) return;
+    // Prevent unnecessary API calls if role hasn't changed
+    if (newRole === selectedRole) return;
     
-    setSelectedRole(newRole);
     setIsChanging(true);
     
     try {
+      // Call the parent's role change handler
       await onRoleChange(userId, newRole);
+      
+      // Only update local state after successful update
+      setSelectedRole(newRole);
+      
       toast({
         title: "Role updated",
         description: `Member role was successfully changed to ${formatRoleName(newRole)}`,
       });
     } catch (error) {
       console.error("Failed to update role:", error);
-      setSelectedRole(currentRole); // Revert to previous role on error
+      
+      // Don't update selectedRole on error
       toast({
         title: "Failed to update role",
         description: "There was an error changing the member's role. Please try again.",
@@ -55,7 +66,7 @@ export const HouseholdMemberRoleSelect: React.FC<HouseholdMemberRoleSelectProps>
     <div className="relative">
       <Select 
         value={selectedRole} 
-        onValueChange={(value) => handleRoleChange(value as HouseholdRole)}
+        onValueChange={handleRoleChange}
         disabled={isChanging}
       >
         <SelectTrigger className={`w-[180px] ${isChanging ? 'opacity-70' : ''}`}>
