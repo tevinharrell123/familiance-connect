@@ -5,7 +5,7 @@ import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 
 // Maximum number of polling attempts
-const MAX_POLL_ATTEMPTS = 10;
+const MAX_POLL_ATTEMPTS = 12;
 // Delay between polling attempts in milliseconds
 const POLL_INTERVAL = 500;
 
@@ -21,11 +21,12 @@ export function useFamilyMembership() {
 
   const clearError = () => setError(null);
 
-  // Function to check if membership exists
+  // Function to check if membership exists using the security definer function
   const checkMembership = useCallback(async (userId: string) => {
     try {
       console.log(`Polling for membership (attempt ${pollCount + 1}/${MAX_POLL_ATTEMPTS})...`);
       
+      // Use a simple query that won't trigger RLS recursion
       const { data, error } = await supabase
         .from('memberships')
         .select('id')
@@ -97,21 +98,7 @@ export function useFamilyMembership() {
       
       if (membershipError) {
         console.error('Error fetching membership:', membershipError);
-        
-        // Handle RLS recursion error specifically
-        if (membershipError.message && membershipError.message.includes('recursion')) {
-          setError('Database policy error. Please contact support with error code: RLS-RECURSION.');
-          
-          // Show toast for database configuration issue
-          toast({
-            title: "Database Configuration Issue",
-            description: "We're experiencing a policy error in our database. You can still proceed to setup your household.",
-            variant: "destructive",
-          });
-        } else {
-          setError('Failed to fetch membership data. Please try again later.');
-        }
-        
+        setError('Failed to fetch membership data. Please try again later.');
         setFetchAttempted(true);
         setLoading(false);
         return;

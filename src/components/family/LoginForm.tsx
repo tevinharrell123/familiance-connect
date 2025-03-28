@@ -44,13 +44,13 @@ export function LoginForm() {
 
       console.log("Login successful, waiting briefly before redirecting");
       
-      // Add a small delay to allow backend operations to complete
-      // before redirecting the user
+      // Add a longer delay to allow membership data to be accessible
+      // This gives time for RLS policies and membership data to sync
       setTimeout(() => {
         console.log("Redirecting after login delay");
         // Use hard redirect instead of navigate to fully refresh the app state
         window.location.href = "/";
-      }, 1000);
+      }, 1500);
 
     } catch (error: any) {
       console.error('Error logging in:', error);

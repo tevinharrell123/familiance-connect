@@ -7,6 +7,8 @@ import { FamilyError } from '@/components/family/FamilyError';
 import { FamilyLoading } from '@/components/family/FamilyLoading';
 import { useFamilyMembership } from '@/hooks/useFamilyMembership';
 import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from 'lucide-react';
 
 export default function Family() {
   const { user } = useAuth();
@@ -35,11 +37,19 @@ export default function Family() {
       pollCount
     });
     
-    if (error && error.includes('RLS-RECURSION')) {
+    // Show helpful toast for debugging purposes in development
+    if (isPolling && pollCount === 1) {
       toast({
-        title: "Database Configuration Issue",
-        description: "We're experiencing a policy error in our database. You can still proceed to setup your household.",
-        variant: "destructive",
+        title: "Checking Membership",
+        description: "Verifying your family membership status...",
+      });
+    }
+    
+    // Show toast when polling completes
+    if (isPolling && pollCount > 0 && !loading && household) {
+      toast({
+        title: "Success",
+        description: "Your family data has been loaded successfully.",
       });
     }
   }, [user, loading, error, household, fetchAttempted, isPolling, pollCount]);
@@ -63,7 +73,7 @@ export default function Family() {
       <FamilyLoading 
         isPolling={isPolling}
         pollCount={pollCount}
-        maxPolls={10}
+        maxPolls={12}
       />
     );
   }
