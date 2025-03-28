@@ -10,7 +10,7 @@ import { LeaveHouseholdDialog } from './LeaveHouseholdDialog';
 
 interface HouseholdDetailsProps {
   household: Household;
-  householdMembers: HouseholdMember[] | null;
+  householdMembers: any[] | null;
   userRole: HouseholdRole | null;
   userId: string;
   onRefreshHousehold: () => Promise<void>;
