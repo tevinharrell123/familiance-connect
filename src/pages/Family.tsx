@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/components/ui/use-toast";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { FamilyDashboard } from '@/components/family/FamilyDashboard';
 import { OnboardingFlow } from '@/components/family/OnboardingFlow';
 import { Button } from '@/components/ui/button';
+import { AlertTriangle } from 'lucide-react';
 
 export default function Family() {
   const [user, setUser] = useState<any>(null);
@@ -14,6 +15,7 @@ export default function Family() {
   const [membership, setMembership] = useState<any>(null);
   const [household, setHousehold] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
   const navigate = useNavigate();
 
   // Check if user is authenticated and has a household
@@ -33,6 +35,7 @@ export default function Family() {
         
         // Check if user already has a membership
         try {
+          console.log("Fetching membership data for user:", session.user.id);
           const { data: membershipData, error: membershipError } = await supabase
             .from('memberships')
             .select('*')
@@ -42,6 +45,7 @@ export default function Family() {
           if (membershipError) {
             console.error('Error fetching membership:', membershipError);
             setError('Failed to fetch membership data. Please try again later.');
+            setFetchAttempted(true);
             setLoading(false);
             return;
           }
@@ -61,6 +65,7 @@ export default function Family() {
             if (householdError) {
               console.error('Error fetching household:', householdError);
               setError('Failed to fetch household data. Please try again later.');
+              setFetchAttempted(true);
               setLoading(false);
               return;
             }
@@ -68,15 +73,19 @@ export default function Family() {
             console.log("Household data:", householdData);
             setHousehold(householdData);
           }
+          
+          setFetchAttempted(true);
         } catch (fetchError) {
           console.error('Error fetching data:', fetchError);
           setError('An error occurred while fetching your data. Please try again later.');
+          setFetchAttempted(true);
         }
         
         setLoading(false);
       } catch (error) {
         console.error('Session check error:', error);
         setError('Failed to check your session. Please try again later.');
+        setFetchAttempted(true);
         setLoading(false);
       }
     };
@@ -93,22 +102,32 @@ export default function Family() {
         setUser(session.user);
         
         try {
-          const { data: membershipData } = await supabase
+          const { data: membershipData, error: membershipError } = await supabase
             .from('memberships')
             .select('*')
             .eq('user_id', session.user.id)
             .maybeSingle();
+          
+          if (membershipError) {
+            console.error('Error fetching membership after auth change:', membershipError);
+            return;
+          }
             
           console.log("Membership data after auth state change:", membershipData);
           
           if (membershipData) {
             setMembership(membershipData);
             
-            const { data: householdData } = await supabase
+            const { data: householdData, error: householdError } = await supabase
               .from('households')
               .select('*')
               .eq('id', membershipData.household_id)
               .maybeSingle();
+            
+            if (householdError) {
+              console.error('Error fetching household after auth change:', householdError);
+              return;
+            }
               
             console.log("Household data after auth state change:", householdData);
             
@@ -131,18 +150,43 @@ export default function Family() {
     };
   }, [navigate]);
 
-  // If there's an error, show it to the user
+  // If there's an error, show it to the user with options to continue
   if (error) {
     return (
       <div className="container mx-auto max-w-md py-10">
         <Card className="p-8">
-          <h2 className="text-xl font-bold mb-4 text-center">Error</h2>
-          <p className="text-center mb-4 text-red-500">{error}</p>
-          <div className="flex justify-center">
-            <Button onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
+          <CardHeader>
+            <div className="flex items-center justify-center mb-2 text-amber-500">
+              <AlertTriangle size={40} />
+            </div>
+            <CardTitle className="text-xl font-bold text-center">Error</CardTitle>
+            <CardDescription className="text-center text-red-500">{error}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center mb-6 text-sm text-muted-foreground">
+              {fetchAttempted && user ? 
+                "We're having trouble accessing your household data. You can proceed to create or join a household." :
+                "There was an error loading your data. Please try again."}
+            </p>
+            <div className="flex flex-col gap-4 justify-center">
+              {fetchAttempted && user ? (
+                <Button onClick={() => setError(null)} className="w-full">
+                  Continue to Setup
+                </Button>
+              ) : (
+                <Button onClick={() => window.location.reload()} className="w-full">
+                  Try Again
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/')} 
+                className="w-full"
+              >
+                Return to Home
+              </Button>
+            </div>
+          </CardContent>
         </Card>
       </div>
     );
