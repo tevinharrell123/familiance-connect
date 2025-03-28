@@ -101,43 +101,60 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       console.log("Household found:", householdData.name);
       setHousehold(householdData);
 
-      // Get members data with a safe approach
-      const { data: allMembers, error: membersError } = await supabase
+      // First fetch all membership IDs
+      const { data: membershipsData, error: membershipsError } = await supabase
         .from('memberships')
-        .select(`
-          id, 
-          user_id, 
-          household_id, 
-          role,
-          user_profiles:user_id (
-            first_name, 
-            last_name, 
-            avatar_url
-          )
-        `)
+        .select('id, user_id, household_id, role')
         .eq('household_id', membershipData.household_id);
 
-      if (membersError) {
-        console.error('Error fetching members:', membersError);
+      if (membershipsError) {
+        console.error('Error fetching memberships:', membershipsError);
         setMembers([]);
-      } else if (allMembers && Array.isArray(allMembers)) {
-        console.log(`Found ${allMembers.length} members for household`);
-        
-        // Format members with profile data included
-        const formattedMembers: Member[] = allMembers.map(member => ({
-          id: member.id,
-          user_id: member.user_id,
-          household_id: member.household_id,
-          role: member.role,
-          first_name: member.user_profiles?.first_name,
-          last_name: member.user_profiles?.last_name,
-          avatar_url: member.user_profiles?.avatar_url
-        }));
-        
-        setMembers(formattedMembers);
-      } else {
-        setMembers([]);
+        setIsLoading(false);
+        return;
       }
+
+      if (!membershipsData || membershipsData.length === 0) {
+        console.log("No members found for household");
+        setMembers([]);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log(`Found ${membershipsData.length} members for household`);
+
+      // Then fetch user profiles separately
+      const userIds = membershipsData.map(m => m.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Create a map of user profiles for quick lookup
+      const profilesMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, any>);
+      
+      // Combine membership data with profile data
+      const formattedMembers: Member[] = membershipsData.map(membership => {
+        const profile = profilesMap[membership.user_id] || {};
+        return {
+          id: membership.id,
+          user_id: membership.user_id,
+          household_id: membership.household_id,
+          role: membership.role,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          avatar_url: profile.avatar_url
+        };
+      });
+      
+      setMembers(formattedMembers);
     } catch (error) {
       console.error('Error in household data fetch:', error);
     } finally {
