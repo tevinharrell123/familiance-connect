@@ -11,10 +11,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from 'lucide-react';
 
 export default function Family() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { 
     loading,
-    authLoading,
     membership,
     household,
     error,
@@ -22,19 +21,23 @@ export default function Family() {
     clearError,
     refetch,
     isPolling,
-    pollCount
+    pollCount,
+    startOnboarding,
+    pollingComplete
   } = useFamilyMembership();
   
   // Log when component mounts for debugging
   useEffect(() => {
     console.log('Family component rendered', { 
       hasUser: !!user, 
+      authLoading,
       loading, 
       error, 
       fetchAttempted,
       hasHousehold: !!household,
       isPolling,
-      pollCount
+      pollCount,
+      pollingComplete
     });
     
     // Show helpful toast for debugging purposes in development
@@ -44,15 +47,7 @@ export default function Family() {
         description: "Verifying your family membership status...",
       });
     }
-    
-    // Show toast when polling completes
-    if (isPolling && pollCount > 0 && !loading && household) {
-      toast({
-        title: "Success",
-        description: "Your family data has been loaded successfully.",
-      });
-    }
-  }, [user, loading, error, household, fetchAttempted, isPolling, pollCount]);
+  }, [user, authLoading, loading, error, household, fetchAttempted, isPolling, pollCount, pollingComplete]);
   
   // Show error state if there's an error
   if (error) {
@@ -67,13 +62,27 @@ export default function Family() {
     );
   }
 
-  // Show loading state while both auth and data are loading
-  if (loading || authLoading) {
+  // Show loading state while data is loading
+  if (loading || authLoading || (isPolling && !pollingComplete)) {
     return (
       <FamilyLoading 
         isPolling={isPolling}
         pollCount={pollCount}
         maxPolls={12}
+        isAuthLoading={authLoading}
+      />
+    );
+  }
+
+  // If polling is complete but no household found, or if user wants to create/join a household
+  if ((pollingComplete && !household) || (!household && user && fetchAttempted)) {
+    return (
+      <FamilyLoading 
+        isPolling={false}
+        pollCount={12}
+        maxPolls={12}
+        onCreateHousehold={startOnboarding}
+        onRetry={refetch}
       />
     );
   }
