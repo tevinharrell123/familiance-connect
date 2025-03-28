@@ -27,7 +27,7 @@ export const LoginForm = () => {
   const { signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Initialize the form using useForm
+  // Initialize form using useForm
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
