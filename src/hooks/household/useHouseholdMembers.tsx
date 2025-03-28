@@ -14,11 +14,13 @@ export function useHouseholdMembers(
   const getHouseholdMembers = async (id: string): Promise<void> => {
     try {
       console.log('Fetching members for household:', id);
+      
+      // Improved query to ensure we get all household members with their profiles
       const { data, error } = await supabase
         .from('household_members')
         .select(`
           *,
-          user_profiles:profiles(full_name, avatar_url)
+          user_profiles:profiles(id, full_name, avatar_url)
         `)
         .eq('household_id', id);
 

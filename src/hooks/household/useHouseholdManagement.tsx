@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast'; 
@@ -190,11 +191,13 @@ export function useHouseholdManagement(
   const getHouseholdMembers = async (householdId: string): Promise<void> => {
     try {
       console.log('Fetching members for household:', householdId);
+      
+      // Include ID in the profile selection
       const { data, error } = await supabase
         .from('household_members')
         .select(`
           *,
-          user_profiles:profiles(full_name, avatar_url)
+          user_profiles:profiles(id, full_name, avatar_url)
         `)
         .eq('household_id', householdId);
 
