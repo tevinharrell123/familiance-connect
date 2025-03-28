@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { CalendarWidget } from '@/components/dashboard/Calendar';
 import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards';
@@ -9,7 +10,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
-  const { isLoading } = useRequireAuth();
+  const { user, isLoading } = useRequireAuth();
   const { profile } = useAuth();
   
   if (isLoading) {
@@ -18,6 +19,10 @@ const Dashboard = () => {
         <p>Loading...</p>
       </div>
     );
+  }
+  
+  if (!user) {
+    return <Navigate to="/auth" replace />;
   }
 
   const familyName = profile?.full_name ? `${profile.full_name.split(' ')[0]} Family` : 'Harrell Family';
