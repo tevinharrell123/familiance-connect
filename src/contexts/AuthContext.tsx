@@ -458,37 +458,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      localStorage.setItem('signing_out', 'true');
       setIsLoading(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
+      }
       
       setProfile(null);
       setMembership(null);
       setHousehold(null);
       setHouseholdMembers(null);
-      setUser(null);
-      setSession(null);
-      
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('supabase.')) {
-          localStorage.removeItem(key);
-        }
-      }
-      
-      try {
-        const { error } = await supabase.auth.signOut({ scope: 'global' });
-        if (error) {
-          console.error('Supabase sign out error:', error);
-        }
-      } catch (error: any) {
-        console.error('Supabase sign out error:', error);
-      }
-      
-      window.location.href = '/auth';
     } catch (error: any) {
       console.error('Sign out error:', error);
-      localStorage.removeItem('signing_out');
-      window.location.href = '/auth';
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -500,19 +484,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem('signing_out') === 'true') {
-      return;
-    }
-    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth event:', event);
-        
-        if (localStorage.getItem('signing_out') === 'true' && event === 'SIGNED_OUT') {
-          console.log('Ignoring auth event during signout');
-          return;
-        }
-        
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
