@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -55,6 +55,21 @@ export const RegisterForm = () => {
       householdCode: '',
     },
   });
+
+  // Effect to handle form field requirements based on household option
+  useEffect(() => {
+    // Reset the values when switching tabs
+    if (householdOption === 'none') {
+      form.setValue('householdName', '');
+      form.setValue('householdCode', '');
+    } else if (householdOption === 'create') {
+      form.setValue('householdCode', '');
+    } else if (householdOption === 'join') {
+      form.setValue('householdName', '');
+    }
+
+    console.log("Household option changed to:", householdOption);
+  }, [householdOption, form]);
 
   const onSubmit = async (values: RegisterFormValues) => {
     console.log("Form submitted with values:", values);
