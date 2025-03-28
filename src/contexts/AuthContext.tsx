@@ -133,7 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('household_members')
         .select(`
           *,
-          profiles (*)
+          user_profiles:profiles (*)
         `)
         .eq('household_id', householdId);
 
@@ -152,12 +152,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: item.role as HouseholdRole,
           created_at: item.created_at
         },
-        profile: item.profiles ? {
-          id: item.profiles.id,
-          full_name: item.profiles.full_name,
-          avatar_url: item.profiles.avatar_url,
-          created_at: item.profiles.created_at,
-          updated_at: item.profiles.updated_at
+        profile: item.user_profiles ? {
+          id: item.user_profiles.id,
+          full_name: item.user_profiles.full_name,
+          avatar_url: item.user_profiles.avatar_url,
+          created_at: item.user_profiles.created_at,
+          updated_at: item.user_profiles.updated_at
         } : null
       }));
 
