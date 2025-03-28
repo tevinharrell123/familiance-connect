@@ -8,7 +8,9 @@ export function useRequireAuth(redirectUrl = '/auth') {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Only redirect if loading is complete and there's no user
     if (!isLoading && !user) {
+      console.log('No authenticated user found, redirecting to', redirectUrl);
       navigate(redirectUrl);
     }
   }, [user, isLoading, navigate, redirectUrl]);

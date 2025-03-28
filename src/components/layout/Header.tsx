@@ -12,9 +12,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
+import { useSignOut } from '@/hooks/auth/useSignOut';
 
 export function Header() {
-  const { user, profile, household, signOut } = useAuth();
+  const { user, profile, household } = useAuth();
+  const { signOut } = useSignOut();
   
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -74,7 +76,7 @@ export function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOut()} className="text-red-500">
+                  <DropdownMenuItem onClick={signOut} className="text-red-500">
                     <LogOut className="h-4 w-4 mr-2" />
                     Log out
                   </DropdownMenuItem>
