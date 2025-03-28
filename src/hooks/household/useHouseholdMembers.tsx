@@ -26,7 +26,7 @@ export function useHouseholdMembers(
           user_id,
           role,
           created_at,
-          user_profiles:user_id (full_name, avatar_url)
+          user_profiles:profiles(full_name, avatar_url)
         `)
         .eq('household_id', finalHouseholdId);
         

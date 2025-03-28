@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('household_members')
         .select(`
           *,
-          user_profiles:user_id (*)
+          user_profiles:profiles (*)
         `)
         .eq('household_id', householdId);
 
