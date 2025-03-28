@@ -100,7 +100,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_membership_status: {
+        Args: {
+          user_uuid: string
+          household_uuid: string
+        }
+        Returns: string
+      }
+      is_household_admin: {
+        Args: {
+          user_uuid: string
+          household_uuid: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "admin" | "adult" | "child"

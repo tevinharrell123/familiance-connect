@@ -53,30 +53,37 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
     }
 
     try {
+      console.log("Fetching household data for user:", user.id);
+      
       // Get the user's primary household (first one found)
       const { data: membershipData, error: membershipError } = await supabase
         .from('memberships')
         .select('household_id, role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (membershipError) {
-        if (membershipError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
-          console.error('Error fetching membership:', membershipError);
-        }
+        console.error('Error fetching membership:', membershipError);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!membershipData) {
+        console.log("No household membership found for user");
         setIsLoading(false);
         return;
       }
 
       // Set admin status
       setIsAdmin(membershipData.role === 'admin');
+      console.log("User role:", membershipData.role);
 
       // Get household details
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .select('*')
         .eq('id', membershipData.household_id)
-        .single();
+        .maybeSingle();
 
       if (householdError) {
         console.error('Error fetching household:', householdError);
@@ -84,6 +91,13 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
         return;
       }
 
+      if (!householdData) {
+        console.log("No household found with ID:", membershipData.household_id);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Household found:", householdData.name);
       setHousehold(householdData);
 
       // Get all members of this household
@@ -94,7 +108,9 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
 
       if (membersError) {
         console.error('Error fetching members:', membersError);
-      } else {
+      } else if (allMembers) {
+        console.log(`Found ${allMembers.length} members for household`);
+        
         // Fetch profile data for each member separately
         const formattedMembers: Member[] = [];
         
@@ -104,7 +120,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
             .from('user_profiles')
             .select('first_name, last_name, avatar_url')
             .eq('id', member.user_id)
-            .single();
+            .maybeSingle();
           
           formattedMembers.push({
             id: member.id,

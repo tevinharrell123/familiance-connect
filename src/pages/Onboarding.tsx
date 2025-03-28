@@ -40,6 +40,8 @@ const Onboarding = () => {
 
     setIsLoading(true);
     try {
+      console.log("Creating household for user:", user.id);
+      
       // Create new household
       const { data: household, error: householdError } = await supabase
         .from('households')
@@ -51,8 +53,11 @@ const Onboarding = () => {
         .single();
 
       if (householdError) {
+        console.error("Error creating household:", householdError);
         throw new Error(householdError.message);
       }
+
+      console.log("Household created:", household);
 
       // Create membership for the current user as admin
       const { error: membershipError } = await supabase
@@ -64,8 +69,11 @@ const Onboarding = () => {
         });
 
       if (membershipError) {
+        console.error("Error creating membership:", membershipError);
         throw new Error(membershipError.message);
       }
+
+      console.log("Membership created for user as admin");
 
       toast({
         title: "Household created!",
@@ -74,6 +82,7 @@ const Onboarding = () => {
       
       navigate("/");
     } catch (error: any) {
+      console.error("Error in onboarding:", error);
       toast({
         title: "Something went wrong",
         description: error.message || "Please try again later",
