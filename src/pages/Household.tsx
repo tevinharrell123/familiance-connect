@@ -39,12 +39,12 @@ const Household = () => {
   const { 
     household, 
     householdMembers,
+    userRole,
     createHousehold,
     joinHousehold,
     leaveHousehold,
     updateMemberRole,
-    refreshHousehold,
-    userRole
+    refreshHousehold
   } = auth;
   
   const [newHouseholdName, setNewHouseholdName] = useState('');

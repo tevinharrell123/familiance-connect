@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -279,7 +280,7 @@ export function useHousehold(
         profile: member.profile && typeof member.profile === 'object' 
           ? {
               full_name: member.profile.full_name || 'Unknown User',
-              avatar_url: member.profile.avatar_url
+              avatar_url: member.profile.avatar_url || undefined
             }
           : { full_name: 'Unknown User' }
       }));

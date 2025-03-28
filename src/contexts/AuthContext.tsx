@@ -1,3 +1,4 @@
+
 import React, { createContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +41,7 @@ type AuthContextType = {
   membership: Membership | null;
   household: Household | null;
   householdMembers: HouseholdMember[] | null;
+  userRole: HouseholdRole | null; // Add userRole to the context type
   createHousehold: (name: string) => Promise<Household>;
   joinHousehold: (inviteCode: string) => Promise<void>;
   leaveHousehold: () => Promise<void>;
@@ -559,6 +561,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       membership,
       household,
       householdMembers,
+      userRole: membership?.role || null, // Add userRole to the context provider
       createHousehold,
       joinHousehold,
       leaveHousehold,
