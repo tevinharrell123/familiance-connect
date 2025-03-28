@@ -3,14 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
 import { FamilyDashboard } from '@/components/family/FamilyDashboard';
-import { CreateHouseholdForm } from '@/components/family/CreateHouseholdForm';
-import { JoinHouseholdForm } from '@/components/family/JoinHouseholdForm';
+import { OnboardingFlow } from '@/components/family/OnboardingFlow';
 
 export default function Family() {
   const [user, setUser] = useState<any>(null);
@@ -83,34 +78,15 @@ export default function Family() {
 
   // If the user is authenticated but doesn't have a household, show the onboarding
   return (
-    <div className="container mx-auto max-w-md py-10">
+    <div>
       {loading ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading...</CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="container mx-auto max-w-md py-10">
+          <Card className="p-8 text-center">
+            <div className="animate-pulse">Loading...</div>
+          </Card>
+        </div>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome to Family Management</CardTitle>
-            <CardDescription>Create a new household or join an existing one</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="create">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="create">Create Household</TabsTrigger>
-                <TabsTrigger value="join">Join Household</TabsTrigger>
-              </TabsList>
-              <TabsContent value="create">
-                <CreateHouseholdForm user={user} />
-              </TabsContent>
-              <TabsContent value="join">
-                <JoinHouseholdForm user={user} />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        <OnboardingFlow user={user} />
       )}
     </div>
   );
