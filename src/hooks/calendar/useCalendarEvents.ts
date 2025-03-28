@@ -27,7 +27,7 @@ export const useCalendarEvents = () => {
     setIsLoading(true);
     try {
       // Fetch household events
-      const { data: householdEvents, error: householdError } = await supabase
+      const { data: householdEventsData, error: householdError } = await supabase
         .from('household_events')
         .select('*')
         .eq('household_id', household.id);
@@ -43,7 +43,7 @@ export const useCalendarEvents = () => {
       }
 
       // Fetch user's personal events
-      const { data: personalEvents, error: personalError } = await supabase
+      const { data: personalEventsData, error: personalError } = await supabase
         .from('user_events')
         .select('*')
         .eq('user_id', user.id);
@@ -59,7 +59,7 @@ export const useCalendarEvents = () => {
       }
 
       // Fetch public events from household members
-      const { data: publicEvents, error: publicError } = await supabase
+      const { data: publicEventsData, error: publicError } = await supabase
         .from('user_events')
         .select('*')
         .neq('user_id', user.id)
@@ -69,23 +69,29 @@ export const useCalendarEvents = () => {
         console.error('Error fetching public events:', publicError);
       }
 
-      // Combine and format all events
-      const allHouseholdEvents = (householdEvents || []).map(event => ({
-        ...event,
-        is_household_event: true
-      }));
+      // Type the data correctly
+      const householdEvents: CalendarEvent[] = householdEventsData 
+        ? householdEventsData.map(event => ({
+            ...event,
+            is_household_event: true
+          }))
+        : [];
 
-      const allPersonalEvents = (personalEvents || []).map(event => ({
-        ...event,
-        is_household_event: false
-      }));
+      const personalEvents: CalendarEvent[] = personalEventsData
+        ? personalEventsData.map(event => ({
+            ...event,
+            is_household_event: false
+          }))
+        : [];
 
-      const allPublicEvents = (publicEvents || []).map(event => ({
-        ...event,
-        is_household_event: false
-      }));
+      const publicEvents: CalendarEvent[] = publicEventsData
+        ? publicEventsData.map(event => ({
+            ...event,
+            is_household_event: false
+          }))
+        : [];
 
-      setEvents([...allHouseholdEvents, ...allPersonalEvents, ...allPublicEvents]);
+      setEvents([...householdEvents, ...personalEvents, ...publicEvents]);
     } catch (error) {
       console.error('Error in fetchEvents:', error);
       toast({
@@ -114,7 +120,7 @@ export const useCalendarEvents = () => {
             start_date: eventData.start_date,
             end_date: eventData.end_date,
             color: eventData.color
-          })
+          } as any)
           .select()
           .single();
 
@@ -128,7 +134,11 @@ export const useCalendarEvents = () => {
           return null;
         }
 
-        const newEvent = { ...data, is_household_event: true };
+        const newEvent: CalendarEvent = { 
+          ...data, 
+          is_household_event: true 
+        };
+        
         setEvents(prev => [...prev, newEvent]);
         return newEvent;
       } else {
@@ -143,7 +153,7 @@ export const useCalendarEvents = () => {
             end_date: eventData.end_date,
             is_public: eventData.is_public || false,
             color: eventData.color
-          })
+          } as any)
           .select()
           .single();
 
@@ -157,7 +167,11 @@ export const useCalendarEvents = () => {
           return null;
         }
 
-        const newEvent = { ...data, is_household_event: false };
+        const newEvent: CalendarEvent = { 
+          ...data, 
+          is_household_event: false 
+        };
+        
         setEvents(prev => [...prev, newEvent]);
         return newEvent;
       }
@@ -186,7 +200,7 @@ export const useCalendarEvents = () => {
             start_date: eventData.start_date,
             end_date: eventData.end_date,
             color: eventData.color
-          })
+          } as any)
           .eq('id', id);
 
         if (error) {
@@ -209,7 +223,7 @@ export const useCalendarEvents = () => {
             end_date: eventData.end_date,
             is_public: eventData.is_public,
             color: eventData.color
-          })
+          } as any)
           .eq('id', id)
           .eq('user_id', user.id);
 
