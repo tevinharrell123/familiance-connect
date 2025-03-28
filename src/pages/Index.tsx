@@ -1,14 +1,44 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import React from 'react';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { CalendarWidget } from '@/components/dashboard/Calendar';
+import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards';
+import { QuickActions, TasksAndChores, WeeklyRoutines } from '@/components/dashboard/QuickActions';
+import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
+
+const Dashboard = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <MainLayout>
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Welcome, Harrell Family</h1>
+          <p className="text-lg text-muted-foreground">Here's your family dashboard for today</p>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-6 mb-6">
+          <CalendarWidget />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-2 gap-6">
+            <BudgetSummary />
+            <GoalsSummary />
+            <div className="col-span-2">
+              <QuickActions />
+            </div>
+            <div className="col-span-2">
+              <TasksAndChores />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6">
+            <FamilyMembersWidget />
+            <WeeklyRoutines />
+          </div>
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 
-export default Index;
+export default Dashboard;

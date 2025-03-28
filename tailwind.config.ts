@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// FamPilot custom colors
+				fampilot: {
+					background: '#F9F6F3',
+					card: '#FFFFFF',
+					primary: '#7B68EE',    // Muted lavender
+					secondary: '#F08080',   // Blush pink
+					accent1: '#8FBC8F',     // Sage green
+					accent2: '#DAA520',     // Goldenrod
 				}
 			},
 			borderRadius: {
@@ -89,6 +99,9 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
 			}
 		}
 	},
