@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -69,7 +68,6 @@ export function useAuthProvider() {
     return null;
   };
 
-  // Define the auth functions directly in this hook
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -118,31 +116,22 @@ export function useAuthProvider() {
     try {
       setIsLoading(true);
       
-      // First clear local state
-      localStorage.removeItem('supabase.auth.token');
-      
-      // Attempt to sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Sign out error:', error);
-        // Handle session not found errors gracefully
-        if (error.message !== 'Session not found') {
-          throw error;
-        }
+      try {
+        await supabase.auth.signOut();
+      } catch (error: any) {
+        console.error('Supabase sign out error:', error);
       }
       
-      // Always clear local state
       setProfile(null);
       setUser(null);
       setSession(null);
       
-      // Always navigate to auth page, even if there was an error
-      navigate('/auth');
+      localStorage.removeItem('supabase.auth.token');
+      
+      window.location.href = '/auth';
     } catch (error: any) {
       console.error('Sign out error:', error);
-      // Continue with navigation despite error
-      navigate('/auth');
+      window.location.href = '/auth';
     } finally {
       setIsLoading(false);
     }
