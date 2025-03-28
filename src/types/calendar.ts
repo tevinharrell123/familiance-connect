@@ -14,6 +14,8 @@ export interface CalendarEvent {
     full_name: string | null;
     avatar_url: string | null;
   } | null;
+  isMultiDay?: boolean;
+  duration?: number;
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month';

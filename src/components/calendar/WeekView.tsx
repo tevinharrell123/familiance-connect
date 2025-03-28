@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
-import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, differenceInDays } from 'date-fns';
 import { CalendarEventCard } from './CalendarEventCard';
 
 interface WeekViewProps {
@@ -29,6 +29,16 @@ export function WeekView({ currentDate, events = [] }: WeekViewProps) {
       return isSameDay(day, eventStart) || 
              isSameDay(day, eventEnd) || 
              (day >= eventStart && day <= eventEnd);
+    }).map(event => {
+      const eventStart = parseISO(event.start_date);
+      const eventEnd = parseISO(event.end_date);
+      const duration = differenceInDays(eventEnd, eventStart);
+      
+      return {
+        ...event,
+        isMultiDay: duration > 0,
+        duration: duration + 1 // Include both start and end days
+      };
     });
   };
 
@@ -57,7 +67,7 @@ export function WeekView({ currentDate, events = [] }: WeekViewProps) {
                 ) : (
                   dayEvents.map(event => (
                     <div key={event.id} className="text-xs">
-                      <CalendarEventCard event={event} />
+                      <CalendarEventCard event={event} showMultiDayBadge={true} />
                     </div>
                   ))
                 )}

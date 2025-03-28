@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { CalendarFormValues, CalendarEvent, CalendarViewType } from '@/types/calendar';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addDays, startOfWeek, endOfWeek } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { AlertTriangle } from 'lucide-react';
@@ -35,33 +34,18 @@ export function CalendarWidget() {
     refetch
   } = useCalendarEvents();
 
-  // Ensure we have the latest data when the component mounts
   useEffect(() => {
     console.log('Fetching calendar events on mount');
     refetch();
   }, []);
 
-  // Prepare calendar data based on current date
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
-  // Calculate days from previous and next month to fill the calendar
-  const startDay = monthStart.getDay(); // 0 for Sunday, 1 for Monday, etc.
-  const daysFromPreviousMonth = startDay === 0 ? 0 : startDay;
-  const daysFromNextMonth = 42 - (days.length + daysFromPreviousMonth); // 42 = 6 rows of 7 days
+  const firstDay = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const lastDay = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const days = eachDayOfInterval({ start: firstDay, end: lastDay });
   
-  const previousMonthDays = Array.from({ length: daysFromPreviousMonth }, (_, i) => 
-    addDays(monthStart, -(daysFromPreviousMonth - i))
-  );
-  
-  const nextMonthDays = Array.from({ length: daysFromNextMonth }, (_, i) => 
-    addDays(monthEnd, i + 1)
-  );
-  
-  // Combine all days for the calendar grid
-  const calendarDays = [...previousMonthDays, ...days, ...nextMonthDays];
-
   const handleCreateEvent = (values: CalendarFormValues) => {
     console.log('Creating event:', values);
     createEvent(values, {
@@ -148,6 +132,7 @@ export function CalendarWidget() {
     <Card className="shadow-sm">
       <CalendarHeader 
         currentDate={currentDate}
+        onDateChange={setCurrentDate}
         onAddEvent={() => {
           setEditingEvent(null);
           setDialogOpen(true);
@@ -176,7 +161,7 @@ export function CalendarWidget() {
               ) : (
                 <>
                   <MonthView 
-                    days={calendarDays} 
+                    days={days} 
                     events={events} 
                     currentMonth={currentDate} 
                     onEventClick={handleEventClick} 
@@ -187,12 +172,15 @@ export function CalendarWidget() {
                     .calendar-grid {
                       display: grid;
                       grid-template-columns: repeat(7, 1fr);
+                      position: relative;
                     }
                     
                     .calendar-day {
                       min-height: 80px;
                       display: flex;
                       flex-direction: column;
+                      position: relative;
+                      z-index: 1;
                     }
                     
                     @media (max-width: 640px) {
