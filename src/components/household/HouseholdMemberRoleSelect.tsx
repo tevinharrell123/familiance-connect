@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Select, 
   SelectContent, 
@@ -7,7 +7,9 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 import { HouseholdRole } from '@/types/household';
+import { HOUSEHOLD_ROLES, formatRoleName } from '@/utils/household-roles';
 
 interface HouseholdMemberRoleSelectProps {
   userId: string;
@@ -20,27 +22,58 @@ export const HouseholdMemberRoleSelect: React.FC<HouseholdMemberRoleSelectProps>
   currentRole, 
   onRoleChange 
 }) => {
+  const [isChanging, setIsChanging] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<HouseholdRole>(currentRole);
+  const { toast } = useToast();
+
   const handleRoleChange = async (newRole: HouseholdRole) => {
-    await onRoleChange(userId, newRole);
+    if (newRole === currentRole) return;
+    
+    setSelectedRole(newRole);
+    setIsChanging(true);
+    
+    try {
+      await onRoleChange(userId, newRole);
+      toast({
+        title: "Role updated",
+        description: `Member role was successfully changed to ${formatRoleName(newRole)}`,
+      });
+    } catch (error) {
+      console.error("Failed to update role:", error);
+      setSelectedRole(currentRole); // Revert to previous role on error
+      toast({
+        title: "Failed to update role",
+        description: "There was an error changing the member's role. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsChanging(false);
+    }
   };
 
-  const roles: HouseholdRole[] = ['admin', 'adult', 'child', 'guest'];
-
   return (
-    <Select 
-      value={currentRole} 
-      onValueChange={(value) => handleRoleChange(value as HouseholdRole)}
-    >
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select role" />
-      </SelectTrigger>
-      <SelectContent>
-        {roles.map((role) => (
-          <SelectItem key={role} value={role}>
-            {role.charAt(0).toUpperCase() + role.slice(1)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="relative">
+      <Select 
+        value={selectedRole} 
+        onValueChange={(value) => handleRoleChange(value as HouseholdRole)}
+        disabled={isChanging}
+      >
+        <SelectTrigger className={`w-[180px] ${isChanging ? 'opacity-70' : ''}`}>
+          <SelectValue placeholder="Select role" />
+        </SelectTrigger>
+        <SelectContent>
+          {HOUSEHOLD_ROLES.map((role) => (
+            <SelectItem key={role} value={role}>
+              {formatRoleName(role)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {isChanging && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-md">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+        </div>
+      )}
+    </div>
   );
 };
