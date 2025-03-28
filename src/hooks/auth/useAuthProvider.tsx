@@ -25,7 +25,9 @@ export function useAuthProvider() {
     joinHousehold, 
     getHouseholdMembers, 
     updateMemberRole, 
-    leaveHousehold 
+    leaveHousehold,
+    deleteHousehold,
+    refreshHousehold 
   } = useHousehold(user, setIsLoading);
 
   useEffect(() => {
@@ -92,5 +94,7 @@ export function useAuthProvider() {
     getHouseholdMembers,
     updateMemberRole,
     leaveHousehold,
+    deleteHousehold,
+    refreshHousehold,
   };
 }

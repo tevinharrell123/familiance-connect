@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -355,6 +356,81 @@ export function useHousehold(
     }
   };
 
+  const deleteHousehold = async (): Promise<void> => {
+    if (!household || userRole !== 'admin' || !user) {
+      throw new Error('Only household admins can delete a household');
+    }
+    
+    try {
+      setIsLoading(true);
+      console.log("Deleting household:", household.id);
+      
+      // First, delete all household members
+      const { error: membersError } = await supabase
+        .from('household_members')
+        .delete()
+        .eq('household_id', household.id);
+        
+      if (membersError) {
+        console.error("Error deleting household members:", membersError);
+        throw new Error(`Failed to delete household members: ${membersError.message}`);
+      }
+      
+      // Then, delete the household
+      const { error: householdError } = await supabase
+        .from('households')
+        .delete()
+        .eq('id', household.id);
+        
+      if (householdError) {
+        console.error("Error deleting household:", householdError);
+        throw new Error(`Failed to delete household: ${householdError.message}`);
+      }
+      
+      setHousehold(null);
+      setHouseholdMembers(null);
+      setUserRole(null);
+      
+      toast({
+        title: "Household deleted",
+        description: "The household has been successfully deleted.",
+      });
+    } catch (error: any) {
+      console.error('Delete household error:', error);
+      toast({
+        title: "Failed to delete household",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshHousehold = async (): Promise<void> => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      await fetchUserHousehold(user.id);
+      
+      toast({
+        title: "Refreshed",
+        description: "Household data has been refreshed.",
+      });
+    } catch (error: any) {
+      console.error('Refresh household error:', error);
+      toast({
+        title: "Failed to refresh data",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     household,
     householdMembers,
@@ -365,5 +441,7 @@ export function useHousehold(
     getHouseholdMembers,
     updateMemberRole,
     leaveHousehold,
+    deleteHousehold,
+    refreshHousehold,
   };
 }

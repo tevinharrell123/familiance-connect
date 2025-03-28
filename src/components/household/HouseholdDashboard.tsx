@@ -11,7 +11,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, Copy, LogOut, UserCog } from 'lucide-react';
+import { 
+  UserPlus, 
+  Copy, 
+  LogOut, 
+  UserCog, 
+  RefreshCw, 
+  Trash2 
+} from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import {
   DropdownMenu,
@@ -53,7 +60,9 @@ const HouseholdDashboard = () => {
     userRole, 
     getHouseholdMembers, 
     updateMemberRole, 
-    leaveHousehold 
+    leaveHousehold,
+    deleteHousehold,
+    refreshHousehold
   } = useAuth();
 
   useEffect(() => {
@@ -80,25 +89,43 @@ const HouseholdDashboard = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      await refreshHousehold();
+    } catch (error) {
+      console.error('Error refreshing household data:', error);
+    }
+  };
+
   if (!household) return null;
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex justify-between items-center">
-            {household.name}
-            {userRole === 'admin' && (
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                onClick={handleCopyInviteCode}
+          <div className="flex justify-between items-center">
+            <CardTitle>{household.name}</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleRefresh}
+                title="Refresh household data"
               >
-                <Copy className="h-4 w-4" />
-                Share Code
+                <RefreshCw className="h-4 w-4" />
               </Button>
-            )}
-          </CardTitle>
+              {userRole === 'admin' && (
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleCopyInviteCode}
+                >
+                  <Copy className="h-4 w-4" />
+                  Share Code
+                </Button>
+              )}
+            </div>
+          </div>
           <CardDescription>
             Household Members: {householdMembers?.length || 0}
           </CardDescription>
@@ -153,35 +180,66 @@ const HouseholdDashboard = () => {
         </CardContent>
       </Card>
       
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="destructive" className="w-full">
-            <LogOut className="h-4 w-4 mr-2" />
-            Leave Household
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Leave Household</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to leave this household? 
-              {userRole === 'admin' && householdMembers && householdMembers.length > 1 && (
-                " As the admin, you must transfer ownership before leaving."
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {}}>Cancel</Button>
-            <Button 
-              variant="destructive" 
-              onClick={leaveHousehold}
-              disabled={userRole === 'admin' && householdMembers && householdMembers.length > 1}
-            >
+      <div className="flex flex-col space-y-4">
+        {userRole === 'admin' && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="destructive" className="w-full">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Household
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Household</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this household? This action cannot be undone.
+                  All members will be removed from the household.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {}}>Cancel</Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={deleteHousehold}
+                >
+                  Delete Household
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="secondary" className="w-full">
+              <LogOut className="h-4 w-4 mr-2" />
               Leave Household
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Leave Household</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to leave this household? 
+                {userRole === 'admin' && householdMembers && householdMembers.length > 1 && (
+                  " As the admin, you must transfer ownership before leaving."
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {}}>Cancel</Button>
+              <Button 
+                variant="destructive" 
+                onClick={leaveHousehold}
+                disabled={userRole === 'admin' && householdMembers && householdMembers.length > 1}
+              >
+                Leave Household
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
