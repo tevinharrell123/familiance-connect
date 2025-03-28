@@ -14,8 +14,10 @@ export interface HouseholdMember {
   user_id: string;
   role: HouseholdRole;
   created_at: string;
-  full_name: string;
-  avatar_url?: string;
+  profile?: {
+    full_name: string;
+    avatar_url?: string;
+  };
 }
 
 export interface HouseholdInvite {

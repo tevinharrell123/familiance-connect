@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -30,18 +30,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/use-toast';
-import { AlertTriangle, Copy, Home, MoreHorizontal, Plus, UserPlus } from 'lucide-react';
+import { AlertTriangle, Copy, Home, MoreHorizontal, Plus, RefreshCw, UserPlus } from 'lucide-react';
 
 const Household = () => {
   const { user, isLoading } = useRequireAuth();
   const { 
     household, 
-    membership, 
+    userRole,
     householdMembers,
     createHousehold,
     joinHousehold,
     leaveHousehold,
-    updateMemberRole
+    updateMemberRole,
+    refreshHousehold
   } = useAuth();
   
   const [newHouseholdName, setNewHouseholdName] = useState('');
@@ -49,6 +50,14 @@ const Household = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Effect to auto-refresh household members data when the component mounts
+  useEffect(() => {
+    if (household && user) {
+      handleRefreshHousehold();
+    }
+  }, [household, user]);
 
   const handleCreateHousehold = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +82,11 @@ const Household = () => {
       setIsJoining(true);
       await joinHousehold(inviteCode);
       setInviteCode('');
+      
+      // Refresh members after joining
+      setTimeout(() => {
+        handleRefreshHousehold();
+      }, 500);
     } catch (error) {
       console.error('Error joining household:', error);
     } finally {
@@ -91,6 +105,17 @@ const Household = () => {
     }
   };
 
+  const handleRefreshHousehold = async () => {
+    try {
+      setIsRefreshing(true);
+      await refreshHousehold();
+    } catch (error) {
+      console.error('Error refreshing household data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const handleCopyInviteCode = () => {
     if (household?.invite_code) {
       navigator.clipboard.writeText(household.invite_code);
@@ -104,6 +129,8 @@ const Household = () => {
   const handleRoleChange = async (userId: string, role: 'admin' | 'adult' | 'child') => {
     try {
       await updateMemberRole(userId, role);
+      // Refresh members after role change
+      handleRefreshHousehold();
     } catch (error) {
       console.error('Error updating role:', error);
     }
@@ -201,79 +228,99 @@ const Household = () => {
                   <div>
                     <CardTitle>{household.name}</CardTitle>
                     <CardDescription>
-                      {membership?.role === 'admin' ? 'You are the admin of this household' : 'You are a member of this household'}
+                      {userRole === 'admin' ? 'You are the admin of this household' : 'You are a member of this household'}
                     </CardDescription>
                   </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <UserPlus className="h-4 w-4 mr-2" /> Invite Members
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Invite Family Members</DialogTitle>
-                        <DialogDescription>
-                          Share this invite code with family members to join your household.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="flex items-center space-x-2 mt-4 p-4 bg-muted rounded-md">
-                        <code className="text-lg font-mono">{household.invite_code}</code>
-                        <Button variant="ghost" size="icon" onClick={handleCopyInviteCode}>
-                          <Copy className="h-4 w-4" />
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleRefreshHousehold}
+                      disabled={isRefreshing}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} /> 
+                      Refresh
+                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <UserPlus className="h-4 w-4 mr-2" /> Invite Members
                         </Button>
-                      </div>
-                      <DialogFooter className="mt-4">
-                        <Button onClick={handleCopyInviteCode}>
-                          Copy Invite Code
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Invite Family Members</DialogTitle>
+                          <DialogDescription>
+                            Share this invite code with family members to join your household.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex items-center space-x-2 mt-4 p-4 bg-muted rounded-md">
+                          <code className="text-lg font-mono">{household.invite_code}</code>
+                          <Button variant="ghost" size="icon" onClick={handleCopyInviteCode}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <DialogFooter className="mt-4">
+                          <Button onClick={handleCopyInviteCode}>
+                            Copy Invite Code
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <h3 className="text-lg font-semibold mb-4">Household Members</h3>
-                <div className="space-y-4">
-                  {householdMembers?.map((member) => (
-                    <div key={member.membership.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarImage src={member.profile.avatar_url || undefined} />
-                          <AvatarFallback>
-                            {member.profile.full_name?.charAt(0) || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{member.profile.full_name}</p>
-                          <p className="text-sm text-muted-foreground capitalize">{member.membership.role}</p>
+                {householdMembers && householdMembers.length > 0 ? (
+                  <div className="space-y-4">
+                    {householdMembers.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={member.profile?.avatar_url || undefined} />
+                            <AvatarFallback>
+                              {member.profile?.full_name?.charAt(0) || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{member.profile?.full_name || 'Unknown User'}</p>
+                            <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
+                          </div>
                         </div>
+                        
+                        {/* Only admins can change roles, and not for themselves */}
+                        {userRole === 'admin' && member.user_id !== user?.id && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleRoleChange(member.user_id, 'admin')}>
+                                Make Admin
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleRoleChange(member.user_id, 'adult')}>
+                                Set as Adult
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleRoleChange(member.user_id, 'child')}>
+                                Set as Child
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
-                      
-                      {/* Only admins can change roles, and not for themselves */}
-                      {membership?.role === 'admin' && member.membership.user_id !== user?.id && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleRoleChange(member.membership.user_id, 'admin')}>
-                              Make Admin
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleRoleChange(member.membership.user_id, 'adult')}>
-                              Set as Adult
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleRoleChange(member.membership.user_id, 'child')}>
-                              Set as Child
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No members found. Try refreshing the data.</p>
+                    <Button variant="outline" className="mt-4" onClick={handleRefreshHousehold}>
+                      <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+                    </Button>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
                 <Dialog>
@@ -287,7 +334,7 @@ const Household = () => {
                     <DialogHeader>
                       <DialogTitle>Leave Household?</DialogTitle>
                       <DialogDescription>
-                        {membership?.role === 'admin' && householdMembers && householdMembers.length > 1 
+                        {userRole === 'admin' && householdMembers && householdMembers.length > 1 
                           ? "As the admin, if you leave, another member will be promoted to admin."
                           : "Are you sure you want to leave this household? This action cannot be undone."
                         }

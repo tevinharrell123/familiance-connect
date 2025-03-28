@@ -21,7 +21,7 @@ export function useHousehold(
       try {
         const { data: memberData, error: memberError } = await supabase
           .from('household_members')
-          .select('*')
+          .select('*, role')
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -243,27 +243,34 @@ export function useHousehold(
     if (!targetHouseholdId) return [];
     
     try {
+      console.log("Fetching members for household:", targetHouseholdId);
+      
       const { data, error } = await supabase
         .from('household_members')
         .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            avatar_url
-          )
+          id,
+          household_id,
+          user_id,
+          role,
+          created_at,
+          profile:profiles(full_name, avatar_url)
         `)
         .eq('household_id', targetHouseholdId);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching household members:", error);
+        throw error;
+      }
       
-      const members: HouseholdMember[] = data.map((member: any) => ({
-        ...member,
-        full_name: member.profiles.full_name,
-        avatar_url: member.profiles.avatar_url
-      }));
+      if (!data) {
+        console.log("No members found for household");
+        setHouseholdMembers([]);
+        return [];
+      }
       
-      setHouseholdMembers(members);
-      return members;
+      console.log("Household members retrieved:", data);
+      setHouseholdMembers(data);
+      return data;
     } catch (error: any) {
       console.error('Get household members error:', error);
       return [];
