@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -61,10 +60,8 @@ const Onboarding = () => {
         description: `Welcome to ${data.householdName}`,
       });
       
-      // Force a small delay before navigating to ensure data consistency
-      setTimeout(() => {
-        navigate("/");
-      }, 500);
+      // Immediately navigate to the dashboard
+      navigate("/");
     } catch (error: any) {
       console.error("Error in onboarding:", error);
       toast({
