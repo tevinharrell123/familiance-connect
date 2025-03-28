@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/hooks/useAuth';
+import { useHousehold } from '@/hooks/useHousehold';
 
 const householdSchema = z.object({
   householdName: z.string().min(2, { message: "Household name must be at least 2 characters" }),
@@ -18,6 +20,7 @@ const householdSchema = z.object({
 const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const { refreshHousehold } = useHousehold();
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof householdSchema>>({
@@ -41,7 +44,7 @@ const Onboarding = () => {
     try {
       console.log("Creating household for user:", user.id);
       
-      // Use the new database function to create the household and add the user as admin
+      // Use the database function to create the household and add the user as admin
       const { data: householdId, error } = await supabase
         .rpc('create_household_with_admin', {
           household_name: data.householdName,
@@ -55,13 +58,16 @@ const Onboarding = () => {
 
       console.log("Household created with ID:", householdId);
 
+      // Refresh the household data to ensure context is updated
+      await refreshHousehold();
+      
       toast({
         title: "Household created!",
         description: `Welcome to ${data.householdName}`,
       });
       
-      // Immediately navigate to the dashboard
-      navigate("/");
+      // Navigate to dashboard and force a reload to ensure all contexts are fresh
+      navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Error in onboarding:", error);
       toast({
