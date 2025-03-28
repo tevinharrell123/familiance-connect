@@ -1,8 +1,10 @@
+
 import React, { createContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { HouseholdRole } from '@/types/household';
+import { HouseholdRole, Household } from '@/types/household';
+import { generateInviteCode } from '@/lib/utils';
 
 // Define types for our context
 type Profile = {
@@ -12,13 +14,6 @@ type Profile = {
   created_at: string;
   updated_at: string;
   birthday?: string | null;
-};
-
-type Household = {
-  id: string;
-  name: string;
-  created_at: string;
-  invite_code: string;
 };
 
 type Membership = {
@@ -159,7 +154,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: item.id,
           user_id: item.user_id,
           household_id: item.household_id,
-          role: item.role,
+          role: item.role as HouseholdRole,
           created_at: item.created_at
         },
         profile: item.profiles
@@ -180,7 +175,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Creating household:', name);
       
       // Generate a random invite code
-      const inviteCode = Math.random().toString(36).substring(2, 10);
+      const inviteCode = generateInviteCode();
       
       // Insert the household record
       const { data: householdData, error: householdError } = await supabase
@@ -285,7 +280,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .insert([{
           household_id: householdData.id,
           user_id: user.id,
-          role: 'guest'
+          role: 'guest' as HouseholdRole
         }]);
         
       if (membershipError) {

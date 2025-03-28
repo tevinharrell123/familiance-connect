@@ -151,6 +151,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_is_admin_of_household: {
+        Args: {
+          household_id: string
+        }
+        Returns: boolean
+      }
+      user_is_in_household: {
+        Args: {
+          household_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
