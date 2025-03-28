@@ -1,34 +1,14 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
-
-interface Household {
-  id: string;
-  name: string;
-  owner_id: string;
-  created_at: string;
-}
-
-interface Member {
-  id: string;
-  user_id: string;
-  household_id: string;
-  role: 'admin' | 'adult' | 'child';
-  first_name?: string;
-  last_name?: string;
-  avatar_url?: string;
-}
-
-interface HouseholdContextType {
-  household: Household | null;
-  members: Member[];
-  isLoading: boolean;
-  isAdmin: boolean;
-  inviteMember: (email: string, role: 'admin' | 'adult' | 'child') => Promise<void>;
-  refreshHousehold: () => Promise<void>;
-}
+import { Household, Member, HouseholdContextType } from '@/types/household';
+import { 
+  fetchMembershipData,
+  fetchHouseholdData,
+  fetchHouseholdMembers,
+  fetchUserProfiles,
+  combineProfilesWithMembers
+} from '@/services/householdService';
 
 const HouseholdContext = createContext<HouseholdContextType>({
   household: null,
@@ -55,19 +35,8 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
     try {
       console.log("Fetching household data for user:", user.id);
       
-      // Use a more direct approach to avoid RLS recursion
-      // First get the user's membership
-      const { data: membershipData, error: membershipError } = await supabase
-        .from('memberships')
-        .select('household_id, role')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (membershipError) {
-        console.error('Error fetching membership:', membershipError);
-        setIsLoading(false);
-        return;
-      }
+      // Step 1: Get the user's membership
+      const membershipData = await fetchMembershipData(user.id);
 
       if (!membershipData) {
         console.log("No household membership found for user");
@@ -75,22 +44,12 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
         return;
       }
 
-      // Set admin status
+      // Step 2: Set admin status
       setIsAdmin(membershipData.role === 'admin');
       console.log("User role:", membershipData.role);
 
-      // Get household details - fetch only what's needed
-      const { data: householdData, error: householdError } = await supabase
-        .from('households')
-        .select('*')
-        .eq('id', membershipData.household_id)
-        .maybeSingle();
-
-      if (householdError) {
-        console.error('Error fetching household:', householdError);
-        setIsLoading(false);
-        return;
-      }
+      // Step 3: Get household details
+      const householdData = await fetchHouseholdData(membershipData.household_id);
 
       if (!householdData) {
         console.log("No household found with ID:", membershipData.household_id);
@@ -101,18 +60,8 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       console.log("Household found:", householdData.name);
       setHousehold(householdData);
 
-      // Fetch memberships separately to avoid recursive RLS issues
-      const { data: membershipsData, error: membershipsError } = await supabase
-        .from('memberships')
-        .select('id, user_id, household_id, role')
-        .eq('household_id', membershipData.household_id);
-
-      if (membershipsError) {
-        console.error('Error fetching memberships:', membershipsError);
-        setMembers([]);
-        setIsLoading(false);
-        return;
-      }
+      // Step 4: Fetch memberships
+      const membershipsData = await fetchHouseholdMembers(membershipData.household_id);
 
       if (!membershipsData || membershipsData.length === 0) {
         console.log("No members found for household");
@@ -123,36 +72,12 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
 
       console.log(`Found ${membershipsData.length} members for household`);
 
-      // Fetch user profiles separately 
+      // Step 5: Fetch user profiles separately
       const userIds = membershipsData.map(m => m.user_id);
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('id, first_name, last_name, avatar_url')
-        .in('id', userIds);
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-      }
-
-      // Create a map of user profiles for quick lookup
-      const profilesMap = (profilesData || []).reduce((acc, profile) => {
-        acc[profile.id] = profile;
-        return acc;
-      }, {} as Record<string, any>);
+      const profilesData = await fetchUserProfiles(userIds);
       
-      // Combine membership data with profile data
-      const formattedMembers: Member[] = membershipsData.map(membership => {
-        const profile = profilesMap[membership.user_id] || {};
-        return {
-          id: membership.id,
-          user_id: membership.user_id,
-          household_id: membership.household_id,
-          role: membership.role,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          avatar_url: profile.avatar_url
-        };
-      });
+      // Step 6: Combine membership data with profile data
+      const formattedMembers = combineProfilesWithMembers(membershipsData, profilesData || []);
       
       setMembers(formattedMembers);
     } catch (error) {
