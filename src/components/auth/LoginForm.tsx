@@ -14,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { toast } from '@/components/ui/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -26,20 +27,18 @@ export const LoginForm = () => {
   const { signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
-
   const onSubmit = async (values: LoginFormValues) => {
     try {
       setIsSubmitting(true);
+      console.log("Attempting to sign in with:", values.email);
       await signIn(values.email, values.password);
     } catch (error) {
       console.error('Login error:', error);
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
