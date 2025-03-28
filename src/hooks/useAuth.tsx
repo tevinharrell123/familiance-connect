@@ -27,30 +27,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("Auth state changed:", event);
         
-        // Accept most auth events to maintain session
-        // This ensures we don't get locked out due to email confirmation issues
         if (session) {
           console.log("Session exists, updating auth state");
           setSession(session);
           setUser(session.user);
+          setIsLoading(false);
         } else if (event === 'SIGNED_OUT') {
           console.log("User signed out, clearing auth state");
           setSession(null);
           setUser(null);
+          setIsLoading(false);
+        } else {
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Initial session check:", session ? "Found session" : "No session");
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+      }
       setIsLoading(false);
     });
 

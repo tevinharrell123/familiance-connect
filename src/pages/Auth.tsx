@@ -49,40 +49,50 @@ const Auth = () => {
   const onLoginSubmit = async (data: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
-      if (error && error.message.includes("Email not confirmed")) {
-        console.log("Email not confirmed error detected, attempting bypass");
+      if (error) {
+        console.log("Login error detected:", error.message);
         
-        const { error: secondAttemptError } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-        
-        if (secondAttemptError) {
-          console.error("Second attempt failed:", secondAttemptError.message);
-          toast({
-            title: "Login failed",
-            description: secondAttemptError.message,
-            variant: "destructive",
+        if (error.message.includes("Email not confirmed")) {
+          console.log("Email not confirmed error, attempting to sign in anyway");
+          
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: data.email,
+            password: data.password,
+            options: {
+              data: {
+                email_confirmed: true
+              }
+            }
           });
+          
+          if (signInError) {
+            console.error("Second attempt failed:", signInError.message);
+            toast({
+              title: "Login failed",
+              description: signInError.message,
+              variant: "destructive",
+            });
+          } else if (signInData.session) {
+            console.log("Force sign-in succeeded, redirecting");
+            toast({
+              title: "Welcome!",
+              description: "You have successfully logged in",
+            });
+            navigate("/");
+            return;
+          }
         } else {
           toast({
-            title: "Welcome!",
-            description: "You have successfully logged in",
+            title: "Login failed",
+            description: error.message,
+            variant: "destructive",
           });
-          navigate("/");
         }
-      } else if (error) {
-        console.error("Login error:", error.message);
-        toast({
-          title: "Login failed",
-          description: error.message,
-          variant: "destructive",
-        });
       } else {
         toast({
           title: "Welcome back!",
@@ -105,24 +115,25 @@ const Auth = () => {
   const onSignupSubmit = async (data: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: {
             first_name: data.firstName,
             last_name: data.lastName,
+            email_confirmed: true,
           },
-          emailRedirectTo: window.location.origin,
         }
       });
 
-      if (error) {
+      if (signUpError) {
         toast({
           title: "Sign up failed",
-          description: error.message,
+          description: signUpError.message,
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -132,19 +143,47 @@ const Auth = () => {
       });
 
       if (signInError) {
+        console.log("Error signing in after signup:", signInError.message);
+        
+        if (signInError.message.includes("Email not confirmed")) {
+          console.log("Retrying login after signup...");
+          
+          setTimeout(async () => {
+            const { error: finalError } = await supabase.auth.signInWithPassword({
+              email: data.email,
+              password: data.password,
+            });
+            
+            if (finalError) {
+              toast({
+                title: "Login after signup failed",
+                description: "Account created but you'll need to verify your email before logging in.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Account created!",
+                description: "You've been signed in successfully",
+              });
+              navigate("/");
+            }
+            setIsLoading(false);
+          }, 1000);
+          return;
+        }
+        
         toast({
           title: "Login after signup failed",
           description: signInError.message,
           variant: "destructive",
         });
-        return;
+      } else {
+        toast({
+          title: "Account created!",
+          description: "You've been signed in automatically",
+        });
+        navigate("/");
       }
-
-      toast({
-        title: "Account created!",
-        description: "You've been signed in automatically",
-      });
-      navigate("/");
     } catch (error: any) {
       toast({
         title: "Something went wrong",
