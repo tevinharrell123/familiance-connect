@@ -17,7 +17,6 @@ type Profile = {
 type Household = {
   id: string;
   name: string;
-  owner_id: string;
   created_at: string;
   invite_code: string;
 };
@@ -71,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
@@ -97,10 +96,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('Fetching membership for user:', userId);
       const { data: membershipData, error: membershipError } = await supabase
-        .from('memberships')
+        .from('household_members')
         .select(`
           *,
-          household:household_id (*)
+          households:household_id (*)
         `)
         .eq('user_id', userId)
         .maybeSingle();
@@ -118,12 +117,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           user_id: membershipData.user_id,
           household_id: membershipData.household_id,
           role: membershipData.role,
-          created_at: membershipData.created_at,
-          household: undefined
+          created_at: membershipData.created_at
         };
         
         setMembership(membershipObj);
-        setHousehold(membershipData.household as Household);
+        setHousehold(membershipData.households as Household);
         
         // Fetch household members
         fetchHouseholdMembers(membershipData.household_id);
@@ -142,10 +140,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('Fetching members for household:', householdId);
       const { data, error } = await supabase
-        .from('memberships')
+        .from('household_members')
         .select(`
           *,
-          profile:user_id (*)
+          profiles:user_id (*)
         `)
         .eq('household_id', householdId);
 
@@ -164,7 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: item.role,
           created_at: item.created_at
         },
-        profile: item.profile
+        profile: item.profiles
       }));
 
       setHouseholdMembers(members);
@@ -181,10 +179,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(true);
       console.log('Creating household:', name);
       
+      // Generate a random invite code
+      const inviteCode = Math.random().toString(36).substring(2, 10);
+      
       // Insert the household record
       const { data: householdData, error: householdError } = await supabase
         .from('households')
-        .insert([{ name, owner_id: user.id }])
+        .insert([{ name, invite_code: inviteCode }])
         .select()
         .single();
         
@@ -197,7 +198,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Add user as admin member
       const { error: membershipError } = await supabase
-        .from('memberships')
+        .from('household_members')
         .insert([{
           household_id: householdData.id,
           user_id: user.id,
@@ -268,7 +269,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Check if user already has a membership
       const { data: existingMembership } = await supabase
-        .from('memberships')
+        .from('household_members')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -280,11 +281,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Add user to the household as an adult
       const { error: membershipError } = await supabase
-        .from('memberships')
+        .from('household_members')
         .insert([{
           household_id: householdData.id,
           user_id: user.id,
-          role: 'adult'
+          role: 'guest'
         }]);
         
       if (membershipError) {
@@ -321,30 +322,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // Check if user is the owner and there are other members
-      if (household?.owner_id === user.id && householdMembers && householdMembers.length > 1) {
-        // Find another member to transfer ownership to
-        const otherMember = householdMembers.find(m => m.membership.user_id !== user.id);
-        if (otherMember) {
-          // Transfer ownership
-          await supabase
-            .from('households')
-            .update({ owner_id: otherMember.membership.user_id })
-            .eq('id', household.id);
-          
-          // If the other member isn't an admin, make them one
-          if (otherMember.membership.role !== 'admin') {
-            await supabase
-              .from('memberships')
-              .update({ role: 'admin' })
-              .eq('id', otherMember.membership.id);
-          }
-        }
-      }
-      
       // Now remove user's membership
       const { error } = await supabase
-        .from('memberships')
+        .from('household_members')
         .delete()
         .eq('user_id', user.id);
         
@@ -394,7 +374,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(true);
       
       const { error } = await supabase
-        .from('memberships')
+        .from('household_members')
         .update({ role })
         .eq('user_id', userId)
         .eq('household_id', household.id);
