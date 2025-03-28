@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -19,9 +18,10 @@ export function useHousehold(
       
       // Try-catch for the household member query to prevent app crashing
       try {
+        // Modify the query to directly search without using the problematic functions
         const { data: memberData, error: memberError } = await supabase
           .from('household_members')
-          .select('*')
+          .select('*, households:household_id(*)')
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -32,26 +32,13 @@ export function useHousehold(
 
         // If we found a household membership
         if (memberData) {
-          // Fetch the actual household details
-          try {
-            const { data: householdData, error: householdError } = await supabase
-              .from('households')
-              .select('*')
-              .eq('id', memberData.household_id)
-              .single();
-
-            if (householdError) {
-              console.error('Error fetching household details:', householdError);
-              return;
-            }
-
-            setHousehold(householdData);
-            setUserRole(memberData.role as HouseholdRole);
-            
-            await getHouseholdMembers(householdData.id);
-          } catch (err) {
-            console.error("Error in household fetch:", err);
-          }
+          // The household data is now included in the response
+          const householdData = memberData.households;
+          
+          setHousehold(householdData);
+          setUserRole(memberData.role as HouseholdRole);
+          
+          await getHouseholdMembers(householdData.id);
         } else {
           setHousehold(null);
           setHouseholdMembers(null);

@@ -123,6 +123,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_admin_of_household: {
+        Args: {
+          household_id: string
+        }
+        Returns: boolean
+      }
+      check_member_of_household: {
+        Args: {
+          household_id: string
+        }
+        Returns: boolean
+      }
       get_user_household: {
         Args: Record<PropertyKey, never>
         Returns: string
