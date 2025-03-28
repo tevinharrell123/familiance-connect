@@ -18,9 +18,6 @@ export default function Family() {
   const [selectedMembership, setSelectedMembership] = useState<any>(null);
   const [household, setHousehold] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pollingAttempt, setPollingAttempt] = useState(0);
-  const [isPolling, setIsPolling] = useState(false);
-  const maxAttempts = 3; // Reduced from 12 to 3 attempts
   const navigate = useNavigate();
 
   const fetchMemberships = async () => {
@@ -29,7 +26,6 @@ export default function Family() {
     try {
       console.log(`Fetching memberships for user:`, user.id);
       
-      // Single fetch attempt without recursion
       const { data: membershipsData, error: membershipsError } = await supabase
         .from('memberships')
         .select('*, households:household_id(*)')
@@ -37,7 +33,11 @@ export default function Family() {
       
       if (membershipsError) {
         console.error('Error fetching memberships:', membershipsError);
-        setError('Failed to fetch membership data. Please try again later.');
+        if (membershipsError.code === '42P17') {
+          setError('Database policy error. Please contact support.');
+        } else {
+          setError('Failed to fetch membership data. Please try again later.');
+        }
         setLoading(false);
         return;
       }

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/components/ui/use-toast";
@@ -13,8 +13,27 @@ export function CreateHouseholdForm() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userMemberships, setUserMemberships] = useState<any[]>([]);
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
+
+  // Check if user already has memberships
+  useEffect(() => {
+    if (user) {
+      const checkMemberships = async () => {
+        const { data, error } = await supabase
+          .from('memberships')
+          .select('id, household_id, households:household_id(name)')
+          .eq('user_id', user.id);
+        
+        if (!error && data) {
+          setUserMemberships(data);
+        }
+      };
+      
+      checkMemberships();
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,35 +106,87 @@ export function CreateHouseholdForm() {
         setLoading(false);
       }
     } else {
-      // User is already authenticated, just create the household
-      setLoading(true);
-      try {
-        console.log("Creating household with user ID:", user.id);
-        const { data, error } = await supabase.rpc('create_household_with_admin', {
-          household_name: householdName,
-          owner_id: user.id
-        });
+      // User is already authenticated
 
-        if (error) {
-          throw error;
+      // Check if user already has memberships
+      if (userMemberships.length > 0) {
+        setLoading(true);
+        try {
+          // Create new household
+          const { data: newHouseholdData, error: newHouseholdError } = await supabase
+            .from('households')
+            .insert({
+              name: householdName,
+              owner_id: user.id
+            })
+            .select('id')
+            .single();
+
+          if (newHouseholdError) {
+            throw newHouseholdError;
+          }
+
+          // Join the newly created household
+          const { error: joinError } = await supabase.rpc('join_household', {
+            household_id: newHouseholdData.id,
+            user_id: user.id,
+            member_role: 'admin'
+          });
+
+          if (joinError) {
+            // If joining fails, clean up the created household
+            await supabase.from('households').delete().eq('id', newHouseholdData.id);
+            throw joinError;
+          }
+
+          toast({
+            title: "Success",
+            description: "Household created successfully!",
+          });
+
+          // Navigate to the main page with a hard refresh
+          window.location.href = "/";
+        } catch (error: any) {
+          console.error('Error creating household:', error);
+          toast({
+            title: "Error",
+            description: error.message || "Failed to create household",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
         }
+      } else {
+        // User has no memberships, create normally
+        setLoading(true);
+        try {
+          console.log("Creating household with user ID:", user.id);
+          const { data, error } = await supabase.rpc('create_household_with_admin', {
+            household_name: householdName,
+            owner_id: user.id
+          });
 
-        toast({
-          title: "Success",
-          description: "Household created successfully!",
-        });
+          if (error) {
+            throw error;
+          }
 
-        // Navigate to the main page with a hard refresh
-        window.location.href = "/";
-      } catch (error: any) {
-        console.error('Error creating household:', error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to create household",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+          toast({
+            title: "Success",
+            description: "Household created successfully!",
+          });
+
+          // Navigate to the main page with a hard refresh
+          window.location.href = "/";
+        } catch (error: any) {
+          console.error('Error creating household:', error);
+          toast({
+            title: "Error",
+            description: error.message || "Failed to create household",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
+        }
       }
     }
   };

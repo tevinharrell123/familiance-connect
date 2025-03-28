@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/components/ui/use-toast";
@@ -13,8 +13,27 @@ export function JoinHouseholdForm() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userMemberships, setUserMemberships] = useState<any[]>([]);
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
+
+  // Check if user already has memberships
+  useEffect(() => {
+    if (user) {
+      const checkMemberships = async () => {
+        const { data, error } = await supabase
+          .from('memberships')
+          .select('id, household_id, households:household_id(name)')
+          .eq('user_id', user.id);
+        
+        if (!error && data) {
+          setUserMemberships(data);
+        }
+      };
+      
+      checkMemberships();
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +58,11 @@ export function JoinHouseholdForm() {
 
       if (householdError || !householdData) {
         throw new Error("Household not found");
+      }
+
+      // Check if user is already a member of this specific household
+      if (user && userMemberships.some(m => m.household_id === householdId)) {
+        throw new Error('You are already a member of this household');
       }
 
       // For anonymous users, create an account first
