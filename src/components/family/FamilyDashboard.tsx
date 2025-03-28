@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Home, Users, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface FamilyDashboardProps {
   household: any;
@@ -172,11 +173,10 @@ export function FamilyDashboard({
                     <label className="block text-sm font-medium mb-1">
                       Household ID
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={householdId}
                       onChange={(e) => setHouseholdId(e.target.value)}
-                      className="w-full p-2 border rounded"
                       placeholder="Enter household ID"
                     />
                   </div>
