@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -227,7 +226,6 @@ export function useHousehold(
     try {
       console.log("Fetching members for household:", targetHouseholdId);
       
-      // Update the query to properly handle the join with profiles
       const { data, error } = await supabase
         .from('household_members')
         .select(`
@@ -236,7 +234,7 @@ export function useHousehold(
           user_id,
           role,
           created_at,
-          profiles:profiles(full_name, avatar_url)
+          profiles(full_name, avatar_url)
         `)
         .eq('household_id', targetHouseholdId);
         
@@ -253,18 +251,14 @@ export function useHousehold(
       
       console.log("Household members retrieved:", data);
       
-      // Transform the data to match our HouseholdMember interface
-      const typedMembers: HouseholdMember[] = data.map(member => ({
+      const typedMembers = data.map(member => ({
         id: member.id,
         household_id: member.household_id,
         user_id: member.user_id,
         role: member.role as HouseholdRole,
         created_at: member.created_at,
-        profile: member.profiles ? {
-          full_name: member.profiles.full_name,
-          avatar_url: member.profiles.avatar_url
-        } : null
-      }));
+        profiles: member.profiles
+      })) as HouseholdMember[];
       
       setHouseholdMembers(typedMembers);
       return typedMembers;

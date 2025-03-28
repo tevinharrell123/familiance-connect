@@ -272,13 +272,13 @@ const Household = () => {
                       <div key={member.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <Avatar>
-                            <AvatarImage src={member.profile?.avatar_url || undefined} />
+                            <AvatarImage src={member.profiles?.avatar_url || undefined} />
                             <AvatarFallback>
-                              {member.profile?.full_name?.charAt(0) || 'U'}
+                              {member.profiles?.full_name?.charAt(0) || 'U'}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{member.profile?.full_name || 'Unknown User'}</p>
+                            <p className="font-medium">{member.profiles?.full_name || 'Unknown User'}</p>
                             <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
                           </div>
                         </div>
