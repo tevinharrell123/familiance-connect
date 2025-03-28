@@ -4,12 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -40,26 +39,39 @@ export function LoginForm() {
         throw error;
       }
 
-      // Check if user has a household
-      const { data: membershipData, error: membershipError } = await supabase
-        .from('memberships')
-        .select('*')
-        .eq('user_id', data.user.id)
-        .single();
-
-      if (membershipError && membershipError.code !== 'PGRST116') {
-        console.error('Error fetching membership:', membershipError);
-      }
-
       toast({
         title: "Success",
         description: "You are now logged in",
       });
 
-      // Navigate to the main dashboard
-      setTimeout(() => {
-        navigate('/');
-      }, 500);
+      // Try to check if user has a household, but don't block on errors
+      try {
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('memberships')
+          .select('household_id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+          
+        if (membershipError) {
+          console.warn('Non-blocking error fetching membership:', membershipError);
+        }
+        
+        // Navigate to the main dashboard regardless of whether the user has a household
+        setTimeout(() => {
+          if (membershipData?.household_id) {
+            navigate('/');
+          } else {
+            // If no household is found, redirect to family page to create one
+            navigate('/family');
+          }
+        }, 500);
+      } catch (membershipError) {
+        console.error('Error checking household:', membershipError);
+        // Still navigate to family page if there's an error
+        setTimeout(() => {
+          navigate('/family');
+        }, 500);
+      }
     } catch (error: any) {
       console.error('Error logging in:', error);
       toast({
