@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
-import { format, isSameDay, parseISO, isSameMonth } from 'date-fns';
+import { format, isSameDay, parseISO, isSameMonth, differenceInDays } from 'date-fns';
 import { getEventsForDay, getWeeklyEvents } from './utils/calendarEventUtils';
 import { EventIndicator } from './EventIndicator';
 import { MultiDayEvent } from './MultiDayEvent';
@@ -19,9 +19,14 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
   
   // Get weekly events for multi-day rendering
   const weeklyEvents = getWeeklyEvents(days, events);
+  
+  // For debugging
+  if (weeklyEvents.length > 0) {
+    console.log('Multi-day events for calendar:', weeklyEvents.length);
+  }
 
   return (
-    <div className="month-view">
+    <div className="month-view relative">
       <div className="calendar-grid grid-container">
         {weekDays.map((day, i) => (
           <div key={i} className="text-center py-2 font-medium text-sm">
@@ -31,8 +36,16 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
         
         {/* Regular day cells */}
         {days.map((day, i) => {
-          const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
+          const isCurrentMonth = isSameMonth(day, currentMonth);
           const isToday = isSameDay(day, new Date());
+          
+          // Get single-day events
+          const dayEvents = getEventsForDay(day, events)
+            .filter(event => {
+              const eventStart = parseISO(event.start_date);
+              const eventEnd = parseISO(event.end_date);
+              return differenceInDays(eventEnd, eventStart) === 0; // Only single-day events
+            });
           
           return (
             <div 
@@ -47,21 +60,19 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
               
               {/* Only show single-day events in day cells */}
               <div className="px-1 overflow-hidden">
-                {getEventsForDay(day, events)
-                  .filter(event => {
-                    const eventStart = parseISO(event.start_date);
-                    const eventEnd = parseISO(event.end_date);
-                    return isSameDay(eventStart, eventEnd); // Only single-day events
-                  })
-                  .slice(0, 2)
-                  .map(event => (
-                    <EventIndicator 
-                      key={event.id} 
-                      event={event} 
-                      onClick={onEventClick} 
-                    />
-                  ))
-                }
+                {dayEvents.slice(0, 2).map(event => (
+                  <EventIndicator 
+                    key={event.id} 
+                    event={event} 
+                    onClick={onEventClick} 
+                  />
+                ))}
+                
+                {dayEvents.length > 2 && (
+                  <div className="text-xs text-center text-muted-foreground">
+                    +{dayEvents.length - 2} more
+                  </div>
+                )}
               </div>
             </div>
           );

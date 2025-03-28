@@ -4,7 +4,8 @@ import {
   isSameDay, 
   parseISO, 
   isWithinInterval, 
-  areIntervalsOverlapping 
+  areIntervalsOverlapping,
+  differenceInDays
 } from 'date-fns';
 
 /**
@@ -22,6 +23,21 @@ export const getEventsForDay = (day: Date, events: CalendarEvent[]): CalendarEve
            isSameDay(day, eventStart) || 
            isSameDay(day, eventEnd);
   });
+};
+
+/**
+ * Enhance event with duration information
+ */
+export const addEventDurationInfo = (event: CalendarEvent): CalendarEvent & { isMultiDay: boolean; duration: number } => {
+  const eventStart = parseISO(event.start_date);
+  const eventEnd = parseISO(event.end_date);
+  const duration = differenceInDays(eventEnd, eventStart);
+  
+  return {
+    ...event,
+    isMultiDay: duration > 0,
+    duration: duration + 1 // Include both start and end days
+  };
 };
 
 /**
@@ -46,6 +62,9 @@ export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
       const eventStart = parseISO(event.start_date);
       const eventEnd = parseISO(event.end_date);
       
+      // Only consider multi-day events
+      if (differenceInDays(eventEnd, eventStart) === 0) return false;
+      
       return areIntervalsOverlapping(
         { start: weekStart, end: weekEnd },
         { start: eventStart, end: eventEnd }
@@ -57,21 +76,39 @@ export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
       const eventStart = parseISO(event.start_date);
       const eventEnd = parseISO(event.end_date);
       
-      // Find start and end day indices within this week
-      const startIdx = week.findIndex(day => 
-        isWithinInterval(day, { start: eventStart, end: eventEnd }) || isSameDay(day, eventStart)
+      // Find start day index within this week
+      let startIdx = week.findIndex(day => 
+        isSameDay(day, eventStart) || (day > eventStart && day <= eventEnd)
       );
       
-      const endIdx = week.findIndex((day, idx) => 
-        (idx >= startIdx && (isSameDay(day, eventEnd) || day > eventEnd))
+      // If event starts before this week
+      if (startIdx === -1 && eventStart < weekStart) {
+        startIdx = 0;
+      }
+      
+      // Find end day index within this week
+      let endIdx = week.findIndex((day, idx) => 
+        (idx >= startIdx && isSameDay(day, eventEnd)) || (idx >= startIdx && day > eventEnd)
       );
       
-      return {
-        event,
-        startIdx: startIdx === -1 ? 0 : startIdx,
-        endIdx: endIdx === -1 ? 6 : endIdx,
-        weekIdx: weeks.indexOf(week)
-      };
-    });
+      // If event ends after this week
+      if (endIdx === -1 && eventEnd > weekEnd) {
+        endIdx = 6;
+      } else if (endIdx === -1 && startIdx !== -1) {
+        // If end wasn't found but start was, set to end of week
+        endIdx = 6;
+      }
+      
+      // Only return valid events (events that appear in this week)
+      if (startIdx !== -1) {
+        return {
+          event,
+          startIdx: startIdx,
+          endIdx: endIdx === -1 ? 6 : endIdx,
+          weekIdx: weeks.indexOf(week)
+        };
+      }
+      return null;
+    }).filter(Boolean); // Remove null entries
   }).flat();
 };

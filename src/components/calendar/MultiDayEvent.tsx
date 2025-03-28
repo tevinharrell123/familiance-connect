@@ -21,7 +21,7 @@ export function MultiDayEvent({
   const span = endIdx - startIdx + 1;
   
   // Skip rendering very short spans - they'll be shown in the day cells
-  if (span <= 1) return null;
+  if (span <= 0) return null;
   
   const userInitials = event.user_profile?.full_name
     ? event.user_profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()

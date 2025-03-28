@@ -5,6 +5,10 @@ export function MonthViewStyles() {
   return (
     <style>
       {`
+      .month-view {
+        position: relative;
+      }
+      
       .grid-container {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -12,14 +16,16 @@ export function MonthViewStyles() {
       }
       
       .multi-day-events-container {
-        position: relative;
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
-        height: 0;
+        height: 100%;
+        pointer-events: none;
       }
       
       .multi-day-event {
-        left: 0;
-        right: 0;
+        pointer-events: auto;
       }
       
       .calendar-day {
