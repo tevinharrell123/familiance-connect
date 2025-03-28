@@ -7,6 +7,7 @@ import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards
 import { QuickActions, TasksAndChores, WeeklyRoutines } from '@/components/dashboard/QuickActions';
 import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { CreateHouseholdModal } from '@/components/household/CreateHouseholdModal';
 
 const Dashboard = () => {
   const { user, isLoading } = useRequireAuth();
@@ -23,9 +24,9 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Always show dashboard view
   return (
     <MainLayout>
+      <CreateHouseholdModal />
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Welcome to Your Dashboard</h1>
