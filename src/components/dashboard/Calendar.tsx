@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon, Plus } from "lucide-react";
@@ -36,7 +35,6 @@ export function CalendarWidget() {
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
-  // Add days from previous/next months to fill the grid
   const startDay = monthStart.getDay(); // 0 for Sunday, 1 for Monday, etc.
   const daysFromPreviousMonth = startDay === 0 ? 0 : startDay;
   const daysFromNextMonth = 42 - (days.length + daysFromPreviousMonth); // 42 = 6 rows of 7 days
@@ -60,7 +58,6 @@ export function CalendarWidget() {
       const eventStart = parseISO(event.start_date);
       const eventEnd = parseISO(event.end_date);
       
-      // Check if the day falls within the event's date range
       return day >= eventStart && day <= eventEnd;
     });
   };
@@ -208,7 +205,8 @@ export function CalendarWidget() {
                     })}
                   </div>
                   
-                  <style jsx>{`
+                  <style>
+                    {`
                     .calendar-grid {
                       display: grid;
                       grid-template-columns: repeat(7, 1fr);
@@ -225,7 +223,8 @@ export function CalendarWidget() {
                         min-height: 60px;
                       }
                     }
-                  `}</style>
+                    `}
+                  </style>
                 </>
               )}
             </TabsContent>

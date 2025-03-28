@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,10 +18,10 @@ export function useCalendarEvents() {
     // Fetch household events if user belongs to a household
     if (household) {
       const { data: householdEvents, error: householdError } = await supabase
-        .from('household_events' as any)
+        .from('household_events')
         .select(`
           *,
-          creator:created_by(id, full_name:profiles(full_name), avatar_url:profiles(avatar_url))
+          profiles:created_by(full_name, avatar_url)
         `)
         .eq('household_id', household.id);
 
@@ -33,12 +32,20 @@ export function useCalendarEvents() {
 
       if (householdEvents) {
         events.push(
-          ...householdEvents.map((event: any) => ({
-            ...event,
+          ...householdEvents.map((event) => ({
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            start_date: event.start_date,
+            end_date: event.end_date,
+            color: event.color,
             is_household_event: true,
-            user_profile: event.creator ? {
-              full_name: event.creator.full_name?.[0]?.full_name || null,
-              avatar_url: event.creator.avatar_url?.[0]?.avatar_url || null
+            created_by: event.created_by,
+            created_at: event.created_at,
+            user_id: event.created_by,
+            user_profile: event.profiles ? {
+              full_name: event.profiles.full_name,
+              avatar_url: event.profiles.avatar_url
             } : null
           }))
         );
@@ -47,10 +54,10 @@ export function useCalendarEvents() {
 
     // Fetch personal events
     const { data: userEvents, error: userError } = await supabase
-      .from('user_events' as any)
+      .from('user_events')
       .select(`
         *,
-        user:profiles(full_name, avatar_url)
+        profiles:user_id(full_name, avatar_url)
       `)
       .eq('user_id', user.id);
 
@@ -61,10 +68,20 @@ export function useCalendarEvents() {
 
     if (userEvents) {
       events.push(
-        ...userEvents.map((event: any) => ({
-          ...event,
+        ...userEvents.map((event) => ({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          start_date: event.start_date,
+          end_date: event.end_date,
+          color: event.color,
           is_household_event: false,
-          user_profile: event.user || null
+          created_at: event.created_at,
+          user_id: event.user_id,
+          user_profile: event.profiles ? {
+            full_name: event.profiles.full_name,
+            avatar_url: event.profiles.avatar_url
+          } : null
         }))
       );
     }
@@ -72,10 +89,10 @@ export function useCalendarEvents() {
     // Fetch shared personal events from household members if user belongs to a household
     if (household) {
       const { data: sharedEvents, error: sharedError } = await supabase
-        .from('user_events' as any)
+        .from('user_events')
         .select(`
           *,
-          user:profiles(full_name, avatar_url)
+          profiles:user_id(full_name, avatar_url)
         `)
         .eq('is_public', true)
         .neq('user_id', user.id);
@@ -100,11 +117,21 @@ export function useCalendarEvents() {
         
         events.push(
           ...sharedEvents
-            .filter((event: any) => memberIds.has(event.user_id))
-            .map((event: any) => ({
-              ...event,
+            .filter((event) => memberIds.has(event.user_id))
+            .map((event) => ({
+              id: event.id,
+              title: event.title,
+              description: event.description,
+              start_date: event.start_date,
+              end_date: event.end_date,
+              color: event.color,
               is_household_event: false,
-              user_profile: event.user || null
+              created_at: event.created_at,
+              user_id: event.user_id,
+              user_profile: event.profiles ? {
+                full_name: event.profiles.full_name,
+                avatar_url: event.profiles.avatar_url
+              } : null
             }))
         );
       }
@@ -129,7 +156,7 @@ export function useCalendarEvents() {
       if (!household) throw new Error('No household available');
       
       const { data, error } = await supabase
-        .from('household_events' as any)
+        .from('household_events')
         .insert({
           title,
           description,
@@ -143,10 +170,23 @@ export function useCalendarEvents() {
         .single();
         
       if (error) throw error;
-      return { ...data, is_household_event: true } as CalendarEvent;
+      
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        color: data.color,
+        is_household_event: true,
+        created_by: user.id,
+        created_at: data.created_at,
+        user_id: user.id,
+        user_profile: null
+      };
     } else {
       const { data, error } = await supabase
-        .from('user_events' as any)
+        .from('user_events')
         .insert({
           title,
           description,
@@ -160,7 +200,19 @@ export function useCalendarEvents() {
         .single();
         
       if (error) throw error;
-      return { ...data, is_household_event: false } as CalendarEvent;
+      
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        color: data.color,
+        is_household_event: false,
+        created_at: data.created_at,
+        user_id: user.id,
+        user_profile: null
+      };
     }
   };
   
@@ -191,7 +243,7 @@ export function useCalendarEvents() {
     
     if (is_household_event) {
       const { data, error } = await supabase
-        .from('household_events' as any)
+        .from('household_events')
         .update({
           title,
           description,
@@ -208,7 +260,7 @@ export function useCalendarEvents() {
       return { ...data, is_household_event: true } as CalendarEvent;
     } else {
       const { data, error } = await supabase
-        .from('user_events' as any)
+        .from('user_events')
         .update({
           title,
           description,
@@ -253,14 +305,14 @@ export function useCalendarEvents() {
     
     if (is_household_event) {
       const { error } = await supabase
-        .from('household_events' as any)
+        .from('household_events')
         .delete()
         .eq('id', id);
         
       if (error) throw error;
     } else {
       const { error } = await supabase
-        .from('user_events' as any)
+        .from('user_events')
         .delete()
         .eq('id', id);
         
