@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,8 +21,15 @@ export function useCalendarEvents() {
       const { data: householdEvents, error: householdError } = await supabase
         .from('household_events')
         .select(`
-          *,
-          profiles:created_by(full_name, avatar_url)
+          id,
+          title,
+          description,
+          start_date,
+          end_date,
+          color,
+          created_by,
+          created_at,
+          household_id
         `)
         .eq('household_id', household.id);
 
@@ -31,6 +39,23 @@ export function useCalendarEvents() {
       }
 
       if (householdEvents) {
+        // Fetch profiles data separately for creators of household events
+        const creatorIds = householdEvents.map(event => event.created_by);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', creatorIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles for household events:', profilesError);
+        }
+
+        // Create a map of user profiles for quick lookup
+        const profilesMap = (profilesData || []).reduce((map, profile) => {
+          map[profile.id] = profile;
+          return map;
+        }, {});
+
         events.push(
           ...householdEvents.map((event) => ({
             id: event.id,
@@ -43,9 +68,9 @@ export function useCalendarEvents() {
             created_by: event.created_by,
             created_at: event.created_at,
             user_id: event.created_by,
-            user_profile: event.profiles ? {
-              full_name: event.profiles.full_name,
-              avatar_url: event.profiles.avatar_url
+            user_profile: profilesMap[event.created_by] ? {
+              full_name: profilesMap[event.created_by].full_name,
+              avatar_url: profilesMap[event.created_by].avatar_url
             } : null
           }))
         );
@@ -56,8 +81,15 @@ export function useCalendarEvents() {
     const { data: userEvents, error: userError } = await supabase
       .from('user_events')
       .select(`
-        *,
-        profiles:user_id(full_name, avatar_url)
+        id,
+        title,
+        description,
+        start_date,
+        end_date,
+        color,
+        user_id,
+        is_public,
+        created_at
       `)
       .eq('user_id', user.id);
 
@@ -67,6 +99,17 @@ export function useCalendarEvents() {
     }
 
     if (userEvents) {
+      // Fetch the user's own profile
+      const { data: userProfile, error: userProfileError } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (userProfileError) {
+        console.error('Error fetching user profile:', userProfileError);
+      }
+
       events.push(
         ...userEvents.map((event) => ({
           id: event.id,
@@ -78,9 +121,9 @@ export function useCalendarEvents() {
           is_household_event: false,
           created_at: event.created_at,
           user_id: event.user_id,
-          user_profile: event.profiles ? {
-            full_name: event.profiles.full_name,
-            avatar_url: event.profiles.avatar_url
+          user_profile: userProfile ? {
+            full_name: userProfile.full_name,
+            avatar_url: userProfile.avatar_url
           } : null
         }))
       );
@@ -88,37 +131,61 @@ export function useCalendarEvents() {
 
     // Fetch shared personal events from household members if user belongs to a household
     if (household) {
-      const { data: sharedEvents, error: sharedError } = await supabase
-        .from('user_events')
-        .select(`
-          *,
-          profiles:user_id(full_name, avatar_url)
-        `)
-        .eq('is_public', true)
+      // Get all household members
+      const { data: householdMembers, error: membersError } = await supabase
+        .from('household_members')
+        .select('user_id')
+        .eq('household_id', household.id)
         .neq('user_id', user.id);
-
-      if (sharedError) {
-        console.error('Error fetching shared events:', sharedError);
-        throw sharedError;
-      }
-
-      if (sharedEvents) {
-        const { data: householdMembers, error: membersError } = await supabase
-          .from('household_members')
-          .select('user_id')
-          .eq('household_id', household.id);
           
-        if (membersError) {
-          console.error('Error fetching household members:', membersError);
-          throw membersError;
+      if (membersError) {
+        console.error('Error fetching household members:', membersError);
+        throw membersError;
+      }
+      
+      if (householdMembers && householdMembers.length > 0) {
+        const memberIds = householdMembers.map(m => m.user_id);
+        
+        // Fetch public events from those members
+        const { data: sharedEvents, error: sharedError } = await supabase
+          .from('user_events')
+          .select(`
+            id,
+            title,
+            description,
+            start_date,
+            end_date,
+            color,
+            user_id,
+            created_at
+          `)
+          .eq('is_public', true)
+          .in('user_id', memberIds);
+
+        if (sharedError) {
+          console.error('Error fetching shared events:', sharedError);
+          throw sharedError;
         }
-        
-        const memberIds = new Set(householdMembers?.map(m => m.user_id) || []);
-        
-        events.push(
-          ...sharedEvents
-            .filter((event) => memberIds.has(event.user_id))
-            .map((event) => ({
+
+        if (sharedEvents && sharedEvents.length > 0) {
+          // Fetch profiles for the members
+          const { data: memberProfiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .in('id', memberIds);
+
+          if (profilesError) {
+            console.error('Error fetching member profiles:', profilesError);
+          }
+
+          // Create a map of member profiles
+          const profilesMap = (memberProfiles || []).reduce((map, profile) => {
+            map[profile.id] = profile;
+            return map;
+          }, {});
+          
+          events.push(
+            ...sharedEvents.map((event) => ({
               id: event.id,
               title: event.title,
               description: event.description,
@@ -128,12 +195,13 @@ export function useCalendarEvents() {
               is_household_event: false,
               created_at: event.created_at,
               user_id: event.user_id,
-              user_profile: event.profiles ? {
-                full_name: event.profiles.full_name,
-                avatar_url: event.profiles.avatar_url
+              user_profile: profilesMap[event.user_id] ? {
+                full_name: profilesMap[event.user_id].full_name,
+                avatar_url: profilesMap[event.user_id].avatar_url
               } : null
             }))
-        );
+          );
+        }
       }
     }
 
@@ -171,6 +239,17 @@ export function useCalendarEvents() {
         
       if (error) throw error;
       
+      // Fetch user profile for the event
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile for created event:', profileError);
+      }
+      
       return {
         id: data.id,
         title: data.title,
@@ -182,7 +261,10 @@ export function useCalendarEvents() {
         created_by: user.id,
         created_at: data.created_at,
         user_id: user.id,
-        user_profile: null
+        user_profile: profile ? {
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url
+        } : null
       };
     } else {
       const { data, error } = await supabase
@@ -201,6 +283,17 @@ export function useCalendarEvents() {
         
       if (error) throw error;
       
+      // Fetch user profile for the event
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile for created event:', profileError);
+      }
+      
       return {
         id: data.id,
         title: data.title,
@@ -211,7 +304,10 @@ export function useCalendarEvents() {
         is_household_event: false,
         created_at: data.created_at,
         user_id: user.id,
-        user_profile: null
+        user_profile: profile ? {
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url
+        } : null
       };
     }
   };
@@ -257,7 +353,26 @@ export function useCalendarEvents() {
         .single();
         
       if (error) throw error;
-      return { ...data, is_household_event: true } as CalendarEvent;
+      
+      // Get updated user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', data.created_by)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile for updated event:', profileError);
+      }
+      
+      return {
+        ...data,
+        is_household_event: true,
+        user_profile: profile ? {
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url
+        } : event.user_profile
+      };
     } else {
       const { data, error } = await supabase
         .from('user_events')
@@ -274,7 +389,26 @@ export function useCalendarEvents() {
         .single();
         
       if (error) throw error;
-      return { ...data, is_household_event: false } as CalendarEvent;
+      
+      // Get updated user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', data.user_id)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile for updated event:', profileError);
+      }
+      
+      return {
+        ...data,
+        is_household_event: false,
+        user_profile: profile ? {
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url
+        } : event.user_profile
+      };
     }
   };
   

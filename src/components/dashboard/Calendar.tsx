@@ -205,8 +205,7 @@ export function CalendarWidget() {
                     })}
                   </div>
                   
-                  <style>
-                    {`
+                  <style jsx>{`
                     .calendar-grid {
                       display: grid;
                       grid-template-columns: repeat(7, 1fr);
@@ -223,8 +222,7 @@ export function CalendarWidget() {
                         min-height: 60px;
                       }
                     }
-                    `}
-                  </style>
+                  `}</style>
                 </>
               )}
             </TabsContent>
