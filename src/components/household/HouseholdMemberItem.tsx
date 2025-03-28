@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { HouseholdMember, HouseholdRole } from '@/types/household';
@@ -29,15 +28,16 @@ export const HouseholdMemberItem = ({
       .substring(0, 2);
   };
 
-  const getFullName = () => {
+  const getDisplayName = () => {
     if (member.user_profiles?.full_name) {
       return member.user_profiles.full_name;
     }
-    return `User (${member.user_id.substring(0, 6)}...)`;
+    return `Household Member`;
   };
 
-  const fullName = getFullName();
+  const fullName = getDisplayName();
   const initials = getInitials(member.user_profiles?.full_name);
+  const isUnknownMember = !member.user_profiles?.full_name;
   
   return (
     <div className="flex items-center justify-between p-3 bg-card border rounded-lg">
@@ -47,7 +47,11 @@ export const HouseholdMemberItem = ({
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-medium">{fullName} {isCurrentUser && <span className="text-sm text-muted-foreground">(You)</span>}</p>
+          <p className="font-medium">
+            {fullName} 
+            {isCurrentUser && <span className="text-sm text-muted-foreground ml-1">(You)</span>}
+            {isUnknownMember && <span className="text-sm text-muted-foreground ml-1">({member.user_id.substring(0, 6)}...)</span>}
+          </p>
           <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
         </div>
       </div>
