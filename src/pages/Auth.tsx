@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -18,7 +17,6 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -100,10 +98,9 @@ const Auth = () => {
         dob: values.dob ? format(values.dob, 'yyyy-MM-dd') : undefined,
       };
       
-      await signUp(values.email, values.password, userData);
+      const profileImage = values.profileImage?.[0];
       
-      // Profile image would need to be handled after successful signup
-      // when we have a user ID to associate with the image
+      await signUp(values.email, values.password, userData, profileImage);
     } catch (error) {
       console.error('Register error:', error);
     } finally {

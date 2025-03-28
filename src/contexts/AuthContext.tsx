@@ -11,7 +11,7 @@ type AuthContextType = {
   profile: any | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: { full_name?: string, dob?: string }) => Promise<void>;
+  signUp: (email: string, password: string, userData: { full_name?: string, dob?: string }, profileImage?: File) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<any>; 
 };
@@ -111,10 +111,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, userData: { full_name?: string, dob?: string }) => {
+  const uploadProfileImage = async (userId: string, file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}.${fileExt}`;
+      const filePath = `avatar/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profiles')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        console.error('Error uploading profile image:', uploadError);
+        return null;
+      }
+
+      const { data } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      return null;
+    }
+  };
+
+  const signUp = async (email: string, password: string, userData: { full_name?: string, dob?: string }, profileImage?: File) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -129,6 +155,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           variant: "destructive",
         });
         throw error;
+      }
+
+      // If we have a profile image and a user was created
+      if (profileImage && data.user) {
+        const avatarUrl = await uploadProfileImage(data.user.id, profileImage);
+        
+        // Update the profile with the avatar URL
+        if (avatarUrl) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ avatar_url: avatarUrl })
+            .eq('id', data.user.id);
+            
+          if (profileError) {
+            console.error('Error updating profile with avatar:', profileError);
+          }
+        }
       }
 
       toast({
