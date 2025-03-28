@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { useAuth } from '@/contexts/AuthContext';
+import { calendarEventQueries } from './calendarEventQueries';
 
 /**
  * Hook for creating calendar events
@@ -127,9 +128,7 @@ export function useCreateCalendarEvent() {
     mutationFn: createEvent,
     onSuccess: () => {
       console.log('Successfully created event, invalidating queries');
-      queryClient.invalidateQueries({ queryKey: ['household-events'] });
-      queryClient.invalidateQueries({ queryKey: ['personal-events'] });
-      queryClient.invalidateQueries({ queryKey: ['shared-household-events'] });
+      calendarEventQueries.invalidateAll(queryClient);
     },
     onError: (error) => {
       console.error('Error creating event:', error);

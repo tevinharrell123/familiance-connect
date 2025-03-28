@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { CalendarEvent } from '@/types/calendar';
 import { useAuth } from '@/contexts/AuthContext';
+import { calendarEventQueries } from './calendarEventQueries';
 
 /**
  * Hook for updating calendar events
@@ -95,13 +96,7 @@ export function useUpdateCalendarEvent() {
   const updateEventMutation = useMutation({
     mutationFn: updateEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['household-events'] });
-      queryClient.invalidateQueries({ queryKey: ['personal-events'] });
-      queryClient.invalidateQueries({ queryKey: ['shared-household-events'] });
-      toast({
-        title: "Event updated",
-        description: "Your event has been successfully updated.",
-      });
+      calendarEventQueries.invalidateAll(queryClient);
     },
     onError: (error) => {
       console.error('Error updating event:', error);

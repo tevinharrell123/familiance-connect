@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { CalendarEvent } from '@/types/calendar';
 import { useAuth } from '@/contexts/AuthContext';
+import { calendarEventQueries } from './calendarEventQueries';
 
 /**
  * Hook for deleting calendar events
@@ -37,13 +38,7 @@ export function useDeleteCalendarEvent() {
   const deleteEventMutation = useMutation({
     mutationFn: deleteEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['household-events'] });
-      queryClient.invalidateQueries({ queryKey: ['personal-events'] });
-      queryClient.invalidateQueries({ queryKey: ['shared-household-events'] });
-      toast({
-        title: "Event deleted",
-        description: "Your event has been successfully deleted.",
-      });
+      calendarEventQueries.invalidateAll(queryClient);
     },
     onError: (error) => {
       console.error('Error deleting event:', error);
