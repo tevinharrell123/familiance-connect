@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -31,19 +30,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/use-toast';
 import { AlertTriangle, Copy, Home, MoreHorizontal, Plus, RefreshCw, UserPlus } from 'lucide-react';
+import { HouseholdRole } from '@/types/household';
 
 const Household = () => {
   const { user, isLoading } = useRequireAuth();
+  const auth = useAuth();
   const { 
     household, 
-    userRole,
     householdMembers,
     createHousehold,
     joinHousehold,
     leaveHousehold,
     updateMemberRole,
-    refreshHousehold
-  } = useAuth();
+    refreshHousehold,
+    userRole
+  } = auth;
   
   const [newHouseholdName, setNewHouseholdName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
@@ -52,7 +53,6 @@ const Household = () => {
   const [isLeaving, setIsLeaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Effect to auto-refresh household members data when the component mounts
   useEffect(() => {
     if (household && user) {
       handleRefreshHousehold();
@@ -83,7 +83,6 @@ const Household = () => {
       await joinHousehold(inviteCode);
       setInviteCode('');
       
-      // Refresh members after joining
       setTimeout(() => {
         handleRefreshHousehold();
       }, 500);
@@ -126,17 +125,15 @@ const Household = () => {
     }
   };
 
-  const handleRoleChange = async (userId: string, role: 'admin' | 'adult' | 'child') => {
+  const handleRoleChange = async (memberId: string, role: HouseholdRole) => {
     try {
-      await updateMemberRole(userId, role);
-      // Refresh members after role change
+      await updateMemberRole(memberId, role);
       handleRefreshHousehold();
     } catch (error) {
       console.error('Error updating role:', error);
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <MainLayout>
@@ -159,7 +156,6 @@ const Household = () => {
 
         {!household ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Create Household Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -189,7 +185,6 @@ const Household = () => {
               </CardContent>
             </Card>
 
-            {/* Join Household Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -221,7 +216,6 @@ const Household = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Household Info Card */}
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -289,7 +283,6 @@ const Household = () => {
                           </div>
                         </div>
                         
-                        {/* Only admins can change roles, and not for themselves */}
                         {userRole === 'admin' && member.user_id !== user?.id && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -298,13 +291,13 @@ const Household = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleRoleChange(member.user_id, 'admin')}>
+                              <DropdownMenuItem onClick={() => handleRoleChange(member.id, 'admin')}>
                                 Make Admin
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRoleChange(member.user_id, 'adult')}>
+                              <DropdownMenuItem onClick={() => handleRoleChange(member.id, 'adult')}>
                                 Set as Adult
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRoleChange(member.user_id, 'child')}>
+                              <DropdownMenuItem onClick={() => handleRoleChange(member.id, 'child')}>
                                 Set as Child
                               </DropdownMenuItem>
                             </DropdownMenuContent>

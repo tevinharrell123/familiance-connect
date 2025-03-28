@@ -269,8 +269,15 @@ export function useHousehold(
       }
       
       console.log("Household members retrieved:", data);
-      setHouseholdMembers(data);
-      return data;
+      
+      // Cast the data to ensure role is treated as HouseholdRole
+      const typedMembers: HouseholdMember[] = data.map(member => ({
+        ...member,
+        role: member.role as HouseholdRole
+      }));
+      
+      setHouseholdMembers(typedMembers);
+      return typedMembers;
     } catch (error: any) {
       console.error('Get household members error:', error);
       return [];
