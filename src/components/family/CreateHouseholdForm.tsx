@@ -72,8 +72,8 @@ export function CreateHouseholdForm({ user }: CreateHouseholdFormProps) {
           description: "Account and household created successfully!",
         });
 
-        // Refresh the page to show the family dashboard
-        window.location.reload();
+        // Navigate to the main page
+        navigate('/');
       } catch (error: any) {
         console.error('Error creating household:', error);
         toast({
@@ -102,8 +102,8 @@ export function CreateHouseholdForm({ user }: CreateHouseholdFormProps) {
           description: "Household created successfully!",
         });
 
-        // Refresh the page to show the family dashboard
-        window.location.reload();
+        // Navigate to the main page
+        navigate('/');
       } catch (error: any) {
         console.error('Error creating household:', error);
         toast({

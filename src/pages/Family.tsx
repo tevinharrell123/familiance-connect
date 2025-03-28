@@ -21,8 +21,8 @@ export default function Family() {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          // User is not logged in, redirect to home
-          navigate('/');
+          // User is not logged in, show the onboarding flow
+          setLoading(false);
           return;
         }
         
@@ -35,13 +35,17 @@ export default function Family() {
           .eq('user_id', session.user.id)
           .single();
         
-        if (membershipError && membershipError.code !== 'PGRST116') {
-          console.error('Error fetching membership:', membershipError);
-          toast({
-            title: "Error",
-            description: "Failed to fetch household information",
-            variant: "destructive",
-          });
+        if (membershipError) {
+          if (membershipError.code !== 'PGRST116') { // Not found error
+            console.error('Error fetching membership:', membershipError);
+            toast({
+              title: "Error",
+              description: "Failed to fetch household information",
+              variant: "destructive",
+            });
+          }
+          setLoading(false);
+          return;
         }
         
         if (membershipData) {
@@ -56,19 +60,58 @@ export default function Family() {
           
           if (householdError) {
             console.error('Error fetching household:', householdError);
-          } else {
-            setHousehold(householdData);
+            setLoading(false);
+            return;
           }
+          
+          setHousehold(householdData);
         }
         
+        setLoading(false);
       } catch (error) {
         console.error('Session check error:', error);
-      } finally {
         setLoading(false);
       }
     };
     
+    // Call the function immediately
     checkUserSession();
+    
+    // Set up auth state listener for changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // When auth state changes, reload the membership data
+      if (session?.user) {
+        setUser(session.user);
+        
+        const { data: membershipData } = await supabase
+          .from('memberships')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (membershipData) {
+          setMembership(membershipData);
+          
+          const { data: householdData } = await supabase
+            .from('households')
+            .select('*')
+            .eq('id', membershipData.household_id)
+            .single();
+            
+          if (householdData) {
+            setHousehold(householdData);
+          }
+        }
+      } else {
+        setUser(null);
+        setMembership(null);
+        setHousehold(null);
+      }
+    });
+    
+    return () => {
+      authListener.subscription?.unsubscribe();
+    };
   }, [navigate]);
 
   // If the user already has a household, show the family dashboard
