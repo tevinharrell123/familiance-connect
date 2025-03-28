@@ -1,4 +1,3 @@
-
 import React, { createContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +5,6 @@ import { toast } from '@/components/ui/use-toast';
 import { HouseholdRole, Household } from '@/types/household';
 import { generateInviteCode } from '@/lib/utils';
 
-// Define types for our context
 type Profile = {
   id: string;
   full_name: string | null;
@@ -36,7 +34,7 @@ type AuthContextType = {
   profile: Profile | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: { full_name: string, birthday?: string, household_name?: string }) => Promise<void>;
+  signUp: (email: string, password: string, userData: { full_name: string, birthday?: string, household_name?: string, household_code?: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<Profile | null>;
   membership: Membership | null;
@@ -60,7 +58,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch user profile
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
       console.log('Fetching profile for user:', userId);
@@ -86,7 +83,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Fetch user membership and household
   const fetchMembership = async (userId: string): Promise<void> => {
     try {
       console.log('Fetching membership for user:', userId);
@@ -118,7 +114,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setMembership(membershipObj);
         setHousehold(membershipData.households as Household);
         
-        // Fetch household members
         fetchHouseholdMembers(membershipData.household_id);
       } else {
         setMembership(null);
@@ -130,7 +125,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Fetch household members
   const fetchHouseholdMembers = async (householdId: string): Promise<void> => {
     try {
       console.log('Fetching members for household:', householdId);
@@ -166,7 +160,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Create a new household
   const createHousehold = async (name: string): Promise<Household> => {
     if (!user) throw new Error('User must be logged in to create a household');
     
@@ -174,10 +167,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(true);
       console.log('Creating household:', name);
       
-      // Generate a random invite code
       const inviteCode = generateInviteCode();
       
-      // Insert the household record
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .insert([{ name, invite_code: inviteCode }])
@@ -191,7 +182,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       console.log('Household created:', householdData);
       
-      // Add user as admin member
       const { error: membershipError } = await supabase
         .from('household_members')
         .insert([{
@@ -203,7 +193,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (membershipError) {
         console.error('Error adding user to household:', membershipError);
         
-        // Clean up the created household
         await supabase
           .from('households')
           .delete()
@@ -214,7 +203,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       console.log('Membership created successfully');
       
-      // Refresh membership data
       await fetchMembership(user.id);
       
       toast({
@@ -236,7 +224,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Join an existing household
   const joinHousehold = async (inviteCode: string): Promise<void> => {
     if (!user) throw new Error('User must be logged in to join a household');
     
@@ -244,7 +231,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(true);
       console.log('Joining household with invite code:', inviteCode);
       
-      // Find the household with the provided invite code
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .select('*')
@@ -262,7 +248,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       console.log('Found household:', householdData);
       
-      // Check if user already has a membership
       const { data: existingMembership } = await supabase
         .from('household_members')
         .select('*')
@@ -270,11 +255,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .maybeSingle();
         
       if (existingMembership) {
-        // User already has a membership, leave the current household first
         await leaveHousehold();
       }
       
-      // Add user to the household as an adult
       const { error: membershipError } = await supabase
         .from('household_members')
         .insert([{
@@ -290,7 +273,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       console.log('Successfully joined household');
       
-      // Refresh membership data
       await fetchMembership(user.id);
       
       toast({
@@ -310,14 +292,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Leave current household
   const leaveHousehold = async (): Promise<void> => {
     if (!user || !membership) return;
     
     try {
       setIsLoading(true);
       
-      // Now remove user's membership
       const { error } = await supabase
         .from('household_members')
         .delete()
@@ -325,7 +305,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       if (error) throw error;
       
-      // If user was the last member, delete the household
       if (householdMembers && householdMembers.length === 1 && household) {
         await supabase
           .from('households')
@@ -354,13 +333,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Update a member's role
   const updateMemberRole = async (userId: string, role: HouseholdRole): Promise<void> => {
     if (!user || !membership || !household) {
       throw new Error('You must be in a household to update member roles');
     }
     
-    // Check if current user is an admin
     if (membership.role !== 'admin') {
       throw new Error('Only admins can update member roles');
     }
@@ -376,7 +353,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       if (error) throw error;
       
-      // Refresh household members
       await fetchHouseholdMembers(household.id);
       
       toast({
@@ -396,7 +372,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Refresh household data
   const refreshHousehold = async (): Promise<void> => {
     if (!user) return;
     
@@ -420,7 +395,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Sign in user
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -447,8 +421,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Sign up new user
-  const signUp = async (email: string, password: string, userData: { full_name: string, birthday?: string, household_name?: string }) => {
+  const signUp = async (email: string, password: string, userData: { full_name: string, birthday?: string, household_name?: string, household_code?: string }) => {
     try {
       setIsLoading(true);
       console.log('Starting sign up process');
@@ -475,9 +448,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "Your account has been created. Please check your email to confirm your account.",
       });
 
-      // If household_name provided, create household after email confirmation
-      if (userData.household_name && data.user) {
-        console.log('User created, will create household in onAuthStateChange after email confirmation');
+      if ((userData.household_name || userData.household_code) && data.user) {
+        console.log('User created, will process household in onAuthStateChange after email confirmation');
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
@@ -487,7 +459,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Sign out user
   const signOut = async () => {
     try {
       setIsLoading(true);
@@ -508,7 +479,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Refresh profile data
   const refreshProfile = async (): Promise<Profile | null> => {
     if (user) {
       return await fetchProfile(user.id);
@@ -516,9 +486,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return null;
   };
 
-  // Auth state change listener and initial session check
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth event:', event);
@@ -526,22 +494,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(newSession?.user ?? null);
         
         if (newSession?.user) {
-          // Delayed fetch of user data
           setTimeout(() => {
             fetchProfile(newSession.user.id);
             fetchMembership(newSession.user.id);
             
-            // Check if we need to create a household for a new user
             const householdName = newSession.user.user_metadata.household_name;
-            if (event === 'SIGNED_IN' && householdName) {
-              createHousehold(householdName)
-                .then(() => {
-                  // Clear the household_name from metadata
-                  supabase.auth.updateUser({
-                    data: { household_name: null }
-                  });
-                })
-                .catch(err => console.error('Error creating household after signup:', err));
+            const householdCode = newSession.user.user_metadata.household_code;
+            
+            if (event === 'SIGNED_IN') {
+              if (householdName) {
+                createHousehold(householdName)
+                  .then(() => {
+                    supabase.auth.updateUser({
+                      data: { household_name: null }
+                    });
+                  })
+                  .catch(err => console.error('Error creating household after signup:', err));
+              } else if (householdCode) {
+                joinHousehold(householdCode)
+                  .then(() => {
+                    supabase.auth.updateUser({
+                      data: { household_code: null }
+                    });
+                  })
+                  .catch(err => console.error('Error joining household after signup:', err));
+              }
             }
           }, 0);
         } else {
@@ -553,7 +530,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
@@ -594,7 +570,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Hook to use auth context
 export const useAuth = () => {
   const context = React.useContext(AuthContext);
   if (context === undefined) {
