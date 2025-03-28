@@ -42,7 +42,7 @@ export function useHouseholdMembers(
 
       console.log("Fetched household members:", data);
       
-      const members = data.map((member: any) => ({
+      const members: HouseholdMember[] = data.map((member: any) => ({
         id: member.id,
         household_id: member.household_id,
         user_id: member.user_id,
@@ -52,7 +52,7 @@ export function useHouseholdMembers(
           full_name: member.user_profiles.full_name || null,
           avatar_url: member.user_profiles.avatar_url || null
         } : null
-      })) as HouseholdMember[];
+      }));
       
       setHouseholdMembers(members);
       return members;

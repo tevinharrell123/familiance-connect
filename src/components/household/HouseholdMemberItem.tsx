@@ -9,10 +9,10 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { HouseholdRole } from '@/types/household';
+import { HouseholdMember, HouseholdRole } from '@/types/household';
 
 interface HouseholdMemberItemProps {
-  member: any;
+  member: HouseholdMember;
   isAdmin: boolean;
   currentUserId: string;
   onRoleChange: (memberId: string, role: HouseholdRole) => Promise<void>;

@@ -2,11 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import { HouseholdRole } from '@/types/household';
+import { HouseholdMember, HouseholdRole } from '@/types/household';
 import { HouseholdMemberItem } from './HouseholdMemberItem';
 
 interface HouseholdMembersListProps {
-  members: any[] | null;
+  members: HouseholdMember[] | null;
   isAdmin: boolean;
   currentUserId: string;
   onRoleChange: (memberId: string, role: HouseholdRole) => Promise<void>;
