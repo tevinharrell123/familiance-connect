@@ -20,18 +20,16 @@ export default function Family() {
   const [error, setError] = useState<string | null>(null);
   const [pollingAttempt, setPollingAttempt] = useState(0);
   const [isPolling, setIsPolling] = useState(false);
-  const maxAttempts = 12; // Increased from 5 to 12 for more attempts
+  const maxAttempts = 3; // Reduced from 12 to 3 attempts
   const navigate = useNavigate();
 
   const fetchMemberships = async () => {
     if (!user) return;
     
-    setIsPolling(true);
-    setPollingAttempt(prev => prev + 1);
-    
     try {
-      console.log(`Attempt ${pollingAttempt + 1}/${maxAttempts}: Fetching memberships for user:`, user.id);
+      console.log(`Fetching memberships for user:`, user.id);
       
+      // Single fetch attempt without recursion
       const { data: membershipsData, error: membershipsError } = await supabase
         .from('memberships')
         .select('*, households:household_id(*)')
@@ -39,15 +37,8 @@ export default function Family() {
       
       if (membershipsError) {
         console.error('Error fetching memberships:', membershipsError);
-        
-        if (pollingAttempt >= maxAttempts) {
-          setError('Failed to fetch membership data. Please try again later.');
-          setIsPolling(false);
-          setLoading(false);
-        } else {
-          // Poll again after a delay
-          setTimeout(fetchMemberships, 1500); // Increased from 1000ms to 1500ms
-        }
+        setError('Failed to fetch membership data. Please try again later.');
+        setLoading(false);
         return;
       }
       
@@ -57,26 +48,13 @@ export default function Family() {
         setMemberships(membershipsData);
         setSelectedMembership(membershipsData[0]);
         setHousehold(membershipsData[0].households);
-        setIsPolling(false);
-        setLoading(false);
-      } else if (pollingAttempt >= maxAttempts) {
-        setIsPolling(false);
-        setLoading(false);
-      } else {
-        // Poll again if no memberships found yet
-        setTimeout(fetchMemberships, 1500);
       }
+      
+      setLoading(false);
     } catch (fetchError) {
       console.error('Error in fetch operation:', fetchError);
-      
-      if (pollingAttempt >= maxAttempts) {
-        setError('An error occurred while fetching your data. Please try again later.');
-        setIsPolling(false);
-        setLoading(false);
-      } else {
-        // Poll again after a delay
-        setTimeout(fetchMemberships, 1500);
-      }
+      setError('An error occurred while fetching your data. Please try again later.');
+      setLoading(false);
     }
   };
 
@@ -93,6 +71,13 @@ export default function Family() {
   const selectMembership = (membership: any) => {
     setSelectedMembership(membership);
     setHousehold(membership.households);
+  };
+
+  // Add a retry function for users to manually try again
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    fetchMemberships();
   };
 
   if (error) {
@@ -114,9 +99,14 @@ export default function Family() {
             </p>
             <div className="flex flex-col gap-4 justify-center">
               {user ? (
-                <Button onClick={() => setError(null)} className="w-full">
-                  Continue to Setup
-                </Button>
+                <>
+                  <Button onClick={handleRetry} className="w-full">
+                    Try Again
+                  </Button>
+                  <Button onClick={() => setError(null)} className="w-full">
+                    Continue to Setup
+                  </Button>
+                </>
               ) : (
                 <Button onClick={() => window.location.reload()} className="w-full">
                   Try Again
@@ -143,17 +133,13 @@ export default function Family() {
           <CardHeader>
             <CardTitle className="text-xl font-bold text-center">Loading</CardTitle>
             <CardDescription className="text-center">
-              {isPolling ? 
-                `Checking membership status... (Attempt ${pollingAttempt}/${maxAttempts})` : 
-                "Loading your data..."}
+              Loading your household data...
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isPolling && (
-              <div className="mt-4">
-                <Progress value={(pollingAttempt / maxAttempts) * 100} className="h-2" />
-              </div>
-            )}
+            <div className="mt-4">
+              <Progress value={100} className="h-2 animate-pulse" />
+            </div>
           </CardContent>
         </Card>
       </div>
