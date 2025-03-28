@@ -42,7 +42,7 @@ export function JoinHouseholdForm({ user }: JoinHouseholdFormProps) {
         throw new Error('Household not found');
       }
 
-      // Join the household
+      // Join the household using the RPC function
       const { data, error } = await supabase.rpc('join_household', {
         household_id: householdId,
         user_id: user.id,
