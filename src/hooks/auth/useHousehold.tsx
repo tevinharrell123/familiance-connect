@@ -279,8 +279,8 @@ export function useHousehold(
         created_at: member.created_at,
         profile: member.profile && typeof member.profile === 'object' 
           ? {
-              full_name: member.profile.full_name || 'Unknown User',
-              avatar_url: member.profile.avatar_url || undefined
+              full_name: (member.profile?.full_name) || 'Unknown User',
+              avatar_url: (member.profile?.avatar_url) || undefined
             }
           : { full_name: 'Unknown User' }
       }));
