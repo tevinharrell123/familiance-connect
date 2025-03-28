@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast'; 
@@ -23,7 +22,6 @@ export function useHouseholdManagement(
     try {
       setIsLoading(true);
 
-      // Generate a unique invite code
       const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
 
       const { data: householdData, error: householdError } = await supabase
@@ -192,7 +190,6 @@ export function useHouseholdManagement(
     try {
       console.log('Fetching members for household:', householdId);
       
-      // Include ID in the profile selection
       const { data, error } = await supabase
         .from('household_members')
         .select(`
@@ -203,6 +200,11 @@ export function useHouseholdManagement(
 
       if (error) {
         console.error('Error fetching household members:', error);
+        toast({
+          title: "Error fetching household members",
+          description: "Could not retrieve household members. Please try again.",
+          variant: "destructive"
+        });
         return;
       }
 
@@ -223,6 +225,11 @@ export function useHouseholdManagement(
       setHouseholdMembers(members);
     } catch (error) {
       console.error('Error in getHouseholdMembers:', error);
+      toast({
+        title: "Unexpected Error",
+        description: "An unexpected error occurred while fetching household members.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -251,7 +258,6 @@ export function useHouseholdManagement(
         return;
       }
 
-      // Optimistically update the role in the local state
       setHouseholdMembers(prevMembers => {
         if (!prevMembers) return prevMembers;
         return prevMembers.map(member => {
@@ -334,7 +340,6 @@ export function useHouseholdManagement(
     try {
       setIsLoading(true);
 
-      // First, delete all members of the household
       const { error: deleteMembersError } = await supabase
         .from('household_members')
         .delete()
@@ -350,7 +355,6 @@ export function useHouseholdManagement(
         return;
       }
 
-      // Then, delete the household itself
       const { error: deleteHouseholdError } = await supabase
         .from('households')
         .delete()
