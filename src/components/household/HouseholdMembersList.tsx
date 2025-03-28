@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { HouseholdMember, HouseholdRole } from '@/types/household';
 import { HouseholdMemberItem } from './HouseholdMemberItem';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface HouseholdMembersListProps {
   members: HouseholdMember[] | null;
@@ -26,17 +27,19 @@ export const HouseholdMembersList = ({
     <div>
       <h3 className="text-lg font-semibold mb-4">Household Members</h3>
       {members && members.length > 0 ? (
-        <div className="space-y-4">
-          {members.map((member) => (
-            <HouseholdMemberItem
-              key={member.id}
-              member={member}
-              isAdmin={isAdmin}
-              currentUserId={currentUserId}
-              onRoleChange={onRoleChange}
-            />
-          ))}
-        </div>
+        <ScrollArea className="h-[320px] pr-4">
+          <div className="space-y-4">
+            {members.map((member) => (
+              <HouseholdMemberItem
+                key={member.id}
+                member={member}
+                isAdmin={isAdmin}
+                currentUserId={currentUserId}
+                onRoleChange={onRoleChange}
+              />
+            ))}
+          </div>
+        </ScrollArea>
       ) : (
         <div className="text-center py-8 text-muted-foreground">
           <p>No members found. Try refreshing the data.</p>
