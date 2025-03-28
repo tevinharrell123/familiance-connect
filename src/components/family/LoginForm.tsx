@@ -42,10 +42,15 @@ export function LoginForm() {
         description: "You are now logged in",
       });
 
-      console.log("Login successful, hard redirecting to index");
+      console.log("Login successful, waiting briefly before redirecting");
       
-      // Use hard redirect instead of navigate to fully refresh the app state
-      window.location.href = "/";
+      // Add a small delay to allow backend operations to complete
+      // before redirecting the user
+      setTimeout(() => {
+        console.log("Redirecting after login delay");
+        // Use hard redirect instead of navigate to fully refresh the app state
+        window.location.href = "/";
+      }, 1000);
 
     } catch (error: any) {
       console.error('Error logging in:', error);
@@ -54,7 +59,6 @@ export function LoginForm() {
         description: error.message || "Failed to log in",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };

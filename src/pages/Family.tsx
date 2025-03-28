@@ -18,7 +18,9 @@ export default function Family() {
     error,
     fetchAttempted,
     clearError,
-    refetch
+    refetch,
+    isPolling,
+    pollCount
   } = useFamilyMembership();
   
   // Log when component mounts for debugging
@@ -28,7 +30,9 @@ export default function Family() {
       loading, 
       error, 
       fetchAttempted,
-      hasHousehold: !!household 
+      hasHousehold: !!household,
+      isPolling,
+      pollCount
     });
     
     if (error && error.includes('RLS-RECURSION')) {
@@ -38,7 +42,7 @@ export default function Family() {
         variant: "destructive",
       });
     }
-  }, [user, loading, error, household, fetchAttempted]);
+  }, [user, loading, error, household, fetchAttempted, isPolling, pollCount]);
   
   // Show error state if there's an error
   if (error) {
@@ -55,12 +59,18 @@ export default function Family() {
 
   // Show loading state while both auth and data are loading
   if (loading || authLoading) {
-    return <FamilyLoading />;
+    return (
+      <FamilyLoading 
+        isPolling={isPolling}
+        pollCount={pollCount}
+        maxPolls={10}
+      />
+    );
   }
 
   // If the user already has a household, show the family dashboard
   if (household) {
-    return <FamilyDashboard household={household} membership={membership} user={user} />;
+    return <FamilyDashboard household={household} membership={membership} />;
   }
 
   // If the user is authenticated but doesn't have a household, show the onboarding

@@ -1,8 +1,13 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
+
+// Maximum number of polling attempts
+const MAX_POLL_ATTEMPTS = 10;
+// Delay between polling attempts in milliseconds
+const POLL_INTERVAL = 500;
 
 export function useFamilyMembership() {
   const { user, isLoading: authLoading } = useAuth();
@@ -11,8 +16,37 @@ export function useFamilyMembership() {
   const [household, setHousehold] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [fetchAttempted, setFetchAttempted] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
+  const [polling, setPolling] = useState(false);
 
-  const fetchMembershipData = async () => {
+  const clearError = () => setError(null);
+
+  // Function to check if membership exists
+  const checkMembership = useCallback(async (userId: string) => {
+    try {
+      console.log(`Polling for membership (attempt ${pollCount + 1}/${MAX_POLL_ATTEMPTS})...`);
+      
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        // Only log the error during polling, don't set state yet
+        console.error('Error during membership polling:', error);
+        return false;
+      }
+      
+      return !!data; // Return true if membership exists
+    } catch (err) {
+      console.error('Unexpected error during polling:', err);
+      return false;
+    }
+  }, [pollCount]);
+
+  // Main function to fetch membership data with polling
+  const fetchMembershipData = useCallback(async () => {
     // Don't fetch if user is not authenticated yet
     if (authLoading || !user) {
       setLoading(false);
@@ -21,8 +55,40 @@ export function useFamilyMembership() {
     
     try {
       console.log("Fetching membership data for user:", user.id);
+      setPolling(true);
       
-      // Using maybeSingle instead of single to handle the case where no membership exists
+      // First poll to check if membership exists
+      let membershipExists = false;
+      let attempts = 0;
+      
+      while (!membershipExists && attempts < MAX_POLL_ATTEMPTS) {
+        membershipExists = await checkMembership(user.id);
+        if (membershipExists) {
+          console.log("Membership found after polling!");
+          break;
+        }
+        
+        // Increment attempt counter
+        attempts++;
+        setPollCount(attempts);
+        
+        // Wait before next attempt
+        if (!membershipExists && attempts < MAX_POLL_ATTEMPTS) {
+          await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        }
+      }
+      
+      setPolling(false);
+      
+      // If still no membership after polling, just set loading to false
+      if (!membershipExists) {
+        console.log("No membership found after maximum polling attempts");
+        setFetchAttempted(true);
+        setLoading(false);
+        return;
+      }
+      
+      // Now actually fetch the membership data
       const { data: membershipData, error: membershipError } = await supabase
         .from('memberships')
         .select('*')
@@ -39,7 +105,7 @@ export function useFamilyMembership() {
           // Show toast for database configuration issue
           toast({
             title: "Database Configuration Issue",
-            description: "We're experiencing a policy error. You can still proceed to setup your household.",
+            description: "We're experiencing a policy error in our database. You can still proceed to setup your household.",
             variant: "destructive",
           });
         } else {
@@ -85,29 +151,33 @@ export function useFamilyMembership() {
       setFetchAttempted(true);
       setLoading(false);
     }
-  };
+  }, [user, authLoading, checkMembership]);
 
+  // When user changes or auth state updates, restart the fetch process
   useEffect(() => {
     if (user) {
       console.log("User available, fetching membership data");
+      // Reset polling state when starting a new fetch
+      setPollCount(0);
+      setPolling(false);
       fetchMembershipData();
     } else if (!authLoading) {
       // If auth is done loading and there's no user, we can set loading to false
       setLoading(false);
     }
-  }, [user, authLoading]);
-
-  const clearError = () => setError(null);
+  }, [user, authLoading, fetchMembershipData]);
 
   return {
     user,
     authLoading,
-    loading,
+    loading: loading || polling,
     membership,
     household,
     error,
     fetchAttempted,
     clearError,
-    refetch: fetchMembershipData
+    refetch: fetchMembershipData,
+    isPolling: polling,
+    pollCount
   };
 }

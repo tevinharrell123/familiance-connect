@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 interface FamilyDashboardProps {
   household: any;
   membership: any;
-  user: any;
 }
 
 export function FamilyDashboard({ household, membership }: FamilyDashboardProps) {
