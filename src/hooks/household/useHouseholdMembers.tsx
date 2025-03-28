@@ -5,18 +5,15 @@ import { toast } from '@/components/ui/use-toast';
 import { HouseholdMember, HouseholdRole } from '@/types/household';
 
 export function useHouseholdMembers(
-  householdId: string | null, 
+  householdId: string | null,
   userRole: HouseholdRole | null,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[] | null>(null);
 
-  const getHouseholdMembers = async (targetHouseholdId?: string): Promise<HouseholdMember[]> => {
-    const finalHouseholdId = targetHouseholdId || householdId;
-    if (!finalHouseholdId) return [];
-    
+  const getHouseholdMembers = async (householdId: string): Promise<HouseholdMember[] | null> => {
     try {
-      console.log("Fetching members for household:", finalHouseholdId);
+      console.log("Fetching members for household:", householdId);
       
       const { data, error } = await supabase
         .from('household_members')
@@ -31,23 +28,21 @@ export function useHouseholdMembers(
             avatar_url
           )
         `)
-        .eq('household_id', finalHouseholdId);
-        
+        .eq('household_id', householdId);
+
       if (error) {
         console.error("Error fetching household members:", error);
-        throw error;
+        toast({
+          title: "Error",
+          description: "Could not fetch household members: " + error.message,
+          variant: "destructive",
+        });
+        return null;
       }
+
+      console.log("Fetched household members:", data);
       
-      if (!data) {
-        console.log("No members found for household");
-        setHouseholdMembers([]);
-        return [];
-      }
-      
-      console.log("Household members retrieved:", data);
-      
-      // Properly type and handle the returned data
-      const typedMembers: HouseholdMember[] = data.map(member => ({
+      const members: HouseholdMember[] = data.map((member: any) => ({
         id: member.id,
         household_id: member.household_id,
         user_id: member.user_id,
@@ -59,21 +54,22 @@ export function useHouseholdMembers(
         } : null
       }));
       
-      setHouseholdMembers(typedMembers);
-      return typedMembers;
+      setHouseholdMembers(members);
+      return members;
     } catch (error: any) {
-      console.error('Get household members error:', error);
-      return [];
+      console.error("Error in getHouseholdMembers:", error);
+      return null;
     }
   };
 
   const updateMemberRole = async (memberId: string, role: HouseholdRole): Promise<void> => {
     if (!householdId || userRole !== 'admin') {
-      throw new Error('Only household admins can update member roles');
+      throw new Error("Only household admins can update roles");
     }
     
     try {
       setIsLoading(true);
+      console.log(`Updating member ${memberId} to role ${role}`);
       
       const { error } = await supabase
         .from('household_members')
@@ -81,16 +77,21 @@ export function useHouseholdMembers(
         .eq('id', memberId)
         .eq('household_id', householdId);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating member role:", error);
+        throw new Error(`Failed to update role: ${error.message}`);
+      }
       
-      getHouseholdMembers();
+      const updatedMembers = await getHouseholdMembers(householdId);
       
-      toast({
-        title: "Role updated",
-        description: "The member's role has been updated successfully.",
-      });
+      if (updatedMembers) {
+        toast({
+          title: "Role updated",
+          description: "The member's role has been updated successfully.",
+        });
+      }
     } catch (error: any) {
-      console.error('Update member role error:', error);
+      console.error("Update member role error:", error);
       toast({
         title: "Failed to update role",
         description: error.message,

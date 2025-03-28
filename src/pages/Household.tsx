@@ -5,7 +5,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { NoHouseholdView } from '@/components/household/NoHouseholdView';
 import { HouseholdDetails } from '@/components/household/HouseholdDetails';
-import { HouseholdRole } from '@/types/household';
+import { HouseholdRole, HouseholdMember } from '@/types/household';
 
 const Household = () => {
   const { user, isLoading } = useRequireAuth();
@@ -120,7 +120,7 @@ const Household = () => {
           <div className="space-y-6">
             <HouseholdDetails 
               household={household}
-              householdMembers={householdMembers}
+              householdMembers={householdMembers as HouseholdMember[]}
               userRole={userRole}
               userId={user?.id || ''}
               onRefreshHousehold={handleRefreshHousehold}
