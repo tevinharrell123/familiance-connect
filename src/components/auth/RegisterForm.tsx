@@ -1,4 +1,5 @@
 
+// The RegisterForm is 300 lines, so we'll just update what we need
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';

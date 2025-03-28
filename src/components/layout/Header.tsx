@@ -12,11 +12,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
-import { useSignOut } from '@/hooks/auth/useSignOut';
 
 export function Header() {
-  const { user, profile, household } = useAuth();
-  const { signOut } = useSignOut();
+  const { user, profile, household, signOut } = useAuth();
   
   const getInitials = (name: string) => {
     if (!name) return 'U';
