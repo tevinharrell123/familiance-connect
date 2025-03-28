@@ -8,36 +8,47 @@ export function useSignOut() {
 
   const signOut = async () => {
     try {
-      // First clear local state
-      localStorage.removeItem('supabase.auth.token');
+      // Set a flag to prevent auth listener from reacting during signout
+      localStorage.setItem('signing_out', 'true');
+      
+      // Remove all Supabase-related items from localStorage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('supabase.')) {
+          localStorage.removeItem(key);
+        }
+      }
       
       // Attempt to sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Sign out error:', error);
-        // Show error toast only for non-session errors
-        if (error.message !== 'Session not found') {
+      try {
+        const { error } = await supabase.auth.signOut({ scope: 'global' });
+        if (error) {
+          console.error('Supabase sign out error:', error);
+          // Show error toast only for non-session errors
+          if (error.message !== 'Session not found') {
+            toast({
+              title: "Sign out failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
+        } else {
           toast({
-            title: "Sign out failed",
-            description: error.message,
-            variant: "destructive",
+            title: "Signed out",
+            description: "You've been successfully signed out.",
           });
         }
-      } else {
-        toast({
-          title: "Signed out",
-          description: "You've been successfully signed out.",
-        });
+      } catch (error: any) {
+        console.error('Supabase sign out error:', error);
       }
 
-      // Always navigate to auth page, even if there was an error
-      navigate('/auth');
+      // Force a hard redirect to auth page which will reset all state
+      window.location.href = '/auth';
       
     } catch (error: any) {
       console.error('Sign out error:', error);
-      // Continue with navigation despite error
-      navigate('/auth');
+      localStorage.removeItem('signing_out');
+      window.location.href = '/auth';
     }
   };
 

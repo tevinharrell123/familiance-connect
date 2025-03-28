@@ -458,17 +458,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      localStorage.setItem('signing_out', 'true');
       setIsLoading(true);
       
-      // Try to sign out first before clearing local state
-      try {
-        await supabase.auth.signOut();
-      } catch (error: any) {
-        console.error('Supabase sign out error:', error);
-        // We'll continue even if this fails
-      }
-      
-      // Now clear local state
       setProfile(null);
       setMembership(null);
       setHousehold(null);
@@ -476,17 +468,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       setSession(null);
       
-      // Clear any auth tokens in local storage
-      localStorage.removeItem('supabase.auth.token');
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('supabase.')) {
+          localStorage.removeItem(key);
+        }
+      }
       
-      // Force page refresh to ensure all auth state is cleared
+      try {
+        const { error } = await supabase.auth.signOut({ scope: 'global' });
+        if (error) {
+          console.error('Supabase sign out error:', error);
+        }
+      } catch (error: any) {
+        console.error('Supabase sign out error:', error);
+      }
+      
       window.location.href = '/auth';
     } catch (error: any) {
       console.error('Sign out error:', error);
-      // If all else fails, redirect to auth page
+      localStorage.removeItem('signing_out');
       window.location.href = '/auth';
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -498,9 +500,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    if (localStorage.getItem('signing_out') === 'true') {
+      return;
+    }
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth event:', event);
+        
+        if (localStorage.getItem('signing_out') === 'true' && event === 'SIGNED_OUT') {
+          console.log('Ignoring auth event during signout');
+          return;
+        }
+        
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
