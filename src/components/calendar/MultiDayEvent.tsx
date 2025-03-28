@@ -27,6 +27,12 @@ export function MultiDayEvent({
     ? event.user_profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
     : '?';
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('Multi-day event clicked:', event.id);
+    onClick(event);
+  };
+
   return (
     <div 
       className="absolute flex items-center rounded-md px-2 text-xs truncate cursor-pointer hover:opacity-90"
@@ -42,7 +48,7 @@ export function MultiDayEvent({
         width: `calc(${span * (100/7)}% - 4px)`,
         top: `${30 + (weekIdx * 80)}px`
       }}
-      onClick={() => onClick(event)}
+      onClick={handleClick}
     >
       <Avatar className="h-4 w-4 mr-1">
         {event.user_profile?.avatar_url ? (

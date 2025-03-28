@@ -13,15 +13,18 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
     ? event.user_profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
     : '?';
       
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('Event indicator clicked:', event.id);
+    onClick(event);
+  };
+
   return (
     <div 
       key={event.id} 
       className="flex items-center text-xs rounded-full px-1 mt-1 truncate cursor-pointer hover:opacity-80"
       style={{ backgroundColor: `${event.color || '#7B68EE'}30` }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick(event);
-      }}
+      onClick={handleClick}
     >
       <Avatar className="h-4 w-4 mr-1">
         {event.user_profile?.avatar_url ? (

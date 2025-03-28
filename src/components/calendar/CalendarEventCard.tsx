@@ -51,8 +51,10 @@ export function CalendarEventCard({ event, onClick, showMultiDayBadge = false }:
     backgroundColor: `${color || '#7B68EE'}10`
   };
   
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onClick) {
+      console.log('Calendar event card clicked:', event.id);
       onClick(event);
     }
   };

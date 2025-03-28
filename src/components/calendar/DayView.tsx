@@ -45,6 +45,13 @@ export function DayView({ currentDate, events = [], onEventClick }: DayViewProps
     console.log('Day view events:', eventsWithDuration.length);
   }
 
+  const handleEventClick = (event: CalendarEvent) => {
+    if (onEventClick) {
+      console.log('Event clicked in DayView:', event.id);
+      onEventClick(event);
+    }
+  };
+
   return (
     <div className="space-y-4 p-4">
       <h2 className="text-xl font-semibold">{format(currentDate, 'EEEE, MMMM d, yyyy')}</h2>
@@ -60,7 +67,7 @@ export function DayView({ currentDate, events = [], onEventClick }: DayViewProps
               <CalendarEventCard 
                 event={event} 
                 showMultiDayBadge={true} 
-                onClick={onEventClick}
+                onClick={handleEventClick}
               />
             </div>
           ))}

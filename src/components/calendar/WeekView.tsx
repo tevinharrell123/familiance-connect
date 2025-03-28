@@ -43,6 +43,13 @@ export function WeekView({ currentDate, events = [], onEventClick }: WeekViewPro
     });
   };
 
+  const handleEventClick = (event: CalendarEvent) => {
+    if (onEventClick) {
+      console.log('Event clicked in WeekView:', event.id);
+      onEventClick(event);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-center mb-4">
@@ -71,7 +78,7 @@ export function WeekView({ currentDate, events = [], onEventClick }: WeekViewPro
                       <CalendarEventCard 
                         event={event} 
                         showMultiDayBadge={true} 
-                        onClick={onEventClick}
+                        onClick={() => handleEventClick(event)}
                       />
                     </div>
                   ))
