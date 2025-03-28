@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +20,6 @@ const householdSchema = z.object({
 const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const { refreshHousehold } = useHousehold();
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof householdSchema>>({
@@ -62,9 +62,12 @@ const Onboarding = () => {
         description: `Welcome to ${data.householdName}`,
       });
       
-      // Force a complete page reload to reset all contexts
-      // This is more reliable than just refreshing the household data
-      window.location.href = '/';
+      // Set a flag in localStorage to indicate we need to reload the household data
+      // This helps prevent infinite recursion issues
+      localStorage.setItem('household_created', 'true');
+      
+      // Use replace: true to replace the current entry in the history stack
+      navigate('/', { replace: true });
     } catch (error: any) {
       console.error("Error in onboarding:", error);
       toast({

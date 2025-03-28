@@ -16,11 +16,21 @@ export function AuthGuard({
   requiresHousehold = true 
 }: AuthGuardProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const { household, isLoading: householdLoading } = useHousehold();
+  const { household, isLoading: householdLoading, refreshHousehold } = useHousehold();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
+    // Check if household was just created
+    const householdCreated = localStorage.getItem('household_created') === 'true';
+    if (householdCreated && user) {
+      // Clear the flag
+      localStorage.removeItem('household_created');
+      // Force a reload of the page to reset all contexts
+      window.location.reload();
+      return;
+    }
+
     // Don't do anything while still loading
     if (authLoading) return;
 
@@ -54,7 +64,8 @@ export function AuthGuard({
     location.pathname, 
     navigate, 
     requiresAuth,
-    requiresHousehold
+    requiresHousehold,
+    refreshHousehold
   ]);
 
   // If we're checking auth and we're still loading, show nothing
