@@ -13,7 +13,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: { full_name?: string }) => Promise<void>;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<any>; // Changed from Promise<void> to Promise<any>
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
