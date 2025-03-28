@@ -1,4 +1,3 @@
-
 import React, { createContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,7 +40,7 @@ type AuthContextType = {
   membership: Membership | null;
   household: Household | null;
   householdMembers: HouseholdMember[] | null;
-  userRole: HouseholdRole | null; // Add userRole to the context type
+  userRole: HouseholdRole | null;
   createHousehold: (name: string) => Promise<Household>;
   joinHousehold: (inviteCode: string) => Promise<void>;
   leaveHousehold: () => Promise<void>;
@@ -134,7 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('household_members')
         .select(`
           *,
-          user_profiles:user_profiles (*)
+          profiles (*)
         `)
         .eq('household_id', householdId);
 
@@ -153,7 +152,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: item.role as HouseholdRole,
           created_at: item.created_at
         },
-        profile: item.user_profiles
+        profile: item.profiles ? {
+          id: item.profiles.id,
+          full_name: item.profiles.full_name,
+          avatar_url: item.profiles.avatar_url,
+          created_at: item.profiles.created_at,
+          updated_at: item.profiles.updated_at
+        } : null
       }));
 
       setHouseholdMembers(members);
@@ -561,7 +566,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       membership,
       household,
       householdMembers,
-      userRole: membership?.role || null, // Add userRole to the context provider
+      userRole: membership?.role || null,
       createHousehold,
       joinHousehold,
       leaveHousehold,

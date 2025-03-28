@@ -14,7 +14,7 @@ export interface HouseholdMember {
   user_id: string;
   role: HouseholdRole;
   created_at: string;
-  user_profiles?: {
+  profiles: {
     full_name: string | null;
     avatar_url: string | null;
   } | null;
