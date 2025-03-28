@@ -1,20 +1,30 @@
 
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import LoginForm from './LoginForm';
-import RegisterForm from './RegisterForm';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { RegisterForm } from '@/components/auth/RegisterForm';
 
-const AuthCard = () => {
+export function AuthCard() {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (user) {
+    navigate('/');
+    return null;
+  }
 
   return (
     <Card className="w-full max-w-md">
@@ -60,6 +70,4 @@ const AuthCard = () => {
       </CardFooter>
     </Card>
   );
-};
-
-export default AuthCard;
+}

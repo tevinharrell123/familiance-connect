@@ -84,8 +84,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!data) return null;
       
       console.log('Profile data:', data);
-      setProfile(data);
-      return data;
+      setProfile(data as Profile);
+      return data as Profile;
     } catch (error) {
       console.error('Error in fetchProfile:', error);
       return null;
@@ -113,11 +113,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Membership data:', membershipData);
       
       if (membershipData) {
-        setMembership({
-          ...membershipData,
+        const membershipObj: Membership = {
+          id: membershipData.id,
+          user_id: membershipData.user_id,
+          household_id: membershipData.household_id,
+          role: membershipData.role,
+          created_at: membershipData.created_at,
           household: undefined
-        });
-        setHousehold(membershipData.household);
+        };
+        
+        setMembership(membershipObj);
+        setHousehold(membershipData.household as Household);
         
         // Fetch household members
         fetchHouseholdMembers(membershipData.household_id);
@@ -220,7 +226,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: `You've successfully created your household: ${name}`,
       });
       
-      return householdData;
+      return householdData as Household;
     } catch (error: any) {
       console.error('Create household error:', error);
       toast({
@@ -466,12 +472,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Sign up new user
-  const signUp = async (
-    email: string, 
-    password: string, 
-    userData: { full_name: string, birthday?: string, household_name?: string }) 
-  => {
+  // Sign up new user - Fixed the line break issue here
+  const signUp = async (email: string, password: string, userData: { full_name: string, birthday?: string, household_name?: string }) => {
     try {
       setIsLoading(true);
       console.log('Starting sign up process');
