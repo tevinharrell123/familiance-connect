@@ -56,16 +56,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth state changed:', event);
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+        if (newSession) {
+          setSession(newSession);
+          setUser(newSession.user);
+        } else {
+          setSession(null);
+          setUser(null);
+        }
         setIsLoading(false);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
+      if (currentSession) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+      }
       setIsLoading(false);
     });
 
@@ -74,8 +81,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const contextValue = {
+    user,
+    session,
+    isLoading,
+    refreshUser,
+    signOut
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, refreshUser, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

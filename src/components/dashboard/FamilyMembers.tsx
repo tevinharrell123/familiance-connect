@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 type FamilyMember = {
   id: string;
@@ -15,26 +15,70 @@ type FamilyMember = {
   role: 'admin' | 'adult' | 'child';
 };
 
-export function FamilyMembersWidget() {
+interface FamilyMembersWidgetProps {
+  householdId?: string;
+}
+
+export function FamilyMembersWidget({ householdId }: FamilyMembersWidgetProps) {
+  const { user } = useAuth();
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentHousehold, setCurrentHousehold] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFamilyMembers = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
+        if (!user) {
           setLoading(false);
           return;
         }
 
-        // First get the user's household
+        // If householdId is provided, use it directly
+        if (householdId) {
+          // Get all household members with their profiles
+          const { data: members, error: membersError } = await supabase
+            .from('memberships')
+            .select(`
+              id, role, user_id,
+              user_profiles:user_id(id, full_name, avatar_url)
+            `)
+            .eq('household_id', householdId);
+
+          if (membersError) {
+            console.error('Error fetching members:', membersError);
+            toast({
+              title: "Error",
+              description: "Failed to fetch family members",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+
+          // Transform data for component
+          const formattedMembers = members.map((member: any) => {
+            const profile = member.user_profiles;
+            const name = profile?.full_name || 'Family Member';
+            const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2);
+            
+            return {
+              id: member.id,
+              name,
+              avatar: profile?.avatar_url,
+              initials,
+              role: member.role
+            };
+          });
+
+          setFamilyMembers(formattedMembers);
+          setLoading(false);
+          return;
+        }
+
+        // Otherwise, try to find user's household
         const { data: membershipData, error: membershipError } = await supabase
           .from('memberships')
           .select('household_id')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .single();
 
         if (membershipError) {
@@ -42,8 +86,6 @@ export function FamilyMembersWidget() {
           setLoading(false);
           return;
         }
-
-        setCurrentHousehold(membershipData.household_id);
 
         // Get all household members with their profiles
         const { data: members, error: membersError } = await supabase
@@ -89,7 +131,7 @@ export function FamilyMembersWidget() {
     };
 
     fetchFamilyMembers();
-  }, []);
+  }, [householdId, user]);
 
   return (
     <Card className="shadow-sm">
@@ -102,9 +144,9 @@ export function FamilyMembersWidget() {
             <div className="animate-pulse text-muted-foreground">Loading members...</div>
           </div>
         ) : familyMembers.length > 0 ? (
-          <div className="flex justify-center mb-4">
+          <div className="flex flex-wrap justify-center mb-4">
             {familyMembers.map((member) => (
-              <div key={member.id} className="flex flex-col items-center mx-2">
+              <div key={member.id} className="flex flex-col items-center mx-2 mb-3">
                 <Avatar className="h-12 w-12 mb-1">
                   {member.avatar ? (
                     <AvatarImage src={member.avatar} alt={member.name} />
