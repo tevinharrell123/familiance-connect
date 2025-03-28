@@ -1,36 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from '@/components/ui/use-toast';
-import { AlertTriangle, Copy, Home, MoreHorizontal, Plus, RefreshCw, UserPlus } from 'lucide-react';
-import { HouseholdRole, HouseholdMember } from '@/types/household';
+import { NoHouseholdView } from '@/components/household/NoHouseholdView';
+import { HouseholdDetails } from '@/components/household/HouseholdDetails';
+import { HouseholdRole } from '@/types/household';
 
 const Household = () => {
   const { user, isLoading } = useRequireAuth();
@@ -46,8 +21,6 @@ const Household = () => {
     refreshHousehold
   } = auth;
   
-  const [newHouseholdName, setNewHouseholdName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -59,14 +32,10 @@ const Household = () => {
     }
   }, [household, user]);
 
-  const handleCreateHousehold = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newHouseholdName.trim()) return;
-    
+  const handleCreateHousehold = async (name: string) => {
     try {
       setIsSubmitting(true);
-      await createHousehold(newHouseholdName);
-      setNewHouseholdName('');
+      await createHousehold(name);
     } catch (error) {
       console.error('Error creating household:', error);
     } finally {
@@ -74,14 +43,10 @@ const Household = () => {
     }
   };
 
-  const handleJoinHousehold = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteCode.trim()) return;
-    
+  const handleJoinHousehold = async (inviteCode: string) => {
     try {
       setIsJoining(true);
       await joinHousehold(inviteCode);
-      setInviteCode('');
       
       setTimeout(() => {
         handleRefreshHousehold();
@@ -115,16 +80,6 @@ const Household = () => {
     }
   };
 
-  const handleCopyInviteCode = () => {
-    if (household?.invite_code) {
-      navigator.clipboard.writeText(household.invite_code);
-      toast({
-        title: "Invite code copied",
-        description: "The invite code has been copied to your clipboard",
-      });
-    }
-  };
-
   const handleRoleChange = async (memberId: string, role: HouseholdRole) => {
     try {
       await updateMemberRole(memberId, role);
@@ -155,198 +110,25 @@ const Household = () => {
         </div>
 
         {!household ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Home className="mr-2 h-5 w-5" /> Create New Household
-                </CardTitle>
-                <CardDescription>
-                  Start a new household for your family
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleCreateHousehold} className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="household-name" className="text-sm font-medium">
-                      Household Name
-                    </label>
-                    <Input
-                      id="household-name"
-                      placeholder="The Smith Family"
-                      value={newHouseholdName}
-                      onChange={(e) => setNewHouseholdName(e.target.value)}
-                    />
-                  </div>
-                  <Button type="submit" disabled={isSubmitting || !newHouseholdName.trim()}>
-                    {isSubmitting ? "Creating..." : "Create Household"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <UserPlus className="mr-2 h-5 w-5" /> Join Existing Household
-                </CardTitle>
-                <CardDescription>
-                  Join an existing household with an invite code
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleJoinHousehold} className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="invite-code" className="text-sm font-medium">
-                      Invite Code
-                    </label>
-                    <Input
-                      id="invite-code"
-                      placeholder="Enter invite code"
-                      value={inviteCode}
-                      onChange={(e) => setInviteCode(e.target.value)}
-                    />
-                  </div>
-                  <Button type="submit" disabled={isJoining || !inviteCode.trim()}>
-                    {isJoining ? "Joining..." : "Join Household"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+          <NoHouseholdView 
+            onCreateHousehold={handleCreateHousehold}
+            onJoinHousehold={handleJoinHousehold}
+            isSubmitting={isSubmitting}
+            isJoining={isJoining}
+          />
         ) : (
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>{household.name}</CardTitle>
-                    <CardDescription>
-                      {userRole === 'admin' ? 'You are the admin of this household' : 'You are a member of this household'}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleRefreshHousehold}
-                      disabled={isRefreshing}
-                    >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} /> 
-                      Refresh
-                    </Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <UserPlus className="h-4 w-4 mr-2" /> Invite Members
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Invite Family Members</DialogTitle>
-                          <DialogDescription>
-                            Share this invite code with family members to join your household.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex items-center space-x-2 mt-4 p-4 bg-muted rounded-md">
-                          <code className="text-lg font-mono">{household.invite_code}</code>
-                          <Button variant="ghost" size="icon" onClick={handleCopyInviteCode}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <DialogFooter className="mt-4">
-                          <Button onClick={handleCopyInviteCode}>
-                            Copy Invite Code
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <h3 className="text-lg font-semibold mb-4">Household Members</h3>
-                {householdMembers && householdMembers.length > 0 ? (
-                  <div className="space-y-4">
-                    {householdMembers.map((member: HouseholdMember) => (
-                      <div key={member.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Avatar>
-                            <AvatarImage src={member.profiles?.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {member.profiles?.full_name?.charAt(0) || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{member.profiles?.full_name || 'Unknown User'}</p>
-                            <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
-                          </div>
-                        </div>
-                        
-                        {userRole === 'admin' && member.user_id !== user?.id && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleRoleChange(member.id, 'admin')}>
-                                Make Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRoleChange(member.id, 'adult')}>
-                                Set as Adult
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRoleChange(member.id, 'child')}>
-                                Set as Child
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No members found. Try refreshing the data.</p>
-                    <Button variant="outline" className="mt-4" onClick={handleRefreshHousehold}>
-                      <RefreshCw className="h-4 w-4 mr-2" /> Refresh
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="flex justify-between border-t pt-6">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="destructive">
-                      <AlertTriangle className="h-4 w-4 mr-2" />
-                      Leave Household
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Leave Household?</DialogTitle>
-                      <DialogDescription>
-                        {userRole === 'admin' && householdMembers && householdMembers.length > 1 
-                          ? "As the admin, if you leave, another member will be promoted to admin."
-                          : "Are you sure you want to leave this household? This action cannot be undone."
-                        }
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="mt-4">
-                      <Button variant="outline" onClick={() => {}}>Cancel</Button>
-                      <Button 
-                        variant="destructive" 
-                        onClick={handleLeaveHousehold}
-                        disabled={isLeaving}
-                      >
-                        {isLeaving ? "Leaving..." : "Leave Household"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </CardFooter>
-            </Card>
+            <HouseholdDetails 
+              household={household}
+              householdMembers={householdMembers}
+              userRole={userRole}
+              userId={user?.id || ''}
+              onRefreshHousehold={handleRefreshHousehold}
+              onLeaveHousehold={handleLeaveHousehold}
+              onRoleChange={handleRoleChange}
+              isRefreshing={isRefreshing}
+              isLeaving={isLeaving}
+            />
           </div>
         )}
       </div>
