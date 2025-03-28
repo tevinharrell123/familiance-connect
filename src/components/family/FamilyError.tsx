@@ -24,6 +24,8 @@ export function FamilyError({
   
   if (!error) return null;
   
+  const isDbError = error.includes('Database policy error') || error.includes('RLS');
+  
   return (
     <div className="container mx-auto max-w-md py-10">
       <Card className="p-8">
@@ -38,7 +40,9 @@ export function FamilyError({
           <p className="text-center mb-6 text-sm text-muted-foreground">
             {fetchAttempted && hasUser ? 
               "We're having trouble accessing your household data. You can proceed to create or join a household." :
-              "There was an error loading your data. Please try again."}
+              isDbError ? 
+                "There's a database configuration issue. Our team has been notified." :
+                "There was an error loading your data. Please try again."}
           </p>
           <div className="flex flex-col gap-4 justify-center">
             {fetchAttempted && hasUser ? (

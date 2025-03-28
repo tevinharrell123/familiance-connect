@@ -1,17 +1,18 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { toast } from "@/components/ui/use-toast";
 import { OnboardingFlow } from '@/components/family/OnboardingFlow';
 import { FamilyDashboard } from '@/components/family/FamilyDashboard';
 import { FamilyError } from '@/components/family/FamilyError';
 import { FamilyLoading } from '@/components/family/FamilyLoading';
 import { useFamilyMembership } from '@/hooks/useFamilyMembership';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Family() {
+  const { user } = useAuth();
   const { 
-    user,
-    authLoading,
     loading,
+    authLoading,
     membership,
     household,
     error,
@@ -19,6 +20,25 @@ export default function Family() {
     clearError,
     refetch
   } = useFamilyMembership();
+  
+  // Log when component mounts for debugging
+  useEffect(() => {
+    console.log('Family component rendered', { 
+      hasUser: !!user, 
+      loading, 
+      error, 
+      fetchAttempted,
+      hasHousehold: !!household 
+    });
+    
+    if (error && error.includes('RLS-RECURSION')) {
+      toast({
+        title: "Database Configuration Issue",
+        description: "We're working on fixing this. You can still proceed to setup.",
+        variant: "destructive",
+      });
+    }
+  }, [user, loading, error, household, fetchAttempted]);
   
   // Show error state if there's an error
   if (error) {

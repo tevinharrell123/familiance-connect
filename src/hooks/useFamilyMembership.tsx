@@ -21,6 +21,8 @@ export function useFamilyMembership() {
     
     try {
       console.log("Fetching membership data for user:", user.id);
+      
+      // Using maybeSingle instead of single to handle the case where no membership exists
       const { data: membershipData, error: membershipError } = await supabase
         .from('memberships')
         .select('*')
@@ -29,7 +31,12 @@ export function useFamilyMembership() {
       
       if (membershipError) {
         console.error('Error fetching membership:', membershipError);
-        setError('Failed to fetch membership data. Please try again later.');
+        // More specific error message
+        if (membershipError.message.includes('recursion')) {
+          setError('Database policy error. Please contact support with error code: RLS-RECURSION.');
+        } else {
+          setError('Failed to fetch membership data. Please try again later.');
+        }
         setFetchAttempted(true);
         setLoading(false);
         return;
@@ -57,11 +64,13 @@ export function useFamilyMembership() {
         
         console.log("Household data:", householdData);
         setHousehold(householdData);
+      } else {
+        console.log("No membership found for user", user.id);
       }
       
       setFetchAttempted(true);
       setLoading(false);
-    } catch (fetchError) {
+    } catch (fetchError: any) {
       console.error('Error fetching data:', fetchError);
       setError('An error occurred while fetching your data. Please try again later.');
       setFetchAttempted(true);
@@ -70,7 +79,10 @@ export function useFamilyMembership() {
   };
 
   useEffect(() => {
-    fetchMembershipData();
+    if (user) {
+      console.log("User available, fetching membership data");
+      fetchMembershipData();
+    }
   }, [user, authLoading]);
 
   const clearError = () => setError(null);
