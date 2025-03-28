@@ -42,15 +42,10 @@ export function LoginForm() {
         description: "You are now logged in",
       });
 
-      console.log("Login successful, waiting briefly before redirecting");
+      console.log("Login successful, hard redirecting to index");
       
-      // Add a longer delay to allow membership data to be accessible
-      // This gives time for RLS policies and membership data to sync
-      setTimeout(() => {
-        console.log("Redirecting after login delay");
-        // Use hard redirect instead of navigate to fully refresh the app state
-        window.location.href = "/";
-      }, 1500);
+      // Use hard redirect instead of navigate to fully refresh the app state
+      window.location.href = "/";
 
     } catch (error: any) {
       console.error('Error logging in:', error);
@@ -59,6 +54,7 @@ export function LoginForm() {
         description: error.message || "Failed to log in",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
