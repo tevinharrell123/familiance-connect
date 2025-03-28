@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,24 +23,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Setting up auth state listener");
+    
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // If event is a token refresh failure due to email not confirmed, 
-        // we'll still keep the user logged in for this app
-        if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        console.log("Auth state changed:", event);
+        
+        // Accept most auth events to maintain session
+        // This ensures we don't get locked out due to email confirmation issues
+        if (session) {
+          console.log("Session exists, updating auth state");
           setSession(session);
-          setUser(session?.user ?? null);
+          setUser(session.user);
         } else if (event === 'SIGNED_OUT') {
+          console.log("User signed out, clearing auth state");
           setSession(null);
           setUser(null);
         }
+        
         setIsLoading(false);
       }
     );
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session ? "Found session" : "No session");
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);

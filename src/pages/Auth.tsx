@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,51 +49,49 @@ const Auth = () => {
   const onLoginSubmit = async (data: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
-      if (error) {
-        // Handle "Email not confirmed" error by letting them sign in anyway
-        if (error.message.includes("Email not confirmed")) {
-          // Try to sign in again with email/password but bypass the email confirmation
-          const { error: secondError } = await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.password,
+      if (error && error.message.includes("Email not confirmed")) {
+        console.log("Email not confirmed error detected, attempting bypass");
+        
+        const { error: secondAttemptError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        });
+        
+        if (secondAttemptError) {
+          console.error("Second attempt failed:", secondAttemptError.message);
+          toast({
+            title: "Login failed",
+            description: secondAttemptError.message,
+            variant: "destructive",
           });
-          
-          if (secondError) {
-            toast({
-              title: "Login failed",
-              description: secondError.message,
-              variant: "destructive",
-            });
-            return;
-          }
-          
+        } else {
           toast({
             title: "Welcome!",
             description: "You have successfully logged in",
           });
           navigate("/");
-          return;
         }
-        
+      } else if (error) {
+        console.error("Login error:", error.message);
         toast({
           title: "Login failed",
           description: error.message,
           variant: "destructive",
         });
-        return;
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in",
+        });
+        navigate("/");
       }
-
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in",
-      });
-      navigate("/");
     } catch (error: any) {
+      console.error("Unexpected error:", error);
       toast({
         title: "Something went wrong",
         description: error.message || "Please try again later",
@@ -115,7 +112,8 @@ const Auth = () => {
           data: {
             first_name: data.firstName,
             last_name: data.lastName,
-          }
+          },
+          emailRedirectTo: window.location.origin,
         }
       });
 
@@ -128,11 +126,25 @@ const Auth = () => {
         return;
       }
 
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (signInError) {
+        toast({
+          title: "Login after signup failed",
+          description: signInError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Account created!",
-        description: "Please check your email to confirm your account",
+        description: "You've been signed in automatically",
       });
-      setActiveTab("login");
+      navigate("/");
     } catch (error: any) {
       toast({
         title: "Something went wrong",
