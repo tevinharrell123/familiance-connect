@@ -31,12 +31,21 @@ export function useFamilyMembership() {
       
       if (membershipError) {
         console.error('Error fetching membership:', membershipError);
-        // More specific error message
-        if (membershipError.message.includes('recursion')) {
+        
+        // Handle RLS recursion error specifically
+        if (membershipError.message && membershipError.message.includes('recursion')) {
           setError('Database policy error. Please contact support with error code: RLS-RECURSION.');
+          
+          // Show toast for database configuration issue
+          toast({
+            title: "Database Configuration Issue",
+            description: "We're experiencing a policy error. You can still proceed to setup your household.",
+            variant: "destructive",
+          });
         } else {
           setError('Failed to fetch membership data. Please try again later.');
         }
+        
         setFetchAttempted(true);
         setLoading(false);
         return;
@@ -82,6 +91,9 @@ export function useFamilyMembership() {
     if (user) {
       console.log("User available, fetching membership data");
       fetchMembershipData();
+    } else if (!authLoading) {
+      // If auth is done loading and there's no user, we can set loading to false
+      setLoading(false);
     }
   }, [user, authLoading]);
 

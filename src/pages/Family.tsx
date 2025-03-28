@@ -34,7 +34,7 @@ export default function Family() {
     if (error && error.includes('RLS-RECURSION')) {
       toast({
         title: "Database Configuration Issue",
-        description: "We're working on fixing this. You can still proceed to setup.",
+        description: "We're experiencing a policy error in our database. You can still proceed to setup your household.",
         variant: "destructive",
       });
     }
