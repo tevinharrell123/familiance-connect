@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,6 +58,8 @@ export const RegisterForm = () => {
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       setIsSubmitting(true);
+      console.log("Form values submitted:", values);
+      
       const userData: { full_name: string; birthday?: string; household_name?: string; household_code?: string } = {
         full_name: values.fullName,
         birthday: values.dob ? format(values.dob, 'yyyy-MM-dd') : undefined,
@@ -71,6 +72,7 @@ export const RegisterForm = () => {
         userData.household_code = values.householdCode;
       }
       
+      console.log("Calling signUp with data:", values.email, "[password]", userData);
       await signUp(values.email, values.password, userData);
       
       let successMessage = "Your account has been created. Please check your email to confirm your account.";
@@ -86,6 +88,11 @@ export const RegisterForm = () => {
       });
     } catch (error) {
       console.error('Register error:', error);
+      toast({
+        title: "Registration failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -260,7 +267,11 @@ export const RegisterForm = () => {
           </Tabs>
         </div>
         
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isSubmitting}
+        >
           {isSubmitting ? "Creating account..." : "Create Account"}
         </Button>
       </form>

@@ -7,6 +7,8 @@ import { AuthCard } from '@/components/auth/AuthCard';
 const Auth = () => {
   const { user, isLoading } = useAuth();
 
+  console.log("Auth page - User:", user, "isLoading:", isLoading);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -16,6 +18,7 @@ const Auth = () => {
   }
 
   if (user) {
+    console.log("User is authenticated, redirecting to home");
     return <Navigate to="/" replace />;
   }
 
