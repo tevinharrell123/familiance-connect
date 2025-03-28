@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -31,7 +30,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/use-toast';
 import { AlertTriangle, Copy, Home, MoreHorizontal, Plus, RefreshCw, UserPlus } from 'lucide-react';
-import { HouseholdRole } from '@/types/household';
+import { HouseholdRole, HouseholdMember } from '@/types/household';
 
 const Household = () => {
   const { user, isLoading } = useRequireAuth();
@@ -269,7 +268,7 @@ const Household = () => {
                 <h3 className="text-lg font-semibold mb-4">Household Members</h3>
                 {householdMembers && householdMembers.length > 0 ? (
                   <div className="space-y-4">
-                    {householdMembers.map((member) => (
+                    {householdMembers.map((member: HouseholdMember) => (
                       <div key={member.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <Avatar>

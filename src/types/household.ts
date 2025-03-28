@@ -16,7 +16,7 @@ export interface HouseholdMember {
   created_at: string;
   profile?: {
     full_name: string | null;
-    avatar_url?: string | null;
+    avatar_url: string | null;
   } | null;
 }
 
