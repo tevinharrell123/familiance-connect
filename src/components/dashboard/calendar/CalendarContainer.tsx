@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
+import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
 import { CalendarEvent, CalendarFormValues, CalendarViewType } from '@/types/calendar';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
@@ -14,6 +15,8 @@ export function CalendarWidget() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedView, setSelectedView] = useState<CalendarViewType>('month');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   const { 
@@ -103,6 +106,11 @@ export function CalendarWidget() {
 
   const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked:', event);
+    setSelectedEvent(event);
+    setDetailsDialogOpen(true);
+  };
+  
+  const handleEditClick = (event: CalendarEvent) => {
     setEditingEvent(event);
     setDialogOpen(true);
   };
@@ -151,6 +159,13 @@ export function CalendarWidget() {
         defaultValues={getEventDialogDefaultValues()}
         isSubmitting={isCreating || isUpdating}
         isDeleting={isDeleting}
+      />
+      
+      <EventDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        event={selectedEvent}
+        onEditClick={handleEditClick}
       />
     </Card>
   );

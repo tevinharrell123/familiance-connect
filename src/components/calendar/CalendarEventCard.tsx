@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface CalendarEventCardProps {
   event: CalendarEvent & { isMultiDay?: boolean; duration?: number };
-  onClick?: () => void;
+  onClick?: (event: CalendarEvent) => void;
   showMultiDayBadge?: boolean;
 }
 
@@ -51,11 +51,17 @@ export function CalendarEventCard({ event, onClick, showMultiDayBadge = false }:
     backgroundColor: `${color || '#7B68EE'}10`
   };
   
+  const handleClick = () => {
+    if (onClick) {
+      onClick(event);
+    }
+  };
+  
   return (
     <Card 
       className="cursor-pointer hover:shadow-md transition-shadow"
       style={cardStyle}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <CardContent className="p-3">
         <div className="flex justify-between items-start">

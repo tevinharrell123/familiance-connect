@@ -63,11 +63,19 @@ export function CalendarTabContent({
           </TabsContent>
           
           <TabsContent value="day">
-            <DayView currentDate={currentDate} events={events} />
+            <DayView 
+              currentDate={currentDate} 
+              events={events} 
+              onEventClick={onEventClick}
+            />
           </TabsContent>
           
           <TabsContent value="week">
-            <WeekView currentDate={currentDate} events={events} />
+            <WeekView 
+              currentDate={currentDate} 
+              events={events}
+              onEventClick={onEventClick}
+            />
           </TabsContent>
         </Tabs>
       </div>

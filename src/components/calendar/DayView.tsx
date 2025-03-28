@@ -7,9 +7,10 @@ import { CalendarEventCard } from './CalendarEventCard';
 interface DayViewProps {
   currentDate: Date;
   events?: CalendarEvent[];
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function DayView({ currentDate, events = [] }: DayViewProps) {
+export function DayView({ currentDate, events = [], onEventClick }: DayViewProps) {
   // Filter events for the current day
   const dayEvents = events.filter(event => {
     if (!event) return false;
@@ -56,7 +57,11 @@ export function DayView({ currentDate, events = [] }: DayViewProps) {
         <div className="space-y-3">
           {eventsWithDuration.map(event => (
             <div key={event.id} className="max-w-md mx-auto">
-              <CalendarEventCard event={event} showMultiDayBadge={true} />
+              <CalendarEventCard 
+                event={event} 
+                showMultiDayBadge={true} 
+                onClick={onEventClick}
+              />
             </div>
           ))}
         </div>

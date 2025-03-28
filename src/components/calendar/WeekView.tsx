@@ -7,9 +7,10 @@ import { CalendarEventCard } from './CalendarEventCard';
 interface WeekViewProps {
   currentDate: Date;
   events?: CalendarEvent[];
+  onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function WeekView({ currentDate, events = [] }: WeekViewProps) {
+export function WeekView({ currentDate, events = [], onEventClick }: WeekViewProps) {
   // Get start and end of the week
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // 0 = Sunday
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
@@ -67,7 +68,11 @@ export function WeekView({ currentDate, events = [] }: WeekViewProps) {
                 ) : (
                   dayEvents.map(event => (
                     <div key={event.id} className="text-xs">
-                      <CalendarEventCard event={event} showMultiDayBadge={true} />
+                      <CalendarEventCard 
+                        event={event} 
+                        showMultiDayBadge={true} 
+                        onClick={onEventClick}
+                      />
                     </div>
                   ))
                 )}
