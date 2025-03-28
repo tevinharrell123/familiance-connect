@@ -44,12 +44,10 @@ export function LoginForm() {
         description: "You are now logged in",
       });
 
-      // Navigate directly to the family page to ensure the user can continue
-      // This bypasses the problematic membership check
       console.log("Login successful, redirecting to family page");
-      setTimeout(() => {
-        navigate('/family');
-      }, 500);
+      
+      // No setTimeout - navigate immediately
+      navigate('/family');
 
     } catch (error: any) {
       console.error('Error logging in:', error);
