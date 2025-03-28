@@ -17,15 +17,26 @@ import {
 } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters long" }),
 });
 
-const registerSchema = loginSchema.extend({
+const registerSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters long" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  dob: z.date({ required_error: "Please select your date of birth" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters long" }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters long" }),
+  profileImage: z.instanceof(FileList).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -38,6 +49,7 @@ const Auth = () => {
   const { user, isLoading, signIn, signUp } = useAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -57,6 +69,18 @@ const Auth = () => {
     },
   });
 
+  const handleProfileImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfilePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const onLoginSubmit = async (values: LoginFormValues) => {
     try {
       setIsSubmitting(true);
@@ -71,7 +95,15 @@ const Auth = () => {
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     try {
       setIsSubmitting(true);
-      await signUp(values.email, values.password, { full_name: values.fullName });
+      const userData: { full_name: string; dob?: string } = {
+        full_name: values.fullName,
+        dob: values.dob ? format(values.dob, 'yyyy-MM-dd') : undefined,
+      };
+      
+      await signUp(values.email, values.password, userData);
+      
+      // Profile image would need to be handled after successful signup
+      // when we have a user ID to associate with the image
     } catch (error) {
       console.error('Register error:', error);
     } finally {
@@ -138,6 +170,37 @@ const Auth = () => {
             <TabsContent value="register">
               <Form {...registerForm}>
                 <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                  <div className="flex justify-center mb-6">
+                    <div className="relative">
+                      <Avatar className="w-24 h-24">
+                        {profilePreview ? (
+                          <AvatarImage src={profilePreview} alt="Profile Preview" />
+                        ) : (
+                          <AvatarFallback className="text-xl">
+                            {registerForm.getValues("fullName")?.charAt(0) || "?"}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <Input
+                        type="file"
+                        id="profile-image"
+                        accept="image/*"
+                        className="absolute inset-0 opacity-0 cursor-pointer h-full w-full"
+                        onChange={handleProfileImageChange}
+                        {...registerForm.register("profileImage")}
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        className="absolute bottom-0 right-0 rounded-full"
+                        onClick={() => document.getElementById('profile-image')?.click()}
+                      >
+                        <CalendarIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
                   <FormField
                     control={registerForm.control}
                     name="fullName"
@@ -151,6 +214,49 @@ const Auth = () => {
                       </FormItem>
                     )}
                   />
+                  
+                  <FormField
+                    control={registerForm.control}
+                    name="dob"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of Birth</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <FormField
                     control={registerForm.control}
                     name="email"
@@ -164,6 +270,7 @@ const Auth = () => {
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={registerForm.control}
                     name="password"
@@ -177,6 +284,7 @@ const Auth = () => {
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={registerForm.control}
                     name="confirmPassword"
@@ -190,6 +298,7 @@ const Auth = () => {
                       </FormItem>
                     )}
                   />
+                  
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? "Creating account..." : "Create Account"}
                   </Button>
