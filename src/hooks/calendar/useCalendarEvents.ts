@@ -29,8 +29,7 @@ export const useCalendarEvents = () => {
       // Fetch household events
       const { data: householdEventsData, error: householdError } = await supabase
         .from('household_events' as any)
-        .select('*')
-        .eq('household_id', household.id);
+        .select('*');
 
       if (householdError) {
         console.error('Error fetching household events:', householdError);
@@ -72,7 +71,13 @@ export const useCalendarEvents = () => {
       // Process household events
       const householdEvents: CalendarEvent[] = householdEventsData 
         ? householdEventsData.map((event: any) => ({
-            ...event,
+            id: event.id,
+            title: event.title,
+            start_date: event.start_date,
+            end_date: event.end_date,
+            description: event.description,
+            color: event.color,
+            created_by: event.created_by,
             is_household_event: true
           }))
         : [];
@@ -80,7 +85,13 @@ export const useCalendarEvents = () => {
       // Process personal events
       const personalEvents: CalendarEvent[] = personalEventsData
         ? personalEventsData.map((event: any) => ({
-            ...event,
+            id: event.id,
+            title: event.title,
+            start_date: event.start_date,
+            end_date: event.end_date,
+            description: event.description,
+            color: event.color,
+            is_public: event.is_public,
             is_household_event: false
           }))
         : [];
@@ -88,7 +99,13 @@ export const useCalendarEvents = () => {
       // Process public events
       const publicEvents: CalendarEvent[] = publicEventsData
         ? publicEventsData.map((event: any) => ({
-            ...event,
+            id: event.id,
+            title: event.title,
+            start_date: event.start_date,
+            end_date: event.end_date,
+            description: event.description,
+            color: event.color,
+            is_public: event.is_public,
             is_household_event: false
           }))
         : [];
@@ -137,7 +154,13 @@ export const useCalendarEvents = () => {
         }
 
         const newEvent: CalendarEvent = { 
-          ...data, 
+          id: data.id,
+          title: data.title,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          description: data.description,
+          color: data.color,
+          created_by: data.created_by,
           is_household_event: true 
         };
         
@@ -170,7 +193,13 @@ export const useCalendarEvents = () => {
         }
 
         const newEvent: CalendarEvent = { 
-          ...data, 
+          id: data.id,
+          title: data.title,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          description: data.description,
+          color: data.color,
+          is_public: data.is_public,
           is_household_event: false 
         };
         

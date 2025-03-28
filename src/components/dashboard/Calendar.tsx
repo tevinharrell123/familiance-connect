@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Plus } from "lucide-react";
@@ -180,7 +179,8 @@ export function CalendarWidget() {
           })}
         </div>
 
-        <style jsx>{`
+        <style>
+          {`
           .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -203,7 +203,8 @@ export function CalendarWidget() {
             color: white;
             font-size: 11px;
           }
-        `}</style>
+          `}
+        </style>
       </CardContent>
 
       <EventDialog 
