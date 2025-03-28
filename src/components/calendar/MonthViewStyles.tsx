@@ -22,10 +22,13 @@ export function MonthViewStyles() {
         width: 100%;
         height: 100%;
         pointer-events: none;
+        z-index: 20;
       }
       
       .multi-day-event {
         pointer-events: auto;
+        position: absolute;
+        z-index: 10;
       }
       
       .calendar-day {

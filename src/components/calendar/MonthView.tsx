@@ -19,11 +19,6 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
   
   // Get weekly events for multi-day rendering
   const weeklyEvents = getWeeklyEvents(days, events);
-  
-  // For debugging
-  if (weeklyEvents.length > 0) {
-    console.log('Multi-day events for calendar:', weeklyEvents.length);
-  }
 
   return (
     <div className="month-view relative">
@@ -59,7 +54,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
               </div>
               
               {/* Only show single-day events in day cells */}
-              <div className="px-1 overflow-hidden">
+              <div className="px-1 overflow-hidden mt-6">
                 {dayEvents.slice(0, 2).map(event => (
                   <EventIndicator 
                     key={event.id} 
@@ -79,7 +74,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
         })}
       </div>
       
-      {/* Multi-day events rendered on top of the grid */}
+      {/* Overlay container for multi-day events */}
       <div className="multi-day-events-container">
         {weeklyEvents.map((weekEvent, idx) => (
           <MultiDayEvent 

@@ -29,26 +29,26 @@ export function MultiDayEvent({
 
   return (
     <div 
-      className="multi-day-event absolute flex items-center rounded-md px-1 text-xs truncate cursor-pointer hover:opacity-90"
+      className="absolute flex items-center rounded-md px-2 text-xs truncate cursor-pointer hover:opacity-90"
       style={{
         backgroundColor: event.color || '#7B68EE',
         color: 'white',
-        gridRow: `${weekIdx + 2}`, // +2 to account for header row
+        gridRow: weekIdx + 1,
         gridColumn: `${startIdx + 1} / span ${span}`,
-        top: `${(weekIdx * 100) + 30}px`, // Positioning based on week
-        height: '20px',
-        zIndex: 10
+        zIndex: 10,
+        height: '22px',
+        margin: '2px 0',
+        left: `${startIdx * (100/7)}%`,
+        width: `calc(${span * (100/7)}% - 4px)`,
+        top: `${30 + (weekIdx * 80)}px`
       }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick(event);
-      }}
+      onClick={() => onClick(event)}
     >
-      <Avatar className="h-3 w-3 mr-1">
+      <Avatar className="h-4 w-4 mr-1">
         {event.user_profile?.avatar_url ? (
           <AvatarImage src={event.user_profile.avatar_url} alt={event.user_profile.full_name || ''} />
         ) : null}
-        <AvatarFallback className="text-[6px]">{userInitials}</AvatarFallback>
+        <AvatarFallback className="text-[8px]">{userInitials}</AvatarFallback>
       </Avatar>
       <span className="truncate">{event.title}</span>
     </div>
