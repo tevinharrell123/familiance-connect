@@ -35,11 +35,10 @@ export function useHouseholdJoin(
       
       console.log("Found household:", householdData);
       
-      // Step 2: Check if user is already a member
+      // Step 2: Check if user is already a member of any household (with our new constraint, they can only be in one)
       const { data: existingMember, error: checkError } = await supabase
         .from('household_members')
         .select('*')
-        .eq('household_id', householdData.id)
         .eq('user_id', user.id)
         .maybeSingle();
       
@@ -48,10 +47,10 @@ export function useHouseholdJoin(
       }
         
       if (existingMember) {
-        console.log("User is already a member of this household");
+        console.log("User is already a member of a household");
         toast({
           title: "Already a member",
-          description: "You are already a member of this household.",
+          description: "You are already a member of a household. You can only be a member of one household at a time.",
           variant: "destructive",
         });
         return;

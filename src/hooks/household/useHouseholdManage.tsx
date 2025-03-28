@@ -56,12 +56,19 @@ export function useHouseholdManage(
       setIsLoading(true);
       
       if (userRole === 'admin' && householdMembers && householdMembers.length > 1) {
-        toast({
-          title: "Cannot leave household",
-          description: "As the admin, you must transfer ownership before leaving.",
-          variant: "destructive",
-        });
-        return;
+        // Check if there's another admin
+        const otherAdminExists = householdMembers.some(
+          member => member.role === 'admin' && member.user_id !== user.id
+        );
+        
+        if (!otherAdminExists) {
+          toast({
+            title: "Cannot leave household",
+            description: "As the admin, you must transfer ownership or make another member admin before leaving.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
       
       const { error } = await supabase
@@ -72,7 +79,8 @@ export function useHouseholdManage(
         
       if (error) throw error;
       
-      if (householdMembers && householdMembers.length === 1) {
+      // If this was the last member and they were admin, delete the household
+      if (userRole === 'admin' && householdMembers && householdMembers.length === 1) {
         await supabase
           .from('households')
           .delete()
@@ -109,18 +117,7 @@ export function useHouseholdManage(
       setIsLoading(true);
       console.log("Deleting household:", household.id);
       
-      // First, delete all household members
-      const { error: membersError } = await supabase
-        .from('household_members')
-        .delete()
-        .eq('household_id', household.id);
-        
-      if (membersError) {
-        console.error("Error deleting household members:", membersError);
-        throw new Error(`Failed to delete household members: ${membersError.message}`);
-      }
-      
-      // Then, delete the household
+      // Simply delete the household - the cascade will handle member deletion
       const { error: householdError } = await supabase
         .from('households')
         .delete()

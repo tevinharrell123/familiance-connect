@@ -40,6 +40,7 @@ export function CreateHouseholdModal() {
         description: "Your household has been created successfully.",
       });
     } catch (error: any) {
+      console.error("Household creation error:", error);
       toast({
         title: "Error creating household",
         description: error.message || "There was an error creating your household",
