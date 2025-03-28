@@ -91,38 +91,38 @@ export function FamilyMembersWidget() {
     fetchFamilyMembers();
   }, []);
 
-  // Use placeholder data if we're loading or have no members yet
-  const displayMembers = loading || familyMembers.length === 0 
-    ? [
-        { id: '1', name: 'Olivia', initials: 'O', role: 'adult' as const },
-        { id: '2', name: 'Sarah', avatar: '/lovable-uploads/2dd00b84-e39d-4dea-a414-c955a711e06b.png', initials: 'S', role: 'admin' as const },
-        { id: '3', name: 'Jason', initials: 'J', role: 'adult' as const },
-        { id: '4', name: 'Ethan', initials: 'E', role: 'child' as const }
-      ]
-    : familyMembers;
-
   return (
     <Card className="shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg">Family Members</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-center mb-4">
-          {displayMembers.map((member) => (
-            <div key={member.id} className="flex flex-col items-center mx-2">
-              <Avatar className="h-12 w-12 mb-1">
-                {member.avatar ? (
-                  <AvatarImage src={member.avatar} alt={member.name} />
-                ) : null}
-                <AvatarFallback>{member.initials}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm">{member.name}</span>
-              <span className="text-xs text-muted-foreground">{member.role}</span>
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center p-4">
+            <div className="animate-pulse text-muted-foreground">Loading members...</div>
+          </div>
+        ) : familyMembers.length > 0 ? (
+          <div className="flex justify-center mb-4">
+            {familyMembers.map((member) => (
+              <div key={member.id} className="flex flex-col items-center mx-2">
+                <Avatar className="h-12 w-12 mb-1">
+                  {member.avatar ? (
+                    <AvatarImage src={member.avatar} alt={member.name} />
+                  ) : null}
+                  <AvatarFallback>{member.initials}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm">{member.name}</span>
+                <span className="text-xs text-muted-foreground">{member.role}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center p-4 text-muted-foreground">
+            No family members found
+          </div>
+        )}
         
-        <div className="space-y-3">
+        <div className="space-y-3 mt-4">
           <h3 className="text-base font-medium mb-2">Add Request</h3>
           <Button variant="outline" className="w-full justify-start text-left">
             Event Request
