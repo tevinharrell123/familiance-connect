@@ -1,276 +1,385 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
-import { Household, HouseholdRole } from '@/types/household';
-import { generateInviteCode } from '@/lib/utils';
-import { useHouseholdMembers } from './useHouseholdMembers';
+import { toast } from '@/components/ui/use-toast'; 
+import { Household, HouseholdMember, HouseholdRole } from '@/types/household';
+import { useNavigate } from 'react-router-dom';
 
 export function useHouseholdManagement(
   user: any | null,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   const [household, setHousehold] = useState<Household | null>(null);
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[] | null>(null);
   const [userRole, setUserRole] = useState<HouseholdRole | null>(null);
-  
-  const { 
-    householdMembers, 
-    getHouseholdMembers, 
-    updateMemberRole 
-  } = useHouseholdMembers(household?.id || null, userRole, setIsLoading);
+  const navigate = useNavigate();
 
-  const createHousehold = async (name: string): Promise<Household> => {
-    if (!user) throw new Error('User must be logged in to create a household');
-    
+  const createHousehold = async (name: string): Promise<void> => {
+    if (!user) {
+      console.error('User is not authenticated.');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      console.log("Creating household:", name);
-      
-      const inviteCode = generateInviteCode();
-      console.log("Generated invite code:", inviteCode);
-      
+
+      // Generate a unique invite code
+      const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .insert([{ name, invite_code: inviteCode }])
         .select()
         .single();
-        
+
       if (householdError) {
-        console.error("Household creation error:", householdError);
-        throw new Error(`Failed to create household: ${householdError.message}`);
+        console.error('Error creating household:', householdError);
+        toast({
+          title: "Error creating household",
+          description: householdError.message,
+          variant: "destructive",
+        });
+        return;
       }
-      
+
       if (!householdData) {
-        throw new Error("Household creation failed: No data returned");
+        console.error('No household data returned after creation.');
+        return;
       }
-      
-      console.log("Household created successfully:", householdData);
-      
-      const { error: memberError } = await supabase
+
+      const { data: memberData, error: memberError } = await supabase
         .from('household_members')
-        .insert([{
-          household_id: householdData.id,
-          user_id: user.id,
-          role: 'admin'
-        }]);
-          
+        .insert([{ 
+          household_id: householdData.id, 
+          user_id: user.id, 
+          role: 'admin' 
+        }])
+        .select()
+        .single();
+
       if (memberError) {
-        console.error("Error adding user to household:", memberError);
-        
-        const { error: cleanupError } = await supabase
-          .from('households')
-          .delete()
-          .eq('id', householdData.id);
-          
-        if (cleanupError) {
-          console.error("Error cleaning up household:", cleanupError);
-        }
-          
-        throw new Error(`Failed to set household membership: ${memberError.message}`);
+        console.error('Error creating household member:', memberError);
+        toast({
+          title: "Error creating household member",
+          description: memberError.message,
+          variant: "destructive",
+        });
+        return;
       }
-      
-      console.log("Household member record created successfully");
-      
+
       setHousehold(householdData);
       setUserRole('admin');
       
-      await getHouseholdMembers(householdData.id);
-      
       toast({
         title: "Household created",
-        description: `You've successfully created your household: ${name}`,
+        description: "Your household has been created successfully.",
       });
       
-      return householdData;
-    } catch (error: any) {
-      console.error('Create household error:', error);
+      navigate('/household');
+    } catch (error) {
+      console.error('Error creating household:', error);
       toast({
-        title: "Failed to create household",
-        description: error.message || "There was an error creating your household",
+        title: "Error creating household",
+        description: "Failed to create household. Please try again.",
         variant: "destructive",
       });
-      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   const joinHousehold = async (inviteCode: string): Promise<void> => {
-    if (!user) throw new Error('User must be logged in to join a household');
-    
+    if (!user) {
+      console.error('User is not authenticated.');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      console.log("Joining household with invite code:", inviteCode);
-      
+
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .select('*')
         .eq('invite_code', inviteCode)
-        .maybeSingle();
-        
+        .single();
+
       if (householdError) {
-        console.error("Error finding household:", householdError);
-        throw new Error(`Error finding household: ${householdError.message}`);
-      }
-      
-      if (!householdData) {
-        throw new Error("Invalid invite code. The household could not be found.");
-      }
-      
-      console.log("Found household:", householdData);
-      
-      const { data: existingMember, error: checkError } = await supabase
-        .from('household_members')
-        .select('*')
-        .eq('household_id', householdData.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (checkError) {
-        console.error("Error checking existing membership:", checkError);
-      }
-        
-      if (existingMember) {
-        console.log("User is already a member of this household");
+        console.error('Error finding household:', householdError);
         toast({
-          title: "Already a member",
-          description: "You are already a member of this household.",
+          title: "Invalid invite code",
+          description: "Please check the invite code and try again.",
           variant: "destructive",
         });
         return;
       }
-      
-      const { error: memberError } = await supabase
-        .from('household_members')
-        .insert([{
-          household_id: householdData.id,
-          user_id: user.id,
-          role: 'guest'
-        }]);
-        
-      if (memberError) {
-        console.error("Error joining household:", memberError);
-        throw new Error(`Failed to join household: ${memberError.message}`);
+
+      if (!householdData) {
+        toast({
+          title: "Invalid invite code",
+          description: "No household found with this invite code.",
+          variant: "destructive",
+        });
+        return;
       }
-      
-      console.log("Successfully joined household");
-      
+
+      const { data: existingMember, error: existingMemberError } = await supabase
+        .from('household_members')
+        .select('*')
+        .eq('household_id', householdData.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingMemberError && existingMemberError.code !== 'PGRST116') {
+        console.error('Error checking existing membership:', existingMemberError);
+        toast({
+          title: "Error checking membership",
+          description: "Could not verify existing membership. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (existingMember) {
+        toast({
+          title: "Already a member",
+          description: "You are already a member of this household.",
+        });
+        return;
+      }
+
+      const { data: memberData, error: memberError } = await supabase
+        .from('household_members')
+        .insert([{ 
+          household_id: householdData.id, 
+          user_id: user.id, 
+          role: 'guest' 
+        }])
+        .select()
+        .single();
+
+      if (memberError) {
+        console.error('Error creating household member:', memberError);
+        toast({
+          title: "Error joining household",
+          description: memberError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
       setHousehold(householdData);
       setUserRole('guest');
       
-      await getHouseholdMembers(householdData.id);
-      
       toast({
         title: "Joined household",
-        description: `You've successfully joined the household: ${householdData.name}`,
+        description: "You have successfully joined the household.",
       });
-    } catch (error: any) {
-      console.error('Join household error:', error);
+      
+      navigate('/household');
+    } catch (error) {
+      console.error('Error joining household:', error);
       toast({
-        title: "Failed to join household",
-        description: error.message || "There was an error joining the household",
+        title: "Error joining household",
+        description: "Failed to join household. Please try again.",
         variant: "destructive",
       });
-      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getHouseholdMembers = async (householdId: string): Promise<void> => {
+    try {
+      console.log('Fetching members for household:', householdId);
+      const { data, error } = await supabase
+        .from('household_members')
+        .select(`
+          *,
+          user_profiles:profiles(full_name, avatar_url)
+        `)
+        .eq('household_id', householdId);
+
+      if (error) {
+        console.error('Error fetching household members:', error);
+        return;
+      }
+
+      console.log('Household members data:', data);
+      
+      const members: HouseholdMember[] = data.map((item: any) => ({
+        id: item.id,
+        household_id: item.household_id,
+        user_id: item.user_id,
+        role: item.role as HouseholdRole,
+        created_at: item.created_at,
+        user_profiles: item.user_profiles ? {
+          full_name: item.user_profiles.full_name,
+          avatar_url: item.user_profiles.avatar_url
+        } : null
+      }));
+
+      setHouseholdMembers(members);
+    } catch (error) {
+      console.error('Error in getHouseholdMembers:', error);
+    }
+  };
+
+  const updateMemberRole = async (memberId: string, role: HouseholdRole): Promise<void> => {
+    if (!household?.id) {
+      console.error('Household ID is not available.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const { error } = await supabase
+        .from('household_members')
+        .update({ role: role })
+        .eq('user_id', memberId)
+        .eq('household_id', household?.id);
+
+      if (error) {
+        console.error('Error updating member role:', error);
+        toast({
+          title: "Error updating role",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Optimistically update the role in the local state
+      setHouseholdMembers(prevMembers => {
+        if (!prevMembers) return prevMembers;
+        return prevMembers.map(member => {
+          if (member.user_id === memberId) {
+            return { ...member, role: role };
+          }
+          return member;
+        });
+      });
+
+      toast({
+        title: "Member role updated",
+        description: "The member's role has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating member role:', error);
+      toast({
+        title: "Error updating role",
+        description: "Failed to update member role. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const leaveHousehold = async (): Promise<void> => {
-    if (!household || !user) return;
-    
+    if (!user || !household) {
+      console.error('User or household is not available.');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      
-      if (userRole === 'admin' && householdMembers && householdMembers.length > 1) {
+
+      const { error } = await supabase
+        .from('household_members')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('household_id', household.id);
+
+      if (error) {
+        console.error('Error leaving household:', error);
         toast({
-          title: "Cannot leave household",
-          description: "As the admin, you must transfer ownership before leaving.",
+          title: "Error leaving household",
+          description: error.message,
           variant: "destructive",
         });
         return;
       }
-      
-      const { error } = await supabase
-        .from('household_members')
-        .delete()
-        .eq('household_id', household.id)
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
-      
-      if (householdMembers && householdMembers.length === 1) {
-        await supabase
-          .from('households')
-          .delete()
-          .eq('id', household.id);
-      }
-      
+
       setHousehold(null);
       setUserRole(null);
+      setHouseholdMembers(null);
       
       toast({
         title: "Left household",
-        description: "You've successfully left the household.",
+        description: "You have successfully left the household.",
       });
-    } catch (error: any) {
-      console.error('Leave household error:', error);
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error leaving household:', error);
       toast({
-        title: "Failed to leave household",
-        description: error.message,
+        title: "Error leaving household",
+        description: "Failed to leave household. Please try again.",
         variant: "destructive",
       });
-      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   const deleteHousehold = async (): Promise<void> => {
-    if (!household || userRole !== 'admin' || !user) {
-      throw new Error('Only household admins can delete a household');
+    if (!household) {
+      console.error('Household is not available.');
+      return;
     }
-    
+
     try {
       setIsLoading(true);
-      console.log("Deleting household:", household.id);
-      
-      const { error: membersError } = await supabase
+
+      // First, delete all members of the household
+      const { error: deleteMembersError } = await supabase
         .from('household_members')
         .delete()
         .eq('household_id', household.id);
-        
-      if (membersError) {
-        console.error("Error deleting household members:", membersError);
-        throw new Error(`Failed to delete household members: ${membersError.message}`);
+
+      if (deleteMembersError) {
+        console.error('Error deleting household members:', deleteMembersError);
+        toast({
+          title: "Error deleting household",
+          description: "Failed to delete household members. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
-      
-      const { error: householdError } = await supabase
+
+      // Then, delete the household itself
+      const { error: deleteHouseholdError } = await supabase
         .from('households')
         .delete()
         .eq('id', household.id);
-        
-      if (householdError) {
-        console.error("Error deleting household:", householdError);
-        throw new Error(`Failed to delete household: ${householdError.message}`);
+
+      if (deleteHouseholdError) {
+        console.error('Error deleting household:', deleteHouseholdError);
+        toast({
+          title: "Error deleting household",
+          description: "Failed to delete household. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
-      
+
       setHousehold(null);
       setUserRole(null);
+      setHouseholdMembers(null);
       
       toast({
         title: "Household deleted",
         description: "The household has been successfully deleted.",
       });
-    } catch (error: any) {
-      console.error('Delete household error:', error);
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting household:', error);
       toast({
-        title: "Failed to delete household",
-        description: error.message,
+        title: "Error deleting household",
+        description: "Failed to delete household. Please try again.",
         variant: "destructive",
       });
-      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -284,9 +393,9 @@ export function useHouseholdManagement(
     setUserRole,
     createHousehold,
     joinHousehold,
-    leaveHousehold,
-    deleteHousehold,
     getHouseholdMembers,
-    updateMemberRole
+    updateMemberRole,
+    leaveHousehold,
+    deleteHousehold
   };
 }

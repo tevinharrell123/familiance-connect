@@ -18,7 +18,7 @@ export function useHouseholdMembers(
         .from('household_members')
         .select(`
           *,
-          user_profiles:profiles (*)
+          user_profiles:profiles(full_name, avatar_url)
         `)
         .eq('household_id', id);
 
