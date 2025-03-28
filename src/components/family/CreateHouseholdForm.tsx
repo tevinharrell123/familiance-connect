@@ -6,17 +6,15 @@ import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from '@/contexts/AuthContext';
 
-interface CreateHouseholdFormProps {
-  user: any;
-}
-
-export function CreateHouseholdForm({ user }: CreateHouseholdFormProps) {
+export function CreateHouseholdForm() {
   const [householdName, setHouseholdName] = useState('');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const { user, refreshUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +55,10 @@ export function CreateHouseholdForm({ user }: CreateHouseholdFormProps) {
           throw new Error("Failed to create user account");
         }
 
+        // Wait a moment to ensure the auth state is updated
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await refreshUser();
+
         // Create household with the new user
         const { data, error } = await supabase.rpc('create_household_with_admin', {
           household_name: householdName,
@@ -73,7 +75,7 @@ export function CreateHouseholdForm({ user }: CreateHouseholdFormProps) {
         });
 
         // Navigate to the main page
-        navigate('/');
+        window.location.href = "/";
       } catch (error: any) {
         console.error('Error creating household:', error);
         toast({
@@ -88,6 +90,7 @@ export function CreateHouseholdForm({ user }: CreateHouseholdFormProps) {
       // User is already authenticated, just create the household
       setLoading(true);
       try {
+        console.log("Creating household with user ID:", user.id);
         const { data, error } = await supabase.rpc('create_household_with_admin', {
           household_name: householdName,
           owner_id: user.id
@@ -102,8 +105,8 @@ export function CreateHouseholdForm({ user }: CreateHouseholdFormProps) {
           description: "Household created successfully!",
         });
 
-        // Navigate to the main page
-        navigate('/');
+        // Navigate to the main page with a hard refresh
+        window.location.href = "/";
       } catch (error: any) {
         console.error('Error creating household:', error);
         toast({

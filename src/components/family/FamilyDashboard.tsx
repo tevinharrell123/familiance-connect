@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/components/ui/use-toast";
 import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FamilyDashboardProps {
   household: any;
@@ -11,12 +12,15 @@ interface FamilyDashboardProps {
   user: any;
 }
 
-export function FamilyDashboard({ household, membership, user }: FamilyDashboardProps) {
+export function FamilyDashboard({ household, membership }: FamilyDashboardProps) {
+  const { user } = useAuth();
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMembers = async () => {
+      if (!household?.id) return;
+      
       try {
         // Fetch all members of the household
         const { data, error } = await supabase
@@ -45,7 +49,17 @@ export function FamilyDashboard({ household, membership, user }: FamilyDashboard
     };
 
     fetchMembers();
-  }, [household.id]);
+  }, [household?.id]);
+
+  if (!user || !household) {
+    return (
+      <div className="container mx-auto py-6">
+        <Card className="p-8 text-center">
+          <div className="animate-pulse">Loading dashboard data...</div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6">

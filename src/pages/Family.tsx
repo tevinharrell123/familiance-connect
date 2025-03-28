@@ -8,9 +8,10 @@ import { FamilyDashboard } from '@/components/family/FamilyDashboard';
 import { OnboardingFlow } from '@/components/family/OnboardingFlow';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Family() {
-  const [user, setUser] = useState<any>(null);
+  const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [membership, setMembership] = useState<any>(null);
   const [household, setHousehold] = useState<any>(null);
@@ -18,137 +19,67 @@ export default function Family() {
   const [fetchAttempted, setFetchAttempted] = useState(false);
   const navigate = useNavigate();
 
-  // Check if user is authenticated and has a household
+  // Check if user has a household
   useEffect(() => {
-    const checkUserSession = async () => {
+    const fetchMembershipData = async () => {
+      // Don't fetch if user is not authenticated yet
+      if (authLoading || !user) {
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Fetching membership data for user:", user.id);
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('memberships')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
         
-        if (!session) {
-          // User is not logged in, show the onboarding flow
+        if (membershipError) {
+          console.error('Error fetching membership:', membershipError);
+          setError('Failed to fetch membership data. Please try again later.');
+          setFetchAttempted(true);
           setLoading(false);
           return;
         }
         
-        console.log("User is authenticated:", session.user);
-        setUser(session.user);
+        console.log("Membership data:", membershipData);
         
-        // Check if user already has a membership
-        try {
-          console.log("Fetching membership data for user:", session.user.id);
-          const { data: membershipData, error: membershipError } = await supabase
-            .from('memberships')
+        if (membershipData) {
+          setMembership(membershipData);
+          
+          // Fetch household data
+          const { data: householdData, error: householdError } = await supabase
+            .from('households')
             .select('*')
-            .eq('user_id', session.user.id)
+            .eq('id', membershipData.household_id)
             .maybeSingle();
           
-          if (membershipError) {
-            console.error('Error fetching membership:', membershipError);
-            setError('Failed to fetch membership data. Please try again later.');
+          if (householdError) {
+            console.error('Error fetching household:', householdError);
+            setError('Failed to fetch household data. Please try again later.');
             setFetchAttempted(true);
             setLoading(false);
             return;
           }
           
-          console.log("Membership data:", membershipData);
-          
-          if (membershipData) {
-            setMembership(membershipData);
-            
-            // Fetch household data
-            const { data: householdData, error: householdError } = await supabase
-              .from('households')
-              .select('*')
-              .eq('id', membershipData.household_id)
-              .maybeSingle();
-            
-            if (householdError) {
-              console.error('Error fetching household:', householdError);
-              setError('Failed to fetch household data. Please try again later.');
-              setFetchAttempted(true);
-              setLoading(false);
-              return;
-            }
-            
-            console.log("Household data:", householdData);
-            setHousehold(householdData);
-          }
-          
-          setFetchAttempted(true);
-        } catch (fetchError) {
-          console.error('Error fetching data:', fetchError);
-          setError('An error occurred while fetching your data. Please try again later.');
-          setFetchAttempted(true);
+          console.log("Household data:", householdData);
+          setHousehold(householdData);
         }
         
+        setFetchAttempted(true);
         setLoading(false);
-      } catch (error) {
-        console.error('Session check error:', error);
-        setError('Failed to check your session. Please try again later.');
+      } catch (fetchError) {
+        console.error('Error fetching data:', fetchError);
+        setError('An error occurred while fetching your data. Please try again later.');
         setFetchAttempted(true);
         setLoading(false);
       }
     };
     
-    // Call the function immediately
-    checkUserSession();
-    
-    // Set up auth state listener for changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session ? "user authenticated" : "no user");
-      
-      // When auth state changes, reload the membership data
-      if (session?.user) {
-        setUser(session.user);
-        
-        try {
-          const { data: membershipData, error: membershipError } = await supabase
-            .from('memberships')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          if (membershipError) {
-            console.error('Error fetching membership after auth change:', membershipError);
-            return;
-          }
-            
-          console.log("Membership data after auth state change:", membershipData);
-          
-          if (membershipData) {
-            setMembership(membershipData);
-            
-            const { data: householdData, error: householdError } = await supabase
-              .from('households')
-              .select('*')
-              .eq('id', membershipData.household_id)
-              .maybeSingle();
-            
-            if (householdError) {
-              console.error('Error fetching household after auth change:', householdError);
-              return;
-            }
-              
-            console.log("Household data after auth state change:", householdData);
-            
-            if (householdData) {
-              setHousehold(householdData);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching data after auth state change:", error);
-        }
-      } else {
-        setUser(null);
-        setMembership(null);
-        setHousehold(null);
-      }
-    });
-    
-    return () => {
-      authListener.subscription?.unsubscribe();
-    };
-  }, [navigate]);
+    fetchMembershipData();
+  }, [user, authLoading]);
 
   // If there's an error, show it to the user with options to continue
   if (error) {
@@ -192,23 +123,22 @@ export default function Family() {
     );
   }
 
+  // Show loading state while both auth and data are loading
+  if (loading || authLoading) {
+    return (
+      <div className="container mx-auto max-w-md py-10">
+        <Card className="p-8 text-center">
+          <div className="animate-pulse">Loading...</div>
+        </Card>
+      </div>
+    );
+  }
+
   // If the user already has a household, show the family dashboard
-  if (!loading && household) {
+  if (household) {
     return <FamilyDashboard household={household} membership={membership} user={user} />;
   }
 
   // If the user is authenticated but doesn't have a household, show the onboarding
-  return (
-    <div>
-      {loading ? (
-        <div className="container mx-auto max-w-md py-10">
-          <Card className="p-8 text-center">
-            <div className="animate-pulse">Loading...</div>
-          </Card>
-        </div>
-      ) : (
-        <OnboardingFlow user={user} />
-      )}
-    </div>
-  );
+  return <OnboardingFlow />;
 }

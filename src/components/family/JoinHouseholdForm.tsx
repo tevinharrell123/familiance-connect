@@ -6,17 +6,15 @@ import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from '@/contexts/AuthContext';
 
-interface JoinHouseholdFormProps {
-  user: any;
-}
-
-export function JoinHouseholdForm({ user }: JoinHouseholdFormProps) {
+export function JoinHouseholdForm() {
   const [householdId, setHouseholdId] = useState('');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const { user, refreshUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +67,10 @@ export function JoinHouseholdForm({ user }: JoinHouseholdFormProps) {
           throw new Error("Failed to create user account");
         }
 
+        // Wait to ensure auth state is updated
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await refreshUser();
+
         // Join the household
         const { error: joinError } = await supabase.rpc('join_household', {
           household_id: householdId,
@@ -84,10 +86,11 @@ export function JoinHouseholdForm({ user }: JoinHouseholdFormProps) {
           description: "Account created and joined household successfully!",
         });
 
-        // Navigate to the main page
-        navigate('/');
+        // Navigate to the main page with hard refresh
+        window.location.href = "/";
       } else {
         // Join the household as authenticated user
+        console.log("Joining household with user ID:", user.id);
         const { error: joinError } = await supabase.rpc('join_household', {
           household_id: householdId,
           user_id: user.id
@@ -102,8 +105,8 @@ export function JoinHouseholdForm({ user }: JoinHouseholdFormProps) {
           description: "Joined household successfully!",
         });
 
-        // Navigate to the main page
-        navigate('/');
+        // Navigate to the main page with hard refresh
+        window.location.href = "/";
       }
     } catch (error: any) {
       console.error('Error joining household:', error);

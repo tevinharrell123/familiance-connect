@@ -10,29 +10,26 @@ import { QuickActions, TasksAndChores, WeeklyRoutines } from '@/components/dashb
 import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
 import { OnboardingFlow } from '@/components/family/OnboardingFlow';
 import { Card } from "@/components/ui/card";
+import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [household, setHousehold] = useState<any>(null);
 
   useEffect(() => {
-    const checkUserSession = async () => {
+    const fetchHouseholdData = async () => {
+      if (authLoading || !user) {
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          setLoading(false);
-          return;
-        }
-        
-        setUser(session.user);
-        
         // Check if user has a household
         const { data: membershipData, error: membershipError } = await supabase
           .from('memberships')
           .select('household_id')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .single();
         
         if (membershipError && membershipError.code !== 'PGRST116') {
@@ -53,18 +50,17 @@ const Dashboard = () => {
             setHousehold(householdData);
           }
         }
-        
       } catch (error) {
-        console.error('Session check error:', error);
+        console.error('Data fetch error:', error);
       } finally {
         setLoading(false);
       }
     };
     
-    checkUserSession();
-  }, []);
+    fetchHouseholdData();
+  }, [user, authLoading]);
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="container mx-auto py-10">
         <Card className="p-8 text-center">
@@ -76,7 +72,7 @@ const Dashboard = () => {
 
   // If user is not authenticated, show the onboarding flow
   if (!user) {
-    return <OnboardingFlow user={null} />;
+    return <OnboardingFlow />;
   }
 
   // If user is authenticated but has no household, redirect to Family page

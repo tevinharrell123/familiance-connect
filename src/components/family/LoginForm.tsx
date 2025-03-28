@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,10 +42,10 @@ export function LoginForm() {
         description: "You are now logged in",
       });
 
-      console.log("Login successful, redirecting to family page");
+      console.log("Login successful, hard redirecting to index");
       
-      // No setTimeout - navigate immediately
-      navigate('/family');
+      // Use hard redirect instead of navigate to fully refresh the app state
+      window.location.href = "/";
 
     } catch (error: any) {
       console.error('Error logging in:', error);

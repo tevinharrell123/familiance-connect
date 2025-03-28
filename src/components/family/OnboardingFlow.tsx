@@ -8,13 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateHouseholdForm } from './CreateHouseholdForm';
 import { JoinHouseholdForm } from './JoinHouseholdForm';
 import { LoginForm } from './LoginForm';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface OnboardingFlowProps {
-  user: any;
-}
-
-export function OnboardingFlow({ user }: OnboardingFlowProps) {
+export function OnboardingFlow() {
   const [step, setStep] = useState<'welcome' | 'household' | 'login'>('welcome');
+  const { user, isLoading } = useAuth();
 
   const handleStart = () => {
     setStep('household');
@@ -27,6 +25,16 @@ export function OnboardingFlow({ user }: OnboardingFlowProps) {
   const handleBackToOptions = () => {
     setStep('household');
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto max-w-md py-10">
+        <Card className="p-8 text-center">
+          <div className="animate-pulse">Loading...</div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-md py-10">
@@ -93,7 +101,7 @@ export function OnboardingFlow({ user }: OnboardingFlowProps) {
                       : "Create a new account and household. You'll be the administrator."
                     }
                   </p>
-                  <CreateHouseholdForm user={user} />
+                  <CreateHouseholdForm />
                 </div>
               </TabsContent>
               <TabsContent value="join">
@@ -104,7 +112,7 @@ export function OnboardingFlow({ user }: OnboardingFlowProps) {
                       : "Create an account and join an existing household by entering the household ID shared with you."
                     }
                   </p>
-                  <JoinHouseholdForm user={user} />
+                  <JoinHouseholdForm />
                 </div>
               </TabsContent>
             </Tabs>
