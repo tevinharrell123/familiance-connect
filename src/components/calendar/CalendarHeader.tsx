@@ -8,9 +8,10 @@ import { CardHeader, CardTitle } from "@/components/ui/card";
 interface CalendarHeaderProps {
   currentDate: Date;
   onAddEvent: () => void;
+  onDateChange?: (date: Date) => void;
 }
 
-export function CalendarHeader({ currentDate, onAddEvent }: CalendarHeaderProps) {
+export function CalendarHeader({ currentDate, onAddEvent, onDateChange }: CalendarHeaderProps) {
   return (
     <>
       <CardHeader className="flex flex-row items-center justify-between">

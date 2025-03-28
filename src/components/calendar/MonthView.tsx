@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { format, isSameDay, parseISO, isSameMonth, isWithinInterval, areIntervalsOverlapping } from 'date-fns';
@@ -192,7 +191,8 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
         })}
       </div>
       
-      <style jsx>{`
+      <style>
+        {`
         .grid-container {
           display: grid;
           grid-template-columns: repeat(7, 1fr);
@@ -209,7 +209,8 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
           left: 0;
           right: 0;
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 }
