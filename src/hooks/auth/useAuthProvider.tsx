@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,25 +78,36 @@ export function useAuthProvider() {
 
   const fetchUserHousehold = async (userId: string) => {
     try {
+      // First attempt to get the household_member record
       const { data: memberData, error: memberError } = await supabase
         .from('household_members')
-        .select(`
-          *,
-          households:household_id (*)
-        `)
+        .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (memberError && memberError.code !== 'PGRST116') {
+      if (memberError) {
         console.error('Error fetching household membership:', memberError);
         return;
       }
 
+      // If we found a household membership
       if (memberData) {
-        setHousehold(memberData.households as Household);
+        // Fetch the actual household details
+        const { data: householdData, error: householdError } = await supabase
+          .from('households')
+          .select('*')
+          .eq('id', memberData.household_id)
+          .single();
+
+        if (householdError) {
+          console.error('Error fetching household details:', householdError);
+          return;
+        }
+
+        setHousehold(householdData);
         setUserRole(memberData.role as HouseholdRole);
         
-        getHouseholdMembers();
+        getHouseholdMembers(householdData.id);
       } else {
         setHousehold(null);
         setHouseholdMembers(null);
@@ -142,7 +154,7 @@ export function useAuthProvider() {
       setHousehold(householdData);
       setUserRole('admin');
       
-      getHouseholdMembers();
+      getHouseholdMembers(householdData.id);
       
       toast({
         title: "Household created",
@@ -213,7 +225,7 @@ export function useAuthProvider() {
       setHousehold(householdData);
       setUserRole('guest');
       
-      getHouseholdMembers();
+      getHouseholdMembers(householdData.id);
       
       toast({
         title: "Joined household",
@@ -232,8 +244,9 @@ export function useAuthProvider() {
     }
   };
 
-  const getHouseholdMembers = async (): Promise<HouseholdMember[]> => {
-    if (!household) return [];
+  const getHouseholdMembers = async (householdId?: string): Promise<HouseholdMember[]> => {
+    const targetHouseholdId = householdId || household?.id;
+    if (!targetHouseholdId) return [];
     
     try {
       const { data, error } = await supabase
@@ -245,7 +258,7 @@ export function useAuthProvider() {
             avatar_url
           )
         `)
-        .eq('household_id', household.id);
+        .eq('household_id', targetHouseholdId);
         
       if (error) throw error;
       

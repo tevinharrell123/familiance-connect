@@ -83,40 +83,48 @@ export function useSignUp(
       }
 
       // Create household if household_name is provided
+      let createdHouseholdId = null;
       if (userData.household_name && data.user) {
         console.log('Creating household:', userData.household_name);
         const inviteCode = generateInviteCode();
         
-        const { data: householdData, error: householdError } = await supabase
-          .from('households')
-          .insert({ 
-            name: userData.household_name, 
-            invite_code: inviteCode 
-          })
-          .select()
-          .single();
-          
-        if (householdError) {
-          console.error('Error creating household:', householdError);
-        } else if (householdData) {
-          console.log('Adding user to household as admin:', householdData.id);
-          const { error: memberError } = await supabase
-            .from('household_members')
-            .insert({
-              household_id: householdData.id,
-              user_id: data.user.id,
-              role: 'admin'
-            });
+        try {
+          const { data: householdData, error: householdError } = await supabase
+            .from('households')
+            .insert({ 
+              name: userData.household_name, 
+              invite_code: inviteCode 
+            })
+            .select()
+            .single();
             
-          if (memberError) {
-            console.error('Error adding user to household:', memberError);
+          if (householdError) {
+            console.error('Error creating household:', householdError);
+          } else if (householdData) {
+            createdHouseholdId = householdData.id;
+            console.log('Adding user to household as admin:', householdData.id);
+            const { error: memberError } = await supabase
+              .from('household_members')
+              .insert({
+                household_id: householdData.id,
+                user_id: data.user.id,
+                role: 'admin'
+              });
+              
+            if (memberError) {
+              console.error('Error adding user to household:', memberError);
+            }
           }
+        } catch (err) {
+          console.error('Error in household creation process:', err);
         }
       }
 
       toast({
         title: "Account created!",
-        description: "Please check your email to confirm your account.",
+        description: userData.household_name 
+          ? "Your account and household have been created. Please check your email to confirm your account."
+          : "Your account has been created. Please check your email to confirm your account.",
       });
       navigate('/auth');
     } catch (error: any) {

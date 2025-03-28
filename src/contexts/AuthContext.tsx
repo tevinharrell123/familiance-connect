@@ -13,12 +13,12 @@ type AuthContextType = {
   householdMembers: HouseholdMember[] | null;
   userRole: HouseholdRole | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: { full_name?: string, dob?: string }, profileImage?: File) => Promise<void>;
+  signUp: (email: string, password: string, userData: { full_name?: string, dob?: string, household_name?: string }, profileImage?: File | null) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<any>;
   createHousehold: (name: string) => Promise<Household>;
   joinHousehold: (inviteCode: string) => Promise<void>;
-  getHouseholdMembers: () => Promise<HouseholdMember[]>;
+  getHouseholdMembers: (householdId?: string) => Promise<HouseholdMember[]>;
   updateMemberRole: (memberId: string, role: HouseholdRole) => Promise<void>;
   leaveHousehold: () => Promise<void>;
 };
