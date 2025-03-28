@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/hooks/useAuth';
-import { useHousehold } from '@/hooks/useHousehold';
 
 const householdSchema = z.object({
   householdName: z.string().min(2, { message: "Household name must be at least 2 characters" }),
@@ -67,7 +66,8 @@ const Onboarding = () => {
       localStorage.setItem('household_created', 'true');
       
       // Use replace: true to replace the current entry in the history stack
-      navigate('/', { replace: true });
+      // and reload the page to ensure a clean state
+      window.location.href = '/';
     } catch (error: any) {
       console.error("Error in onboarding:", error);
       toast({
