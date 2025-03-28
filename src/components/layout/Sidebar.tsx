@@ -3,9 +3,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Home, BarChart3, Users, Briefcase, WalletCards, 
-  Target, CalendarDays, ClipboardList, User
+  Target, CalendarDays, ClipboardList, User, Home as HouseIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 type NavItemProps = {
   href: string;
@@ -47,6 +48,7 @@ const NavGroup = ({ title, children }: NavGroupProps) => {
 
 export function Sidebar() {
   const currentPath = window.location.pathname;
+  const { household } = useAuth();
 
   return (
     <aside className="w-64 border-r bg-sidebar p-4 hidden md:block">
@@ -59,34 +61,41 @@ export function Sidebar() {
           <NavItem href="/" icon={Home} isActive={currentPath === '/'}>
             Dashboard
           </NavItem>
+          <NavItem href="/household" icon={HouseIcon} isActive={currentPath === '/household'}>
+            Household
+          </NavItem>
           <NavItem href="/mission" icon={Target}>
             Mission & Values
           </NavItem>
         </NavGroup>
         
-        <NavGroup title="Planning">
-          <NavItem href="/calendar" icon={CalendarDays}>
-            Calendar
-          </NavItem>
-          <NavItem href="/tasks" icon={ClipboardList}>
-            Tasks & Chores
-          </NavItem>
-          <NavItem href="/goals" icon={BarChart3}>
-            Goals & Tracking
-          </NavItem>
-        </NavGroup>
-        
-        <NavGroup title="Family">
-          <NavItem href="/members" icon={Users}>
-            Family Members
-          </NavItem>
-          <NavItem href="/collaboration" icon={Briefcase}>
-            Collaboration
-          </NavItem>
-          <NavItem href="/finances" icon={WalletCards}>
-            Budget & Finance
-          </NavItem>
-        </NavGroup>
+        {household && (
+          <>
+            <NavGroup title="Planning">
+              <NavItem href="/calendar" icon={CalendarDays}>
+                Calendar
+              </NavItem>
+              <NavItem href="/tasks" icon={ClipboardList}>
+                Tasks & Chores
+              </NavItem>
+              <NavItem href="/goals" icon={BarChart3}>
+                Goals & Tracking
+              </NavItem>
+            </NavGroup>
+            
+            <NavGroup title="Family">
+              <NavItem href="/members" icon={Users}>
+                Family Members
+              </NavItem>
+              <NavItem href="/collaboration" icon={Briefcase}>
+                Collaboration
+              </NavItem>
+              <NavItem href="/finances" icon={WalletCards}>
+                Budget & Finance
+              </NavItem>
+            </NavGroup>
+          </>
+        )}
       </nav>
       
       <div className="mt-auto pt-4 border-t">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { CalendarWidget } from '@/components/dashboard/Calendar';
 import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards';
@@ -8,10 +8,12 @@ import { QuickActions, TasksAndChores, WeeklyRoutines } from '@/components/dashb
 import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Home } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, isLoading } = useRequireAuth();
-  const { profile } = useAuth();
+  const { profile, household } = useAuth();
   
   if (isLoading) {
     return (
@@ -25,7 +27,26 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const familyName = profile?.full_name ? `${profile.full_name.split(' ')[0]} Family` : 'Harrell Family';
+  // If no household is set up yet, prompt to create/join one
+  if (!household) {
+    return (
+      <MainLayout>
+        <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center p-4">
+          <Home className="h-16 w-16 text-primary mb-6" />
+          <h1 className="text-3xl font-bold mb-4">Welcome to FamPilot</h1>
+          <p className="text-lg text-muted-foreground mb-8">
+            To get started, you need to create or join a household. This will be your family's central hub for managing tasks, calendars, and more.
+          </p>
+          <Button asChild size="lg">
+            <Link to="/household">Set Up Your Household</Link>
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // Normal dashboard view if user has a household
+  const familyName = household.name || 'Your Family';
 
   return (
     <MainLayout>
