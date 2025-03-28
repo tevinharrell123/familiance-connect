@@ -59,15 +59,15 @@ const Onboarding = () => {
 
       console.log("Household created:", household);
 
-      // Step 2: Create membership using a direct insert
-      // This is now a separate operation to avoid RLS policy recursion
-      const { error: membershipError } = await supabase.rpc(
-        'create_admin_membership', 
-        { 
-          user_uuid: user.id, 
-          household_uuid: household.id 
-        }
-      );
+      // Step 2: Create membership for the admin user
+      // Using a direct insert approach to avoid RLS issues
+      const { error: membershipError } = await supabase
+        .from('memberships')
+        .insert({
+          user_id: user.id,
+          household_id: household.id,
+          role: 'admin',
+        });
 
       if (membershipError) {
         console.error("Error creating membership:", membershipError);

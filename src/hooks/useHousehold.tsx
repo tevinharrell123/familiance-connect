@@ -101,18 +101,40 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       console.log("Household found:", householdData.name);
       setHousehold(householdData);
 
-      // Using RPC for safer member fetching
-      const { data: allMembers, error: membersError } = await supabase.rpc(
-        'get_household_members',
-        { household_uuid: membershipData.household_id }
-      );
+      // Get members data with a safe approach
+      const { data: allMembers, error: membersError } = await supabase
+        .from('memberships')
+        .select(`
+          id, 
+          user_id, 
+          household_id, 
+          role,
+          user_profiles:user_id (
+            first_name, 
+            last_name, 
+            avatar_url
+          )
+        `)
+        .eq('household_id', membershipData.household_id);
 
       if (membersError) {
         console.error('Error fetching members:', membersError);
         setMembers([]);
-      } else if (allMembers) {
+      } else if (allMembers && Array.isArray(allMembers)) {
         console.log(`Found ${allMembers.length} members for household`);
-        setMembers(allMembers);
+        
+        // Format members with profile data included
+        const formattedMembers: Member[] = allMembers.map(member => ({
+          id: member.id,
+          user_id: member.user_id,
+          household_id: member.household_id,
+          role: member.role,
+          first_name: member.user_profiles?.first_name,
+          last_name: member.user_profiles?.last_name,
+          avatar_url: member.user_profiles?.avatar_url
+        }));
+        
+        setMembers(formattedMembers);
       } else {
         setMembers([]);
       }
