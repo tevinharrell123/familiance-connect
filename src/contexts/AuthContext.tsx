@@ -21,6 +21,8 @@ type AuthContextType = {
   getHouseholdMembers: (householdId?: string) => Promise<HouseholdMember[]>;
   updateMemberRole: (memberId: string, role: HouseholdRole) => Promise<void>;
   leaveHousehold: () => Promise<void>;
+  deleteHousehold: () => Promise<void>;
+  refreshHousehold: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
