@@ -44,34 +44,13 @@ export function LoginForm() {
         description: "You are now logged in",
       });
 
-      // Try to check if user has a household, but don't block on errors
-      try {
-        const { data: membershipData, error: membershipError } = await supabase
-          .from('memberships')
-          .select('household_id')
-          .eq('user_id', data.user.id)
-          .maybeSingle();
-          
-        if (membershipError) {
-          console.warn('Non-blocking error fetching membership:', membershipError);
-        }
-        
-        // Navigate to the main dashboard regardless of whether the user has a household
-        setTimeout(() => {
-          if (membershipData?.household_id) {
-            navigate('/');
-          } else {
-            // If no household is found, redirect to family page to create one
-            navigate('/family');
-          }
-        }, 500);
-      } catch (membershipError) {
-        console.error('Error checking household:', membershipError);
-        // Still navigate to family page if there's an error
-        setTimeout(() => {
-          navigate('/family');
-        }, 500);
-      }
+      // Navigate directly to the family page to ensure the user can continue
+      // This bypasses the problematic membership check
+      console.log("Login successful, redirecting to family page");
+      setTimeout(() => {
+        navigate('/family');
+      }, 500);
+
     } catch (error: any) {
       console.error('Error logging in:', error);
       toast({
