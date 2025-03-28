@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthCard } from '@/components/auth/AuthCard';
@@ -7,7 +7,9 @@ import { AuthCard } from '@/components/auth/AuthCard';
 const Auth = () => {
   const { user, isLoading } = useAuth();
 
-  console.log("Auth page - User:", user, "isLoading:", isLoading);
+  useEffect(() => {
+    console.log("Auth page - User:", user, "isLoading:", isLoading);
+  }, [user, isLoading]);
 
   if (isLoading) {
     return (
