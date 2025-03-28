@@ -43,6 +43,7 @@ export function useSignOut() {
       }
 
       // Force a hard redirect to auth page which will reset all state
+      // This is important to make sure the app doesn't get stuck in a loading state
       window.location.href = '/auth';
       
     } catch (error: any) {

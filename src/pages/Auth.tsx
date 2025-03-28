@@ -9,9 +9,16 @@ const Auth = () => {
 
   useEffect(() => {
     console.log("Auth page - User:", user, "isLoading:", isLoading);
+    
+    // Clear the signing_out flag when we're on the auth page
+    // This helps prevent getting stuck in a loading state
+    if (localStorage.getItem('signing_out') === 'true') {
+      localStorage.removeItem('signing_out');
+    }
   }, [user, isLoading]);
 
-  if (isLoading) {
+  // If we're in the process of signing out, don't show loading
+  if (isLoading && localStorage.getItem('signing_out') !== 'true') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Loading...</p>
