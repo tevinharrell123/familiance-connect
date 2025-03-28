@@ -100,6 +100,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_household_with_admin: {
+        Args: {
+          household_name: string
+          owner_id: string
+        }
+        Returns: string
+      }
       get_user_membership_status: {
         Args: {
           user_uuid: string

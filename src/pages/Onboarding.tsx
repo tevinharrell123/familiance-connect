@@ -42,43 +42,19 @@ const Onboarding = () => {
     try {
       console.log("Creating household for user:", user.id);
       
-      // Step 1: First create the household using a direct insert
-      const { data: household, error: householdError } = await supabase
-        .from('households')
-        .insert({
-          name: data.householdName,
-          owner_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (householdError) {
-        console.error("Error creating household:", householdError);
-        throw new Error(householdError.message);
-      }
-
-      console.log("Household created:", household);
-
-      // Step 2: Create membership for the admin user
-      // Using a direct insert approach to avoid RLS issues
-      const { error: membershipError } = await supabase
-        .from('memberships')
-        .insert({
-          user_id: user.id,
-          household_id: household.id,
-          role: 'admin',
+      // Use the new database function to create the household and add the user as admin
+      const { data: householdId, error } = await supabase
+        .rpc('create_household_with_admin', {
+          household_name: data.householdName,
+          owner_id: user.id
         });
 
-      if (membershipError) {
-        console.error("Error creating membership:", membershipError);
-        
-        // If there's an error with the membership, try to roll back the household creation
-        await supabase.from('households').delete().eq('id', household.id);
-        
-        throw new Error(membershipError.message);
+      if (error) {
+        console.error("Error creating household:", error);
+        throw new Error(error.message);
       }
 
-      console.log("Membership created for user as admin");
+      console.log("Household created with ID:", householdId);
 
       toast({
         title: "Household created!",
