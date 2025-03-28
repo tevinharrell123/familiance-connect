@@ -7,15 +7,24 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateHouseholdForm } from './CreateHouseholdForm';
 import { JoinHouseholdForm } from './JoinHouseholdForm';
+import { LoginForm } from './LoginForm';
 
 interface OnboardingFlowProps {
   user: any;
 }
 
 export function OnboardingFlow({ user }: OnboardingFlowProps) {
-  const [step, setStep] = useState<'welcome' | 'household'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'household' | 'login'>('welcome');
 
   const handleStart = () => {
+    setStep('household');
+  };
+
+  const handleLoginClick = () => {
+    setStep('login');
+  };
+
+  const handleBackToOptions = () => {
     setStep('household');
   };
 
@@ -43,6 +52,23 @@ export function OnboardingFlow({ user }: OnboardingFlowProps) {
             <Button onClick={handleStart} className="w-full">
               Get Started
             </Button>
+          </CardContent>
+        </Card>
+      ) : step === 'login' ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Login to Your Account</CardTitle>
+            <CardDescription>
+              Enter your credentials to access your family dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LoginForm />
+            <div className="mt-4 text-center">
+              <Button variant="link" onClick={handleBackToOptions}>
+                Back to Options
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -82,6 +108,13 @@ export function OnboardingFlow({ user }: OnboardingFlowProps) {
                 </div>
               </TabsContent>
             </Tabs>
+            
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground mb-2">Already have an account?</p>
+              <Button variant="outline" onClick={handleLoginClick} className="w-full">
+                Log In
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
