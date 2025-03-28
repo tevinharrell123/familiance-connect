@@ -17,7 +17,12 @@ export function useSignOut(
       if (!session) {
         // If no session exists, just clear local state and redirect
         console.log('No active session found, clearing local state only');
-        localStorage.removeItem('supabase.auth.token');
+        // Clear all supabase-related items from localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('supabase.')) {
+            localStorage.removeItem(key);
+          }
+        });
         navigate('/auth');
         return;
       }
@@ -30,18 +35,29 @@ export function useSignOut(
       if (error) {
         console.warn('Sign out error, falling back to manual cleanup:', error);
         // Even if signOut fails, clear localStorage tokens to ensure local logout
-        localStorage.removeItem('supabase.auth.token');
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('supabase.')) {
+            localStorage.removeItem(key);
+          }
+        });
       }
 
       // Always navigate to auth page, regardless of server-side logout success
       navigate('/auth');
     } catch (error: any) {
       console.error('Sign out error:', error);
+      // Clear localStorage tokens even on error to ensure local logout
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('supabase.')) {
+          localStorage.removeItem(key);
+        }
+      });
       toast({
         title: "Error signing out",
-        description: "We couldn't complete the sign-out process. Please try again.",
+        description: "We couldn't complete the sign-out process, but you've been logged out locally.",
         variant: "destructive"
       });
+      navigate('/auth');
     } finally {
       setIsLoading(false);
     }
