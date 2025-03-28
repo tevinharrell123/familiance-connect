@@ -56,6 +56,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       console.log("Fetching household data for user:", user.id);
       
       // Get the user's primary household through their membership
+      // Using maybeSingle to handle the case where no membership exists
       const { data: membershipData, error: membershipError } = await supabase
         .from('memberships')
         .select('household_id, role')
@@ -100,40 +101,20 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       console.log("Household found:", householdData.name);
       setHousehold(householdData);
 
-      // Get all members of this household
-      const { data: allMembers, error: membersError } = await supabase
-        .from('memberships')
-        .select('id, user_id, household_id, role')
-        .eq('household_id', membershipData.household_id);
+      // Using RPC for safer member fetching
+      const { data: allMembers, error: membersError } = await supabase.rpc(
+        'get_household_members',
+        { household_uuid: membershipData.household_id }
+      );
 
       if (membersError) {
         console.error('Error fetching members:', membersError);
+        setMembers([]);
       } else if (allMembers) {
         console.log(`Found ${allMembers.length} members for household`);
-        
-        // Fetch profile data for each member
-        const formattedMembers: Member[] = [];
-        
-        for (const member of allMembers) {
-          // Get user profile data
-          const { data: profileData } = await supabase
-            .from('user_profiles')
-            .select('first_name, last_name, avatar_url')
-            .eq('id', member.user_id)
-            .maybeSingle();
-          
-          formattedMembers.push({
-            id: member.id,
-            user_id: member.user_id,
-            household_id: member.household_id,
-            role: member.role,
-            first_name: profileData?.first_name,
-            last_name: profileData?.last_name,
-            avatar_url: profileData?.avatar_url,
-          });
-        }
-        
-        setMembers(formattedMembers);
+        setMembers(allMembers);
+      } else {
+        setMembers([]);
       }
     } catch (error) {
       console.error('Error in household data fetch:', error);

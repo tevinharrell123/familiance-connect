@@ -42,7 +42,7 @@ const Onboarding = () => {
     try {
       console.log("Creating household for user:", user.id);
       
-      // Create new household
+      // Step 1: First create the household using a direct insert
       const { data: household, error: householdError } = await supabase
         .from('households')
         .insert({
@@ -59,14 +59,15 @@ const Onboarding = () => {
 
       console.log("Household created:", household);
 
-      // Create membership for the current user as admin
-      const { error: membershipError } = await supabase
-        .from('memberships')
-        .insert({
-          user_id: user.id,
-          household_id: household.id,
-          role: 'admin',
-        });
+      // Step 2: Create membership using a direct insert
+      // This is now a separate operation to avoid RLS policy recursion
+      const { error: membershipError } = await supabase.rpc(
+        'create_admin_membership', 
+        { 
+          user_uuid: user.id, 
+          household_uuid: household.id 
+        }
+      );
 
       if (membershipError) {
         console.error("Error creating membership:", membershipError);
@@ -84,7 +85,10 @@ const Onboarding = () => {
         description: `Welcome to ${data.householdName}`,
       });
       
-      navigate("/");
+      // Force a small delay before navigating to ensure data consistency
+      setTimeout(() => {
+        navigate("/");
+      }, 500);
     } catch (error: any) {
       console.error("Error in onboarding:", error);
       toast({
