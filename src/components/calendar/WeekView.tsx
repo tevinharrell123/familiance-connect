@@ -19,7 +19,11 @@ export function WeekView({ currentDate, events = [] }: WeekViewProps) {
   
   // Get events for each day of the week
   const getEventsForDay = (day: Date) => {
+    if (!events || events.length === 0) return [];
+    
     return events.filter(event => {
+      if (!event) return false;
+      
       const eventStart = parseISO(event.start_date);
       const eventEnd = parseISO(event.end_date);
       return isSameDay(day, eventStart) || 

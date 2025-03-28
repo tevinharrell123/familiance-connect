@@ -12,6 +12,7 @@ interface DayViewProps {
 export function DayView({ currentDate, events = [] }: DayViewProps) {
   // Filter events for the current day
   const dayEvents = events.filter(event => {
+    if (!event) return false;
     const eventStart = parseISO(event.start_date);
     const eventEnd = parseISO(event.end_date);
     return isSameDay(currentDate, eventStart) || 
@@ -23,6 +24,10 @@ export function DayView({ currentDate, events = [] }: DayViewProps) {
   const sortedEvents = [...dayEvents].sort((a, b) => {
     return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
   });
+
+  if (sortedEvents.length > 0) {
+    console.log('Day view events:', sortedEvents.length);
+  }
 
   return (
     <div className="space-y-4 p-4">

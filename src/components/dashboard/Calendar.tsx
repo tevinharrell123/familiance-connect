@@ -13,6 +13,7 @@ import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
+import { toast } from '@/components/ui/use-toast';
 
 export function CalendarWidget() {
   const { user, household } = useAuth();
@@ -36,6 +37,7 @@ export function CalendarWidget() {
 
   // Ensure we have the latest data when the component mounts
   useEffect(() => {
+    console.log('Fetching calendar events on mount');
     refetch();
   }, []);
 
@@ -61,10 +63,16 @@ export function CalendarWidget() {
   const calendarDays = [...previousMonthDays, ...days, ...nextMonthDays];
 
   const handleCreateEvent = (values: CalendarFormValues) => {
+    console.log('Creating event:', values);
     createEvent(values, {
       onSuccess: () => {
+        console.log('Event created successfully, refetching');
         refetch();
         setDialogOpen(false);
+        toast({
+          title: "Event created",
+          description: "Your event has been successfully created"
+        });
       }
     });
   };
@@ -72,6 +80,7 @@ export function CalendarWidget() {
   const handleUpdateEvent = (values: CalendarFormValues) => {
     if (!editingEvent) return;
     
+    console.log('Updating event:', values);
     updateEvent({
       ...editingEvent,
       title: values.title,
@@ -82,9 +91,14 @@ export function CalendarWidget() {
       is_household_event: values.is_household_event
     }, {
       onSuccess: () => {
+        console.log('Event updated successfully, refetching');
         refetch();
         setEditingEvent(null);
         setDialogOpen(false);
+        toast({
+          title: "Event updated",
+          description: "Your event has been successfully updated"
+        });
       }
     });
   };
@@ -92,16 +106,23 @@ export function CalendarWidget() {
   const handleDeleteEvent = () => {
     if (!editingEvent) return;
     
+    console.log('Deleting event:', editingEvent);
     deleteEvent(editingEvent, {
       onSuccess: () => {
+        console.log('Event deleted successfully, refetching');
         refetch();
         setEditingEvent(null);
         setDialogOpen(false);
+        toast({
+          title: "Event deleted",
+          description: "Your event has been successfully deleted"
+        });
       }
     });
   };
 
   const handleEventClick = (event: CalendarEvent) => {
+    console.log('Event clicked:', event);
     setEditingEvent(event);
     setDialogOpen(true);
   };
@@ -118,6 +139,10 @@ export function CalendarWidget() {
       is_household_event: editingEvent.is_household_event
     };
   };
+
+  if (events && events.length > 0) {
+    console.log('Calendar events available:', events.length);
+  }
 
   return (
     <Card className="shadow-sm">

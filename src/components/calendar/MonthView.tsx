@@ -15,12 +15,16 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const getEventsForDay = (day: Date): CalendarEvent[] => {
+    if (!events || events.length === 0) return [];
+    
     return events.filter(event => {
       const eventStart = parseISO(event.start_date);
       const eventEnd = parseISO(event.end_date);
       
       // Check if the day falls within the event's date range
-      return day >= eventStart && day <= eventEnd;
+      return (day >= eventStart && day <= eventEnd) || 
+             isSameDay(day, eventStart) || 
+             isSameDay(day, eventEnd);
     });
   };
 
@@ -76,13 +80,17 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
               </div>
               
               <div className="px-1 overflow-hidden">
-                {dayEvents.slice(0, 2).map(event => renderEventIndicator(event))}
-                
-                {dayEvents.length > 2 && (
-                  <div className="text-xs text-center mt-1 text-muted-foreground">
-                    +{dayEvents.length - 2} more
-                  </div>
-                )}
+                {dayEvents.length > 0 ? (
+                  <>
+                    {dayEvents.slice(0, 2).map(event => renderEventIndicator(event))}
+                    
+                    {dayEvents.length > 2 && (
+                      <div className="text-xs text-center mt-1 text-muted-foreground">
+                        +{dayEvents.length - 2} more
+                      </div>
+                    )}
+                  </>
+                ) : null}
               </div>
             </div>
           );

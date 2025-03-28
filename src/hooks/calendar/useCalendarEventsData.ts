@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '@/types/calendar';
@@ -14,6 +13,8 @@ export function useHouseholdEvents() {
     queryKey: ['household-events', household?.id],
     queryFn: async (): Promise<CalendarEvent[]> => {
       if (!user || !household) return [];
+
+      console.log('Fetching household events for household:', household.id);
 
       const { data: householdEvents, error: householdError } = await supabase
         .from('household_events')
@@ -36,8 +37,11 @@ export function useHouseholdEvents() {
       }
 
       if (!householdEvents || householdEvents.length === 0) {
+        console.log('No household events found');
         return [];
       }
+
+      console.log('Found household events:', householdEvents.length);
 
       // Fetch profiles data separately for creators of household events
       const creatorIds = householdEvents.map(event => event.created_by);
@@ -73,7 +77,8 @@ export function useHouseholdEvents() {
         } : null
       }));
     },
-    enabled: !!user && !!household
+    enabled: !!user && !!household,
+    staleTime: 60000 // 1 minute
   });
 }
 
@@ -258,6 +263,7 @@ export function useCalendarEventsData() {
   const events = [...householdEvents, ...personalEvents, ...sharedEvents];
 
   const refetch = () => {
+    console.log('Refetching all calendar events');
     return Promise.all([
       householdEventsQuery.refetch(),
       personalEventsQuery.refetch(),

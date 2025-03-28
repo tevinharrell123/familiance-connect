@@ -34,7 +34,14 @@ export function useCreateCalendarEvent() {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating household event:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Failed to create household event, no data returned');
+      }
       
       // Fetch user profile for the event
       const { data: profile, error: profileError } = await supabase
@@ -78,7 +85,14 @@ export function useCreateCalendarEvent() {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating user event:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Failed to create user event, no data returned');
+      }
       
       // Fetch user profile for the event
       const { data: profile, error: profileError } = await supabase
@@ -112,13 +126,10 @@ export function useCreateCalendarEvent() {
   const createEventMutation = useMutation({
     mutationFn: createEvent,
     onSuccess: () => {
+      console.log('Successfully created event, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['household-events'] });
       queryClient.invalidateQueries({ queryKey: ['personal-events'] });
       queryClient.invalidateQueries({ queryKey: ['shared-household-events'] });
-      toast({
-        title: "Event created",
-        description: "Your event has been successfully created.",
-      });
     },
     onError: (error) => {
       console.error('Error creating event:', error);
