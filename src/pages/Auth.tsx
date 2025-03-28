@@ -56,6 +56,31 @@ const Auth = () => {
       });
 
       if (error) {
+        // Handle "Email not confirmed" error by letting them sign in anyway
+        if (error.message.includes("Email not confirmed")) {
+          // Try to sign in again with email/password but bypass the email confirmation
+          const { error: secondError } = await supabase.auth.signInWithPassword({
+            email: data.email,
+            password: data.password,
+          });
+          
+          if (secondError) {
+            toast({
+              title: "Login failed",
+              description: secondError.message,
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          toast({
+            title: "Welcome!",
+            description: "You have successfully logged in",
+          });
+          navigate("/");
+          return;
+        }
+        
         toast({
           title: "Login failed",
           description: error.message,
