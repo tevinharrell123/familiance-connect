@@ -55,7 +55,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
     try {
       console.log("Fetching household data for user:", user.id);
       
-      // Get the user's primary household (first one found)
+      // Get the user's primary household through their membership
       const { data: membershipData, error: membershipError } = await supabase
         .from('memberships')
         .select('household_id, role')
@@ -111,7 +111,7 @@ export const HouseholdProvider = ({ children }: { children: React.ReactNode }) =
       } else if (allMembers) {
         console.log(`Found ${allMembers.length} members for household`);
         
-        // Fetch profile data for each member separately
+        // Fetch profile data for each member
         const formattedMembers: Member[] = [];
         
         for (const member of allMembers) {

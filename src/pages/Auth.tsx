@@ -41,6 +41,7 @@ const Auth = () => {
   const handleLogin = async (values: z.infer<typeof authSchema>) => {
     setIsLoading(true);
     try {
+      console.log("Attempting login with email:", values.email);
       const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
@@ -50,6 +51,7 @@ const Auth = () => {
         throw error;
       }
 
+      console.log("Login successful");
       toast({
         title: "Successfully signed in",
       });
@@ -70,6 +72,7 @@ const Auth = () => {
   const handleSignup = async (values: z.infer<typeof authSchema>) => {
     setIsLoading(true);
     try {
+      console.log("Attempting signup with email:", values.email);
       const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -79,6 +82,7 @@ const Auth = () => {
         throw error;
       }
 
+      console.log("Signup successful");
       toast({
         title: "Registration successful",
         description: "Please check your email to confirm your account",

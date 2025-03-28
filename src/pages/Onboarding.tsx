@@ -70,6 +70,10 @@ const Onboarding = () => {
 
       if (membershipError) {
         console.error("Error creating membership:", membershipError);
+        
+        // If there's an error with the membership, try to roll back the household creation
+        await supabase.from('households').delete().eq('id', household.id);
+        
         throw new Error(membershipError.message);
       }
 
@@ -125,7 +129,12 @@ const Onboarding = () => {
                 className="w-full" 
                 disabled={isLoading}
               >
-                {isLoading ? "Creating household..." : "Create household"}
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Creating household...
+                  </div>
+                ) : "Create household"}
               </Button>
             </form>
           </Form>
