@@ -1,12 +1,13 @@
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-export function useSignIn(
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  navigate: ReturnType<typeof useNavigate>
-) {
+export function useSignIn() {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -34,5 +35,5 @@ export function useSignIn(
     }
   };
 
-  return { signIn };
+  return { signIn, isLoading };
 }

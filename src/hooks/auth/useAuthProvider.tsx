@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,9 +72,11 @@ export function useAuthProvider() {
     return null;
   };
 
-  const { signIn } = useSignIn(setIsLoading, navigate);
-  const { signUp } = useSignUp(setIsLoading, navigate);
-  const { signOut } = useSignOut(setIsLoading, navigate);
+  // The issue is with these hooks below - they are being called with arguments 
+  // but the updated hooks don't accept arguments anymore
+  const { signIn } = useSignIn();
+  const { signUp } = useSignUp();
+  const { signOut } = useSignOut();
 
   return {
     session,
