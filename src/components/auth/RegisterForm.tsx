@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { CalendarIcon, User } from 'lucide-react';
+import { CalendarIcon, User, ImagePlus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +19,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { toast } from '@/components/ui/use-toast';
 
 const registerSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters long" }),
@@ -28,7 +28,6 @@ const registerSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters long" }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters long" }),
   householdName: z.string().min(2, { message: "Household name must be at least 2 characters long" }).optional(),
-  profileImage: z.instanceof(FileList).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -41,6 +40,7 @@ const RegisterForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [createHousehold, setCreateHousehold] = useState(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -57,6 +57,8 @@ const RegisterForm = () => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const file = files[0];
+      setProfileImage(file);
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         setProfilePreview(e.target?.result as string);
@@ -77,11 +79,19 @@ const RegisterForm = () => {
         userData.household_name = values.householdName;
       }
       
-      const profileImage = values.profileImage?.[0];
-      
       await signUp(values.email, values.password, userData, profileImage);
+      
+      toast({
+        title: "Account created!",
+        description: "Check your email to confirm your account.",
+      });
     } catch (error) {
       console.error('Register error:', error);
+      toast({
+        title: "Registration failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -107,7 +117,6 @@ const RegisterForm = () => {
               accept="image/*"
               className="absolute inset-0 opacity-0 cursor-pointer h-full w-full"
               onChange={handleProfileImageChange}
-              {...form.register("profileImage")}
             />
             <Button 
               type="button" 
@@ -116,7 +125,7 @@ const RegisterForm = () => {
               className="absolute bottom-0 right-0 rounded-full"
               onClick={() => document.getElementById('profile-image')?.click()}
             >
-              <CalendarIcon className="h-4 w-4" />
+              <ImagePlus className="h-4 w-4" />
             </Button>
           </div>
         </div>
