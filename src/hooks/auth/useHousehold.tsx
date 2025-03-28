@@ -16,7 +16,6 @@ export function useHousehold(
     try {
       console.log("Fetching household for user:", userId);
       
-      // Try-catch for the household member query to prevent app crashing
       try {
         const { data: memberData, error: memberError } = await supabase
           .from('household_members')
@@ -29,9 +28,7 @@ export function useHousehold(
           return;
         }
 
-        // If we found a household membership
         if (memberData) {
-          // Fetch the actual household details
           try {
             const { data: householdData, error: householdError } = await supabase
               .from('households')
@@ -74,8 +71,6 @@ export function useHousehold(
       const inviteCode = generateInviteCode();
       console.log("Generated invite code:", inviteCode);
       
-      // Step 1: Insert the household record
-      console.log("Step 1: Creating the household record");
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .insert([{ name, invite_code: inviteCode }])
@@ -93,8 +88,6 @@ export function useHousehold(
       
       console.log("Household created successfully:", householdData);
       
-      // Step 2: Add the user as an admin
-      console.log("Step 2: Adding user as admin to household:", householdData.id);
       const { error: memberError } = await supabase
         .from('household_members')
         .insert([{
@@ -106,8 +99,6 @@ export function useHousehold(
       if (memberError) {
         console.error("Error adding user to household:", memberError);
         
-        // Step 3: If member creation fails, clean up the household
-        console.log("Cleaning up the created household due to membership creation failure");
         const { error: cleanupError } = await supabase
           .from('households')
           .delete()
@@ -122,12 +113,9 @@ export function useHousehold(
       
       console.log("Household member record created successfully");
       
-      // Set local state only after successful DB operations
       setHousehold(householdData);
       setUserRole('admin');
       
-      // Get household members
-      console.log("Fetching household members");
       await getHouseholdMembers(householdData.id);
       
       toast({
@@ -156,7 +144,6 @@ export function useHousehold(
       setIsLoading(true);
       console.log("Joining household with invite code:", inviteCode);
       
-      // Step 1: Find the household with the provided invite code
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .select('*')
@@ -174,7 +161,6 @@ export function useHousehold(
       
       console.log("Found household:", householdData);
       
-      // Step 2: Check if user is already a member
       const { data: existingMember, error: checkError } = await supabase
         .from('household_members')
         .select('*')
@@ -196,8 +182,6 @@ export function useHousehold(
         return;
       }
       
-      // Step 3: Add user to the household as a guest
-      console.log("Adding user to household as guest");
       const { error: memberError } = await supabase
         .from('household_members')
         .insert([{
@@ -213,11 +197,9 @@ export function useHousehold(
       
       console.log("Successfully joined household");
       
-      // Update local state
       setHousehold(householdData);
       setUserRole('guest');
       
-      // Get household members
       await getHouseholdMembers(householdData.id);
       
       toast({
@@ -269,19 +251,16 @@ export function useHousehold(
       
       console.log("Household members retrieved:", data);
       
-      // Transform the data to match our HouseholdMember type
       const typedMembers: HouseholdMember[] = data.map(member => ({
         id: member.id,
         household_id: member.household_id,
         user_id: member.user_id,
         role: member.role as HouseholdRole,
         created_at: member.created_at,
-        profile: member.profile && typeof member.profile === 'object' 
-          ? {
-              full_name: member.profile?.full_name ?? 'Unknown User',
-              avatar_url: member.profile?.avatar_url
-            }
-          : { full_name: 'Unknown User' }
+        profile: member.profile ? {
+          full_name: member.profile.full_name ?? 'Unknown User',
+          avatar_url: member.profile.avatar_url
+        } : null
       }));
       
       setHouseholdMembers(typedMembers);
@@ -387,7 +366,6 @@ export function useHousehold(
       setIsLoading(true);
       console.log("Deleting household:", household.id);
       
-      // First, delete all household members
       const { error: membersError } = await supabase
         .from('household_members')
         .delete()
@@ -398,7 +376,6 @@ export function useHousehold(
         throw new Error(`Failed to delete household members: ${membersError.message}`);
       }
       
-      // Then, delete the household
       const { error: householdError } = await supabase
         .from('households')
         .delete()

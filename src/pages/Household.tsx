@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -272,7 +273,7 @@ const Household = () => {
                       <div key={member.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <Avatar>
-                            <AvatarImage src={member.profile?.avatar_url} />
+                            <AvatarImage src={member.profile?.avatar_url || undefined} />
                             <AvatarFallback>
                               {member.profile?.full_name?.charAt(0) || 'U'}
                             </AvatarFallback>

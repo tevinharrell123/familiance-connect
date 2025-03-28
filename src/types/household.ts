@@ -15,9 +15,9 @@ export interface HouseholdMember {
   role: HouseholdRole;
   created_at: string;
   profile?: {
-    full_name: string;
-    avatar_url?: string;
-  };
+    full_name: string | null;
+    avatar_url?: string | null;
+  } | null;
 }
 
 export interface HouseholdInvite {
