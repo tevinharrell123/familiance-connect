@@ -33,7 +33,8 @@ export const HouseholdMemberItem = ({
     if (member.user_profiles?.full_name) {
       return member.user_profiles.full_name;
     }
-    return `Household Member`;
+    // Use user ID as fallback instead of generic "Household Member"
+    return `User ${member.user_id.substring(0, 6)}...`;
   };
 
   const fullName = getDisplayName();
@@ -51,7 +52,6 @@ export const HouseholdMemberItem = ({
           <p className="font-medium">
             {fullName} 
             {isCurrentUser && <span className="text-sm text-muted-foreground ml-1">(You)</span>}
-            {isUnknownMember && <span className="text-sm text-muted-foreground ml-1">({member.user_id.substring(0, 6)}...)</span>}
           </p>
           <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
         </div>
