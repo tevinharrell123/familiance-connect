@@ -26,7 +26,7 @@ export function useHouseholdMembers(
           user_id,
           role,
           created_at,
-          profiles (
+          user_profiles:profiles (
             full_name,
             avatar_url
           )
@@ -53,9 +53,9 @@ export function useHouseholdMembers(
         user_id: member.user_id,
         role: member.role as HouseholdRole,
         created_at: member.created_at,
-        profiles: member.profiles ? {
-          full_name: member.profiles.full_name || null,
-          avatar_url: member.profiles.avatar_url || null
+        user_profiles: member.user_profiles ? {
+          full_name: member.user_profiles.full_name || null,
+          avatar_url: member.user_profiles.avatar_url || null
         } : null
       }));
       
