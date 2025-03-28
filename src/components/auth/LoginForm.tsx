@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const LoginForm = () => {
+export const LoginForm = () => {
   const { signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -81,5 +81,3 @@ const LoginForm = () => {
     </Form>
   );
 };
-
-export default LoginForm;

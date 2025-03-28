@@ -7,9 +7,14 @@ import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards
 import { QuickActions, TasksAndChores, WeeklyRoutines } from '@/components/dashboard/QuickActions';
 import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Home } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, isLoading } = useRequireAuth();
+  const { household, profile } = useAuth();
   
   if (isLoading) {
     return (
@@ -23,12 +28,31 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Always show dashboard view
+  if (!household) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+          <h1 className="text-3xl font-bold mb-4">Welcome to FamPilot, {profile?.full_name || 'New User'}!</h1>
+          <p className="text-xl text-muted-foreground mb-8 text-center">
+            To get started, create or join a household to organize your family activities.
+          </p>
+          <Button asChild size="lg">
+            <Link to="/household">
+              <Home className="mr-2 h-5 w-5" />
+              Set Up Your Household
+            </Link>
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // Dashboard view for users with a household
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome to Your Dashboard</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome to {household.name}</h1>
           <p className="text-lg text-muted-foreground">Here's your family dashboard for today</p>
         </div>
         

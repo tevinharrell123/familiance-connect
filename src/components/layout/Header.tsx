@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, ChevronDown, Bell, LogOut } from 'lucide-react';
+import { Menu, ChevronDown, Bell, LogOut, HomeIcon, UserCog } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 
 export function Header() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, household, signOut } = useAuth();
   
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -28,6 +28,17 @@ export function Header() {
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle Menu</span>
         </Button>
+        
+        {user && (
+          <div className="flex items-center gap-4 ml-4">
+            <Link to="/household">
+              <Button variant="ghost" className="flex items-center gap-2">
+                <HomeIcon className="h-4 w-4" />
+                {household ? household.name : "Join a Household"}
+              </Button>
+            </Link>
+          </div>
+        )}
         
         <div className="flex items-center gap-2 ml-auto">
           {user ? (
@@ -51,10 +62,16 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link to="/profile">Profile</Link>
+                    <Link to="/profile">
+                      <UserCog className="h-4 w-4 mr-2" />
+                      Profile
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/settings">Settings</Link>
+                    <Link to="/household">
+                      <HomeIcon className="h-4 w-4 mr-2" />
+                      Household
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()} className="text-red-500">

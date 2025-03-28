@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, User, ImagePlus } from 'lucide-react';
+import { CalendarIcon, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -36,12 +35,10 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-const RegisterForm = () => {
+export const RegisterForm = () => {
   const { signUp } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [createHousehold, setCreateHousehold] = useState(false);
-  const [profileImage, setProfileImage] = useState<File | null>(null);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -54,26 +51,12 @@ const RegisterForm = () => {
     },
   });
 
-  const handleProfileImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      setProfileImage(file);
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfilePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       setIsSubmitting(true);
-      const userData: { full_name: string; dob?: string; household_name?: string } = {
+      const userData: { full_name: string; birthday?: string; household_name?: string } = {
         full_name: values.fullName,
-        dob: values.dob ? format(values.dob, 'yyyy-MM-dd') : undefined,
+        birthday: values.dob ? format(values.dob, 'yyyy-MM-dd') : undefined,
       };
       
       // Only add household_name to userData if the user wants to create a household
@@ -81,7 +64,7 @@ const RegisterForm = () => {
         userData.household_name = values.householdName;
       }
       
-      await signUp(values.email, values.password, userData, profileImage);
+      await signUp(values.email, values.password, userData);
       
       toast({
         title: "Account created!",
@@ -91,11 +74,6 @@ const RegisterForm = () => {
       });
     } catch (error) {
       console.error('Register error:', error);
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -104,36 +82,6 @@ const RegisterForm = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="flex justify-center mb-6">
-          <div className="relative">
-            <Avatar className="w-24 h-24">
-              {profilePreview ? (
-                <AvatarImage src={profilePreview} alt="Profile Preview" />
-              ) : (
-                <AvatarFallback className="text-xl">
-                  {form.getValues("fullName")?.charAt(0) || <User className="h-12 w-12" />}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <Input
-              type="file"
-              id="profile-image"
-              accept="image/*"
-              className="absolute inset-0 opacity-0 cursor-pointer h-full w-full"
-              onChange={handleProfileImageChange}
-            />
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              className="absolute bottom-0 right-0 rounded-full"
-              onClick={() => document.getElementById('profile-image')?.click()}
-            >
-              <ImagePlus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        
         <FormField
           control={form.control}
           name="fullName"
@@ -270,5 +218,3 @@ const RegisterForm = () => {
     </Form>
   );
 };
-
-export default RegisterForm;
