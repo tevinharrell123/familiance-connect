@@ -26,7 +26,7 @@ export function useHouseholdMembers(
           user_id,
           role,
           created_at,
-          user_profiles:profiles(full_name, avatar_url)
+          user_profiles:user_profiles(full_name, avatar_url)
         `)
         .eq('household_id', finalHouseholdId);
         
@@ -50,7 +50,7 @@ export function useHouseholdMembers(
         user_id: member.user_id,
         role: member.role as HouseholdRole,
         created_at: member.created_at,
-        user_profiles: member.user_profiles
+        user_profiles: member.user_profiles || null
       }));
       
       setHouseholdMembers(typedMembers);
