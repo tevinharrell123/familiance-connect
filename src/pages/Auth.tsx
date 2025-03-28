@@ -24,6 +24,7 @@ const Auth = () => {
     return <Navigate to="/" replace />;
   }
 
+  console.log("Auth page rendering login/register form");
   return (
     <div className="min-h-screen flex items-center justify-center bg-fampilot-background p-4">
       <AuthCard />

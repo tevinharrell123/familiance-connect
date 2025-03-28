@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,9 +57,9 @@ export const RegisterForm = () => {
   });
 
   const onSubmit = async (values: RegisterFormValues) => {
+    console.log("Form submitted with values:", values);
     try {
       setIsSubmitting(true);
-      console.log("Form values submitted:", values);
       
       const userData: { full_name: string; birthday?: string; household_name?: string; household_code?: string } = {
         full_name: values.fullName,
@@ -97,6 +98,9 @@ export const RegisterForm = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Custom console logger for debugging purposes
+  console.log("Register form rendering, isSubmitting:", isSubmitting);
 
   return (
     <Form {...form}>
