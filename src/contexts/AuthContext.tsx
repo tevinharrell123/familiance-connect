@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { HouseholdRole, Household } from '@/types/household';
+import { HouseholdRole, Household, HouseholdMember } from '@/types/household';
 import { generateInviteCode } from '@/lib/utils';
 
 type Profile = {
@@ -21,11 +21,6 @@ type Membership = {
   role: HouseholdRole;
   created_at: string;
   household?: Household;
-};
-
-type HouseholdMember = {
-  membership: Membership;
-  profile: Profile;
 };
 
 type AuthContextType = {
@@ -144,20 +139,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       console.log('Household members data:', data);
       
-      const members = data.map((item: any) => ({
-        membership: {
-          id: item.id,
-          user_id: item.user_id,
-          household_id: item.household_id,
-          role: item.role as HouseholdRole,
-          created_at: item.created_at
-        },
-        profile: item.user_profiles ? {
-          id: item.user_profiles.id,
+      const members: HouseholdMember[] = data.map((item: any) => ({
+        id: item.id,
+        household_id: item.household_id,
+        user_id: item.user_id,
+        role: item.role as HouseholdRole,
+        created_at: item.created_at,
+        user_profiles: item.user_profiles ? {
           full_name: item.user_profiles.full_name,
-          avatar_url: item.user_profiles.avatar_url,
-          created_at: item.user_profiles.created_at,
-          updated_at: item.user_profiles.updated_at
+          avatar_url: item.user_profiles.avatar_url
         } : null
       }));
 
