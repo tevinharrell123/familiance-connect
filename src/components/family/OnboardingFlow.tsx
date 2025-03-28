@@ -49,7 +49,9 @@ export function OnboardingFlow({ user }: OnboardingFlowProps) {
         <Card>
           <CardHeader>
             <CardTitle>Set Up Your Household</CardTitle>
-            <CardDescription>Create a new household or join an existing one</CardDescription>
+            <CardDescription>
+              {user ? "Create a new household or join an existing one" : "Create a new account and household or join an existing one"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="create" className="w-full">
@@ -60,7 +62,10 @@ export function OnboardingFlow({ user }: OnboardingFlowProps) {
               <TabsContent value="create">
                 <div className="pt-4">
                   <p className="text-sm text-muted-foreground mb-4">
-                    Create a new household that your family members can join. You'll be the administrator.
+                    {user 
+                      ? "Create a new household that your family members can join. You'll be the administrator."
+                      : "Create a new account and household. You'll be the administrator."
+                    }
                   </p>
                   <CreateHouseholdForm user={user} />
                 </div>
@@ -68,7 +73,10 @@ export function OnboardingFlow({ user }: OnboardingFlowProps) {
               <TabsContent value="join">
                 <div className="pt-4">
                   <p className="text-sm text-muted-foreground mb-4">
-                    Join an existing household by entering the household ID shared with you.
+                    {user
+                      ? "Join an existing household by entering the household ID shared with you."
+                      : "Create an account and join an existing household by entering the household ID shared with you."
+                    }
                   </p>
                   <JoinHouseholdForm user={user} />
                 </div>
