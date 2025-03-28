@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -75,6 +76,7 @@ const RegisterForm = () => {
         dob: values.dob ? format(values.dob, 'yyyy-MM-dd') : undefined,
       };
       
+      // Only add household_name to userData if the user wants to create a household
       if (createHousehold && values.householdName) {
         userData.household_name = values.householdName;
       }
@@ -83,7 +85,9 @@ const RegisterForm = () => {
       
       toast({
         title: "Account created!",
-        description: "Check your email to confirm your account.",
+        description: createHousehold 
+          ? "Your account and household have been created. Please check your email to confirm your account."
+          : "Your account has been created. Please check your email to confirm your account.",
       });
     } catch (error) {
       console.error('Register error:', error);

@@ -82,6 +82,7 @@ export function useSignUp(
         }
       }
 
+      // Create household if household_name is provided
       if (userData.household_name && data.user) {
         console.log('Creating household:', userData.household_name);
         const inviteCode = generateInviteCode();
