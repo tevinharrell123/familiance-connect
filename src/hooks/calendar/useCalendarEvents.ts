@@ -28,7 +28,7 @@ export const useCalendarEvents = () => {
     try {
       // Fetch household events
       const { data: householdEventsData, error: householdError } = await supabase
-        .from('household_events')
+        .from('household_events' as any)
         .select('*')
         .eq('household_id', household.id);
 
@@ -44,7 +44,7 @@ export const useCalendarEvents = () => {
 
       // Fetch user's personal events
       const { data: personalEventsData, error: personalError } = await supabase
-        .from('user_events')
+        .from('user_events' as any)
         .select('*')
         .eq('user_id', user.id);
 
@@ -60,7 +60,7 @@ export const useCalendarEvents = () => {
 
       // Fetch public events from household members
       const { data: publicEventsData, error: publicError } = await supabase
-        .from('user_events')
+        .from('user_events' as any)
         .select('*')
         .neq('user_id', user.id)
         .eq('is_public', true);
@@ -69,23 +69,25 @@ export const useCalendarEvents = () => {
         console.error('Error fetching public events:', publicError);
       }
 
-      // Type the data correctly
+      // Process household events
       const householdEvents: CalendarEvent[] = householdEventsData 
-        ? householdEventsData.map(event => ({
+        ? householdEventsData.map((event: any) => ({
             ...event,
             is_household_event: true
           }))
         : [];
 
+      // Process personal events
       const personalEvents: CalendarEvent[] = personalEventsData
-        ? personalEventsData.map(event => ({
+        ? personalEventsData.map((event: any) => ({
             ...event,
             is_household_event: false
           }))
         : [];
 
+      // Process public events
       const publicEvents: CalendarEvent[] = publicEventsData
-        ? publicEventsData.map(event => ({
+        ? publicEventsData.map((event: any) => ({
             ...event,
             is_household_event: false
           }))
@@ -111,7 +113,7 @@ export const useCalendarEvents = () => {
       if (eventData.is_household_event) {
         // Add household event
         const { data, error } = await supabase
-          .from('household_events')
+          .from('household_events' as any)
           .insert({
             household_id: household.id,
             created_by: user.id,
@@ -120,7 +122,7 @@ export const useCalendarEvents = () => {
             start_date: eventData.start_date,
             end_date: eventData.end_date,
             color: eventData.color
-          } as any)
+          })
           .select()
           .single();
 
@@ -144,7 +146,7 @@ export const useCalendarEvents = () => {
       } else {
         // Add personal event
         const { data, error } = await supabase
-          .from('user_events')
+          .from('user_events' as any)
           .insert({
             user_id: user.id,
             title: eventData.title,
@@ -153,7 +155,7 @@ export const useCalendarEvents = () => {
             end_date: eventData.end_date,
             is_public: eventData.is_public || false,
             color: eventData.color
-          } as any)
+          })
           .select()
           .single();
 
@@ -193,14 +195,14 @@ export const useCalendarEvents = () => {
       if (isHouseholdEvent) {
         // Update household event
         const { error } = await supabase
-          .from('household_events')
+          .from('household_events' as any)
           .update({
             title: eventData.title,
             description: eventData.description,
             start_date: eventData.start_date,
             end_date: eventData.end_date,
             color: eventData.color
-          } as any)
+          })
           .eq('id', id);
 
         if (error) {
@@ -215,7 +217,7 @@ export const useCalendarEvents = () => {
       } else {
         // Update personal event
         const { error } = await supabase
-          .from('user_events')
+          .from('user_events' as any)
           .update({
             title: eventData.title,
             description: eventData.description,
@@ -223,7 +225,7 @@ export const useCalendarEvents = () => {
             end_date: eventData.end_date,
             is_public: eventData.is_public,
             color: eventData.color
-          } as any)
+          })
           .eq('id', id)
           .eq('user_id', user.id);
 
@@ -264,7 +266,7 @@ export const useCalendarEvents = () => {
       if (isHouseholdEvent) {
         // Delete household event
         const { error } = await supabase
-          .from('household_events')
+          .from('household_events' as any)
           .delete()
           .eq('id', id);
 
@@ -280,7 +282,7 @@ export const useCalendarEvents = () => {
       } else {
         // Delete personal event
         const { error } = await supabase
-          .from('user_events')
+          .from('user_events' as any)
           .delete()
           .eq('id', id)
           .eq('user_id', user.id);

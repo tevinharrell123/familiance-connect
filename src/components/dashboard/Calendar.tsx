@@ -179,6 +179,31 @@ export function CalendarWidget() {
             );
           })}
         </div>
+
+        <style jsx>{`
+          .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+          }
+          .calendar-day {
+            height: 60px;
+            padding: 2px 4px;
+            position: relative;
+          }
+          .calendar-day-events {
+            margin-top: 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+          }
+          .calendar-day-event {
+            border-radius: 2px;
+            padding: 1px 2px;
+            color: white;
+            font-size: 11px;
+          }
+        `}</style>
       </CardContent>
 
       <EventDialog 
