@@ -9,6 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      household_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          household_id: string
+          id: string
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          household_id: string
+          id?: string
+          start_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          household_id?: string
+          id?: string
+          start_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_events_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_invites: {
         Row: {
           created_at: string
@@ -122,6 +169,45 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          is_public: boolean
+          start_date: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          is_public?: boolean
+          start_date: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_public?: boolean
+          start_date?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
