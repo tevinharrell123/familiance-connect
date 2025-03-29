@@ -4,10 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { CalendarFormValues } from '@/types/calendar';
 import { useAuth } from '@/contexts/AuthContext';
 import { calendarEventQueries } from './calendarEventQueries';
-import { queryClient } from '@/lib/react-query';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
 
 export function useCreateCalendarEvent() {
   const { user, household } = useAuth();
+  const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (values: CalendarFormValues) => {
