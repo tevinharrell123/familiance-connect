@@ -10,6 +10,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOf
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarTabContent } from './CalendarTabContent';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function CalendarWidget() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -18,6 +19,7 @@ export function CalendarWidget() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const { household } = useAuth();
 
   const { 
     events, 
@@ -36,6 +38,14 @@ export function CalendarWidget() {
     console.log('Fetching calendar events on mount');
     refetch();
   }, []);
+
+  // Refetch events when household changes or refreshes
+  useEffect(() => {
+    if (household) {
+      console.log('Household updated, refetching calendar events');
+      refetch();
+    }
+  }, [household?.id]);
 
   // Calculate dates for different views
   const monthStart = startOfMonth(currentDate);

@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '@/types/calendar';
@@ -45,6 +44,7 @@ export function useSharedHouseholdMemberEvents() {
           end_date,
           color,
           user_id,
+          is_public,
           created_at
         `)
         .eq('is_public', true)
@@ -91,6 +91,9 @@ export function useSharedHouseholdMemberEvents() {
         } : null
       }));
     },
-    enabled: !!user && !!household
+    enabled: !!user && !!household,
+    refetchInterval: 60000,
+    refetchOnWindowFocus: true,
+    staleTime: 30000
   });
 }
