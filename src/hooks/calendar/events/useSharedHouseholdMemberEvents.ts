@@ -100,8 +100,9 @@ export function useSharedHouseholdMemberEvents() {
       }));
     },
     enabled: !!user && !!household,
-    refetchInterval: 30000, // Reduce refresh interval to 30 seconds for testing
-    refetchOnWindowFocus: true,
-    staleTime: 10000 // Reduce stale time to 10 seconds
+    // Increase these values to prevent excessive refetching
+    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000 // 2 minutes
   });
 }

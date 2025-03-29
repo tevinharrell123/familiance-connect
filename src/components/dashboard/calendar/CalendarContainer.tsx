@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
@@ -20,7 +20,10 @@ export function CalendarWidget() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const { household, refreshHousehold } = useAuth();
-
+  
+  // Add a ref to prevent too frequent refreshes
+  const lastRefreshTimeRef = useRef<number>(0);
+  
   const { 
     events, 
     isLoading, 
@@ -36,23 +39,46 @@ export function CalendarWidget() {
 
   // Refresh function to update both household data and calendar events
   const refreshData = useCallback(async () => {
-    console.log('Refreshing all data - household and calendar events');
-    if (household) {
-      await refreshHousehold();
+    // Throttle refreshes to prevent loops
+    const now = Date.now();
+    if (now - lastRefreshTimeRef.current < 10000) { // 10 seconds minimum between refreshes
+      console.log('Skipping refresh - too soon after last refresh');
+      return;
     }
-    return refetch();
+    
+    console.log('Refreshing all data - household and calendar events');
+    lastRefreshTimeRef.current = now;
+    
+    if (household) {
+      try {
+        await refreshHousehold();
+      } catch (err) {
+        console.error('Error refreshing household:', err);
+      }
+    }
+    
+    try {
+      return await refetch();
+    } catch (err) {
+      console.error('Error refreshing calendar events:', err);
+    }
   }, [household, refreshHousehold, refetch]);
 
+  // Initial data fetch on mount - do this only once
   useEffect(() => {
     console.log('Fetching calendar events on mount');
     refreshData();
   }, []);
 
-  // Refetch events when household changes or refreshes
+  // Refetch events when household changes or refreshes - but not too often
   useEffect(() => {
     if (household) {
       console.log('Household updated, refetching calendar events');
-      refetch();
+      // Don't call refreshData here to prevent loops,
+      // just refetch the events data
+      refetch().catch(err => {
+        console.error('Error refetching events after household update:', err);
+      });
     }
   }, [household?.id]);
 

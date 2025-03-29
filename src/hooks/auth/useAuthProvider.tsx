@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,9 @@ export function useAuthProvider() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  
+  // Add a ref to track the last refresh time
+  const lastRefreshTimeRef = useRef<number>(0);
 
   const { profile, setProfile, fetchProfile, refreshProfile: refreshProfileData } = useProfile();
   const { 
@@ -74,10 +77,28 @@ export function useAuthProvider() {
   }, [user, refreshProfileData]);
 
   const refreshAll = useCallback(async () => {
+    // Throttle refreshes to prevent loops
+    const now = Date.now();
+    if (now - lastRefreshTimeRef.current < 10000) { // 10 seconds minimum between refreshes
+      console.log('Skipping refresh - too soon after last refresh');
+      return;
+    }
+    
     console.log('Refreshing all auth-related data');
+    lastRefreshTimeRef.current = now;
+    
     if (user) {
-      await refreshProfileData(user.id);
-      await refreshHousehold();
+      try {
+        await refreshProfileData(user.id);
+      } catch (err) {
+        console.error('Error refreshing profile:', err);
+      }
+      
+      try {
+        await refreshHousehold();
+      } catch (err) {
+        console.error('Error refreshing household:', err);
+      }
     }
   }, [user, refreshProfileData, refreshHousehold]);
 
