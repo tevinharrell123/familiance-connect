@@ -30,7 +30,7 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
   return (
     <div 
       key={event.id} 
-      className="flex items-center text-xs rounded-full px-1 mt-1 truncate cursor-pointer hover:opacity-80"
+      className="flex items-center text-xs rounded-full px-1 mt-1 truncate cursor-pointer hover:opacity-80 single-day-event"
       style={{ backgroundColor: `${event.color || '#7B68EE'}30` }}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}

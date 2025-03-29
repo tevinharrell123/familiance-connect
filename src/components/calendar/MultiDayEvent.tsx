@@ -40,7 +40,7 @@ export function MultiDayEvent({
 
   return (
     <div 
-      className="absolute flex items-center rounded-md px-2 text-xs truncate cursor-pointer hover:opacity-90"
+      className="absolute flex items-center rounded-md px-2 text-xs truncate cursor-pointer hover:opacity-90 multi-day-event"
       style={{
         backgroundColor: event.color || '#7B68EE',
         color: 'white',

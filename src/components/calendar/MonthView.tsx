@@ -25,6 +25,13 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
     onEventClick(event);
   };
 
+  // Filter out multi-day events for day cell rendering
+  const singleDayEvents = events.filter(event => {
+    const eventStart = parseISO(event.start_date);
+    const eventEnd = parseISO(event.end_date);
+    return differenceInDays(eventEnd, eventStart) === 0;
+  });
+
   return (
     <div className="month-view relative">
       <div className="calendar-grid grid-container">
@@ -39,13 +46,8 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isToday = isSameDay(day, new Date());
           
-          // Get single-day events
-          const dayEvents = getEventsForDay(day, events)
-            .filter(event => {
-              const eventStart = parseISO(event.start_date);
-              const eventEnd = parseISO(event.end_date);
-              return differenceInDays(eventEnd, eventStart) === 0; // Only single-day events
-            });
+          // Get single-day events for this day
+          const dayEvents = getEventsForDay(day, singleDayEvents);
           
           return (
             <div 
@@ -58,9 +60,8 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
                 {format(day, 'd')}
               </div>
               
-              {/* Only show single-day events in day cells */}
-              <div className="px-1 overflow-hidden mt-6 day-events-container">
-                {dayEvents.slice(0, 2).map(event => (
+              <div className="px-1 overflow-visible day-events-container">
+                {dayEvents.length > 0 && dayEvents.slice(0, 2).map(event => (
                   <EventIndicator 
                     key={event.id} 
                     event={event} 
