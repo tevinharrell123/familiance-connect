@@ -15,8 +15,9 @@ export function useAuthProvider() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   
-  // Add a ref to track the last refresh time
+  // Add refs to track refresh status and prevent loops
   const lastRefreshTimeRef = useRef<number>(0);
+  const isRefreshingRef = useRef<boolean>(false);
 
   const { profile, setProfile, fetchProfile, refreshProfile: refreshProfileData } = useProfile();
   const { 
@@ -41,6 +42,7 @@ export function useAuthProvider() {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Use setTimeout to prevent potential auth deadlocks
           setTimeout(() => {
             fetchProfile(session.user.id);
           }, 0);
@@ -77,15 +79,22 @@ export function useAuthProvider() {
   }, [user, refreshProfileData]);
 
   const refreshAll = useCallback(async () => {
+    // Don't refresh if we're already refreshing
+    if (isRefreshingRef.current) {
+      console.log('Skipping auth refresh - already in progress');
+      return;
+    }
+    
     // Throttle refreshes to prevent loops
     const now = Date.now();
     if (now - lastRefreshTimeRef.current < 10000) { // 10 seconds minimum between refreshes
-      console.log('Skipping refresh - too soon after last refresh');
+      console.log('Skipping auth refresh - too soon after last refresh');
       return;
     }
     
     console.log('Refreshing all auth-related data');
     lastRefreshTimeRef.current = now;
+    isRefreshingRef.current = true;
     
     if (user) {
       try {
@@ -100,6 +109,8 @@ export function useAuthProvider() {
         console.error('Error refreshing household:', err);
       }
     }
+    
+    isRefreshingRef.current = false;
   }, [user, refreshProfileData, refreshHousehold]);
 
   const { signIn } = useSignIn(setIsLoading, navigate);

@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
@@ -19,10 +18,12 @@ export function CalendarWidget() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const { household, refreshHousehold } = useAuth();
+  const { household } = useAuth();
   
   // Add a ref to prevent too frequent refreshes
   const lastRefreshTimeRef = useRef<number>(0);
+  const isRefreshingRef = useRef<boolean>(false);
+  const initialLoadRef = useRef<boolean>(false);
   
   const { 
     events, 
@@ -37,8 +38,14 @@ export function CalendarWidget() {
     refetch
   } = useCalendarEvents();
 
-  // Refresh function to update both household data and calendar events
+  // Refresh function to update calendar events
   const refreshData = useCallback(async () => {
+    // Don't refresh if we're already refreshing
+    if (isRefreshingRef.current) {
+      console.log('Skipping refresh - already in progress');
+      return;
+    }
+    
     // Throttle refreshes to prevent loops
     const now = Date.now();
     if (now - lastRefreshTimeRef.current < 10000) { // 10 seconds minimum between refreshes
@@ -46,41 +53,40 @@ export function CalendarWidget() {
       return;
     }
     
-    console.log('Refreshing all data - household and calendar events');
+    console.log('Refreshing calendar events');
     lastRefreshTimeRef.current = now;
-    
-    if (household) {
-      try {
-        await refreshHousehold();
-      } catch (err) {
-        console.error('Error refreshing household:', err);
-      }
-    }
+    isRefreshingRef.current = true;
     
     try {
       return await refetch();
     } catch (err) {
       console.error('Error refreshing calendar events:', err);
+    } finally {
+      isRefreshingRef.current = false;
     }
-  }, [household, refreshHousehold, refetch]);
+  }, [refetch]);
 
   // Initial data fetch on mount - do this only once
   useEffect(() => {
-    console.log('Fetching calendar events on mount');
-    refreshData();
-  }, []);
-
-  // Refetch events when household changes or refreshes - but not too often
-  useEffect(() => {
-    if (household) {
-      console.log('Household updated, refetching calendar events');
-      // Don't call refreshData here to prevent loops,
-      // just refetch the events data
-      refetch().catch(err => {
-        console.error('Error refetching events after household update:', err);
-      });
+    if (!initialLoadRef.current) {
+      console.log('Fetching calendar events on mount');
+      refreshData();
+      initialLoadRef.current = true;
     }
-  }, [household?.id]);
+  }, [refreshData]);
+
+  // Refetch events when household changes - but only once per household change
+  const householdIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (household && household.id !== householdIdRef.current) {
+      console.log('Household changed, refetching calendar events');
+      householdIdRef.current = household.id;
+      // Wait a tick to avoid potential race conditions
+      setTimeout(() => {
+        refreshData();
+      }, 100);
+    }
+  }, [household?.id, refreshData]);
 
   // Calculate dates for different views
   const monthStart = startOfMonth(currentDate);
@@ -94,8 +100,11 @@ export function CalendarWidget() {
     console.log('Creating event:', values);
     createEvent(values, {
       onSuccess: () => {
-        console.log('Event created successfully, refetching');
-        refreshData();
+        console.log('Event created successfully, refreshing data');
+        // Wait a tick to avoid potential race conditions
+        setTimeout(() => {
+          refreshData();
+        }, 100);
         setDialogOpen(false);
         toast({
           title: "Event created",
@@ -119,8 +128,11 @@ export function CalendarWidget() {
       is_household_event: values.is_household_event
     }, {
       onSuccess: () => {
-        console.log('Event updated successfully, refetching');
-        refreshData();
+        console.log('Event updated successfully, refreshing data');
+        // Wait a tick to avoid potential race conditions
+        setTimeout(() => {
+          refreshData();
+        }, 100);
         setEditingEvent(null);
         setDialogOpen(false);
         toast({
@@ -137,8 +149,11 @@ export function CalendarWidget() {
     console.log('Deleting event:', editingEvent);
     deleteEvent(editingEvent, {
       onSuccess: () => {
-        console.log('Event deleted successfully, refetching');
-        refreshData();
+        console.log('Event deleted successfully, refreshing data');
+        // Wait a tick to avoid potential race conditions
+        setTimeout(() => {
+          refreshData();
+        }, 100);
         setEditingEvent(null);
         setDialogOpen(false);
         toast({

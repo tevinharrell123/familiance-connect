@@ -1,7 +1,7 @@
 import { useHouseholdEvents } from './events/useHouseholdEvents';
 import { usePersonalEvents } from './events/usePersonalEvents';
 import { useSharedHouseholdMemberEvents } from './events/useSharedHouseholdMemberEvents';
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 
 /**
  * Hook to combine all event sources
@@ -13,6 +13,9 @@ export function useCalendarEventsData() {
   
   // Add a ref to prevent refresh loops
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastRefreshTimeRef = useRef<number>(0);
+  // State to track whether a refresh is in progress
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data: householdEvents = [] } = householdEventsQuery;
   const { data: personalEvents = [] } = personalEventsQuery;
@@ -32,13 +35,32 @@ export function useCalendarEventsData() {
 
   // Define refetch callback to use in useEffect
   const refetch = useCallback(() => {
+    // Check if we're already refreshing
+    if (isRefreshing) {
+      console.log('Skipping refetch - already in progress');
+      return Promise.resolve();
+    }
+    
+    // Throttle refreshes - at most once every 2 seconds
+    const now = Date.now();
+    if (now - lastRefreshTimeRef.current < 2000) {
+      console.log('Skipping refetch - too soon after last refresh');
+      return Promise.resolve();
+    }
+    
     console.log('Refetching all calendar events');
+    setIsRefreshing(true);
+    lastRefreshTimeRef.current = now;
+    
     return Promise.all([
       householdEventsQuery.refetch(),
       personalEventsQuery.refetch(),
       sharedEventsQuery.refetch()
-    ]);
-  }, [householdEventsQuery, personalEventsQuery, sharedEventsQuery]);
+    ])
+    .finally(() => {
+      setIsRefreshing(false);
+    });
+  }, [householdEventsQuery, personalEventsQuery, sharedEventsQuery, isRefreshing]);
 
   // Set up periodic refetching to keep events in sync across household
   // But make sure to properly clean up and prevent multiple intervals
@@ -51,7 +73,7 @@ export function useCalendarEventsData() {
       refreshIntervalRef.current = null;
     }
     
-    // Set up a new refresh interval - using 5 minutes instead of 2
+    // Set up a new refresh interval - using 5 minutes
     refreshIntervalRef.current = setInterval(() => {
       console.log('Auto-refreshing calendar events');
       refetch();
