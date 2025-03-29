@@ -39,6 +39,12 @@ export function MonthViewStyles() {
         z-index: 1;
       }
       
+      .day-events-container {
+        pointer-events: auto;
+        position: relative;
+        z-index: 5;
+      }
+      
       @media (max-width: 640px) {
         .calendar-day {
           min-height: 60px;
