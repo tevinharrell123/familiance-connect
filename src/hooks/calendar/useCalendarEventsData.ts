@@ -1,7 +1,9 @@
+
 import { useHouseholdEvents } from './events/useHouseholdEvents';
 import { usePersonalEvents } from './events/usePersonalEvents';
 import { useSharedHouseholdMemberEvents } from './events/useSharedHouseholdMemberEvents';
 import { useEffect, useCallback, useRef, useState } from 'react';
+import { toast } from '@/components/ui/use-toast';
 
 /**
  * Hook to combine all event sources
@@ -31,6 +33,7 @@ export function useCalendarEventsData() {
     personalEventsQuery.error || 
     sharedEventsQuery.error;
     
+  // Combine all event sources
   const events = [...householdEvents, ...personalEvents, ...sharedEvents];
 
   // Define refetch callback to use in useEffect
@@ -57,6 +60,24 @@ export function useCalendarEventsData() {
       personalEventsQuery.refetch(),
       sharedEventsQuery.refetch()
     ])
+    .then((results) => {
+      console.log(`Refreshed successfully: ${results.length} queries`);
+      toast({
+        title: "Calendar refreshed",
+        description: "All events have been updated with the latest data",
+        variant: "default"
+      });
+      return results;
+    })
+    .catch((error) => {
+      console.error('Error refreshing calendar events:', error);
+      toast({
+        title: "Refresh failed",
+        description: "There was an error refreshing calendar data",
+        variant: "destructive"
+      });
+      throw error;
+    })
     .finally(() => {
       setIsRefreshing(false);
     });
@@ -73,11 +94,13 @@ export function useCalendarEventsData() {
       refreshIntervalRef.current = null;
     }
     
-    // Set up a new refresh interval - using 5 minutes
+    // Set up a new refresh interval - using 1 minute for more frequent syncing
     refreshIntervalRef.current = setInterval(() => {
       console.log('Auto-refreshing calendar events');
-      refetch();
-    }, 5 * 60 * 1000); // Refresh every 5 minutes
+      refetch().catch(err => {
+        console.error('Auto-refresh failed:', err);
+      });
+    }, 1 * 60 * 1000); // Refresh every minute
     
     return () => {
       console.log('Cleaning up calendar events auto-refresh');

@@ -16,6 +16,7 @@ export interface CalendarEvent {
   } | null;
   isMultiDay?: boolean;
   duration?: number;
+  is_public?: boolean;
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month';
@@ -27,4 +28,5 @@ export interface CalendarFormValues {
   end_date: Date;
   color?: string;
   is_household_event: boolean;
+  is_public?: boolean;
 }

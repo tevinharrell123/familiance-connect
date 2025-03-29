@@ -6,67 +6,59 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calendarEventQueries } from '../mutations/calendarEventQueries';
 
 /**
- * Hook to fetch personal events from Supabase
+ * Hook to fetch personal events
  */
 export function usePersonalEvents() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   return useQuery({
     queryKey: calendarEventQueries.personal,
     queryFn: async (): Promise<CalendarEvent[]> => {
       if (!user) return [];
 
-      const { data: userEvents, error: userError } = await supabase
-        .from('user_events')
-        .select(`
-          id,
-          title,
-          description,
-          start_date,
-          end_date,
-          color,
-          user_id,
-          is_public,
-          created_at
-        `)
-        .eq('user_id', user.id);
-
-      if (userError) {
-        console.error('Error fetching user events:', userError);
-        throw userError;
+      try {
+        console.log(`Fetching personal events for user: ${user.id}`);
+        
+        const { data, error } = await supabase
+          .from('user_events')
+          .select('*')
+          .eq('user_id', user.id);
+          
+        if (error) {
+          console.error('Error fetching personal events:', error);
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          console.log('No personal events found');
+          return [];
+        }
+        
+        console.log(`Found ${data.length} personal events`);
+        
+        return data.map(event => ({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          start_date: event.start_date,
+          end_date: event.end_date,
+          color: event.color,
+          is_household_event: false,
+          created_at: event.created_at,
+          user_id: user.id,
+          user_profile: profile ? {
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url
+          } : null
+        }));
+      } catch (error) {
+        console.error('Error in usePersonalEvents:', error);
+        throw error;
       }
-
-      if (!userEvents || userEvents.length === 0) {
-        return [];
-      }
-
-      // Fetch the user's own profile
-      const { data: userProfile, error: userProfileError } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', user.id)
-        .single();
-
-      if (userProfileError) {
-        console.error('Error fetching user profile:', userProfileError);
-      }
-
-      return userEvents.map((event) => ({
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        start_date: event.start_date,
-        end_date: event.end_date,
-        color: event.color,
-        is_household_event: false,
-        created_at: event.created_at,
-        user_id: event.user_id,
-        user_profile: userProfile ? {
-          full_name: userProfile.full_name,
-          avatar_url: userProfile.avatar_url
-        } : null
-      }));
     },
-    enabled: !!user
+    enabled: !!user,
+    refetchInterval: 1 * 60 * 1000, // Refresh every minute
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000 // Consider data stale after 30 seconds
   });
 }
