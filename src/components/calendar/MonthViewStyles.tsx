@@ -21,7 +21,7 @@ export function MonthViewStyles() {
         left: 0;
         width: 100%;
         height: 100%;
-        pointer-events: none;
+        /* Removed pointer-events: none to allow clicks to work */
         z-index: 20;
       }
       
