@@ -14,7 +14,7 @@ export function useCreateCalendarEvent() {
     mutationFn: async (values: CalendarFormValues) => {
       if (!user) throw new Error('User is not authenticated');
       
-      const { title, description, start_date, end_date, color, is_household_event } = values;
+      const { title, description, start_date, end_date, color, is_household_event, is_public = true } = values;
       
       if (is_household_event) {
         if (!household) throw new Error('User is not in a household');
@@ -49,7 +49,7 @@ export function useCreateCalendarEvent() {
             end_date: end_date.toISOString(),
             color,
             user_id: user.id,
-            is_public: true // Always make personal events public to share with household
+            is_public // Use the passed value or default to true
           })
           .select()
           .single();

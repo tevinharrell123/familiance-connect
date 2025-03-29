@@ -1,4 +1,3 @@
-
 import { useHouseholdEvents } from './events/useHouseholdEvents';
 import { usePersonalEvents } from './events/usePersonalEvents';
 import { useSharedHouseholdMemberEvents } from './events/useSharedHouseholdMemberEvents';
@@ -62,11 +61,6 @@ export function useCalendarEventsData() {
     ])
     .then((results) => {
       console.log(`Refreshed successfully: ${results.length} queries`);
-      toast({
-        title: "Calendar refreshed",
-        description: "All events have been updated with the latest data",
-        variant: "default"
-      });
       return results;
     })
     .catch((error) => {
@@ -94,13 +88,13 @@ export function useCalendarEventsData() {
       refreshIntervalRef.current = null;
     }
     
-    // Set up a new refresh interval - using 1 minute for more frequent syncing
+    // Set up a new refresh interval - using 30 seconds for more frequent syncing
     refreshIntervalRef.current = setInterval(() => {
       console.log('Auto-refreshing calendar events');
       refetch().catch(err => {
         console.error('Auto-refresh failed:', err);
       });
-    }, 1 * 60 * 1000); // Refresh every minute
+    }, 30 * 1000); // Refresh every 30 seconds
     
     return () => {
       console.log('Cleaning up calendar events auto-refresh');

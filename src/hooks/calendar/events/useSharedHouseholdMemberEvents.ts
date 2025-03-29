@@ -39,7 +39,7 @@ export function useSharedHouseholdMemberEvents() {
         const memberIds = householdMembers.map(m => m.user_id);
         console.log(`Found ${memberIds.length} household members to fetch shared events from: ${memberIds.join(', ')}`);
         
-        // Fetch public events from household members
+        // Fetch public events from household members - make sure is_public is true
         const { data: sharedEvents, error: sharedError } = await supabase
           .from('user_events')
           .select(`
@@ -66,7 +66,7 @@ export function useSharedHouseholdMemberEvents() {
           return [];
         }
 
-        console.log(`Found ${sharedEvents.length} shared events from household members: ${sharedEvents.map(e => e.id).join(', ')}`);
+        console.log(`Found ${sharedEvents.length} shared events from household members`);
 
         // Fetch profile data for all members
         const { data: memberProfiles, error: profilesError } = await supabase
@@ -95,6 +95,7 @@ export function useSharedHouseholdMemberEvents() {
           is_household_event: false,
           created_at: event.created_at,
           user_id: event.user_id,
+          is_public: event.is_public,
           user_profile: profilesMap[event.user_id] ? {
             full_name: profilesMap[event.user_id].full_name,
             avatar_url: profilesMap[event.user_id].avatar_url
@@ -106,8 +107,8 @@ export function useSharedHouseholdMemberEvents() {
       }
     },
     enabled: !!user && !!household,
-    refetchInterval: 1 * 60 * 1000, // Reduce to 1 minute to ensure more frequent syncing
+    refetchInterval: 30 * 1000, // Reduce to 30 seconds to ensure more frequent syncing
     refetchOnWindowFocus: true,
-    staleTime: 30 * 1000 // Reduce to 30 seconds to ensure fresher data
+    staleTime: 10 * 1000 // Reduce to 10 seconds to ensure fresher data
   });
 }
