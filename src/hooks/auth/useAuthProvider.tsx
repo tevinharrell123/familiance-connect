@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +33,7 @@ export function useAuthProvider() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log(`Auth event: ${event}`);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -64,12 +66,20 @@ export function useAuthProvider() {
     }
   }, [user, profile]);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       return await refreshProfileData(user.id);
     }
     return null;
-  };
+  }, [user, refreshProfileData]);
+
+  const refreshAll = useCallback(async () => {
+    console.log('Refreshing all auth-related data');
+    if (user) {
+      await refreshProfileData(user.id);
+      await refreshHousehold();
+    }
+  }, [user, refreshProfileData, refreshHousehold]);
 
   const { signIn } = useSignIn(setIsLoading, navigate);
   const { signUp } = useSignUp(setIsLoading, navigate);
@@ -87,6 +97,7 @@ export function useAuthProvider() {
     signUp,
     signOut,
     refreshProfile,
+    refreshAll,
     createHousehold,
     joinHousehold,
     getHouseholdMembers,

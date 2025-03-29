@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
@@ -19,7 +19,7 @@ export function CalendarWidget() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const { household } = useAuth();
+  const { household, refreshHousehold } = useAuth();
 
   const { 
     events, 
@@ -34,9 +34,18 @@ export function CalendarWidget() {
     refetch
   } = useCalendarEvents();
 
+  // Refresh function to update both household data and calendar events
+  const refreshData = useCallback(async () => {
+    console.log('Refreshing all data - household and calendar events');
+    if (household) {
+      await refreshHousehold();
+    }
+    return refetch();
+  }, [household, refreshHousehold, refetch]);
+
   useEffect(() => {
     console.log('Fetching calendar events on mount');
-    refetch();
+    refreshData();
   }, []);
 
   // Refetch events when household changes or refreshes
@@ -60,7 +69,7 @@ export function CalendarWidget() {
     createEvent(values, {
       onSuccess: () => {
         console.log('Event created successfully, refetching');
-        refetch();
+        refreshData();
         setDialogOpen(false);
         toast({
           title: "Event created",
@@ -85,7 +94,7 @@ export function CalendarWidget() {
     }, {
       onSuccess: () => {
         console.log('Event updated successfully, refetching');
-        refetch();
+        refreshData();
         setEditingEvent(null);
         setDialogOpen(false);
         toast({
@@ -103,7 +112,7 @@ export function CalendarWidget() {
     deleteEvent(editingEvent, {
       onSuccess: () => {
         console.log('Event deleted successfully, refetching');
-        refetch();
+        refreshData();
         setEditingEvent(null);
         setDialogOpen(false);
         toast({

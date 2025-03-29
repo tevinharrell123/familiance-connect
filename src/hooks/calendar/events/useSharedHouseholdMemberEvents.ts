@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '@/types/calendar';
@@ -15,6 +16,8 @@ export function useSharedHouseholdMemberEvents() {
     queryFn: async (): Promise<CalendarEvent[]> => {
       if (!user || !household) return [];
 
+      console.log(`Fetching shared events for household: ${household.id}`);
+
       // Get all household members
       const { data: householdMembers, error: membersError } = await supabase
         .from('household_members')
@@ -28,10 +31,12 @@ export function useSharedHouseholdMemberEvents() {
       }
       
       if (!householdMembers || householdMembers.length === 0) {
+        console.log('No other household members found');
         return [];
       }
       
       const memberIds = householdMembers.map(m => m.user_id);
+      console.log(`Found ${memberIds.length} household members to fetch shared events from`);
       
       // Fetch public events from those members
       const { data: sharedEvents, error: sharedError } = await supabase
@@ -56,8 +61,11 @@ export function useSharedHouseholdMemberEvents() {
       }
       
       if (!sharedEvents || sharedEvents.length === 0) {
+        console.log('No shared events found from household members');
         return [];
       }
+
+      console.log(`Found ${sharedEvents.length} shared events from household members`);
 
       // Fetch profiles for the members
       const { data: memberProfiles, error: profilesError } = await supabase
@@ -92,8 +100,8 @@ export function useSharedHouseholdMemberEvents() {
       }));
     },
     enabled: !!user && !!household,
-    refetchInterval: 60000,
+    refetchInterval: 30000, // Reduce refresh interval to 30 seconds for testing
     refetchOnWindowFocus: true,
-    staleTime: 30000
+    staleTime: 10000 // Reduce stale time to 10 seconds
   });
 }
