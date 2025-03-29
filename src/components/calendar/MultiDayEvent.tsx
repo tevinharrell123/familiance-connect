@@ -2,6 +2,7 @@
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MultiDayEventProps {
   event: CalendarEvent;
@@ -19,6 +20,7 @@ export function MultiDayEvent({
   onClick 
 }: MultiDayEventProps) {
   const span = endIdx - startIdx + 1;
+  const isMobile = useIsMobile();
   
   // Skip rendering very short spans - they'll be shown in the day cells
   if (span <= 0) return null;
@@ -33,20 +35,21 @@ export function MultiDayEvent({
     onClick(event);
   };
 
+  // Calculate the top position based on week index
+  const topPosition = `calc(${weekIdx} * (${isMobile ? '60px' : '80px'}) + ${isMobile ? '25px' : '30px'})`;
+
   return (
     <div 
       className="absolute flex items-center rounded-md px-2 text-xs truncate cursor-pointer hover:opacity-90"
       style={{
         backgroundColor: event.color || '#7B68EE',
         color: 'white',
-        gridRow: weekIdx + 1,
-        gridColumn: `${startIdx + 1} / span ${span}`,
-        zIndex: 10,
         height: '22px',
         margin: '2px 0',
         left: `${startIdx * (100/7)}%`,
         width: `calc(${span * (100/7)}% - 4px)`,
-        top: `${30 + (weekIdx * 80)}px`
+        top: topPosition,
+        zIndex: 10
       }}
       onClick={handleClick}
     >

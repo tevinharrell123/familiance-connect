@@ -21,7 +21,8 @@ export function MonthViewStyles() {
         left: 0;
         width: 100%;
         height: 100%;
-        /* Removed pointer-events: none to allow clicks to work */
+        /* Ensure the container allows clicks */
+        pointer-events: auto;
         z-index: 20;
       }
       
@@ -40,9 +41,13 @@ export function MonthViewStyles() {
       }
       
       .day-events-container {
+        /* Explicitly set to ensure clicks work */
         pointer-events: auto;
         position: relative;
         z-index: 5;
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
       }
       
       @media (max-width: 640px) {
