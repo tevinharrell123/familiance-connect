@@ -19,6 +19,13 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
     console.log('Event indicator clicked:', event.id);
     onClick(event);
   };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Event indicator touched:', event.id);
+    onClick(event);
+  };
 
   return (
     <div 
@@ -26,7 +33,7 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
       className="flex items-center text-xs rounded-full px-1 mt-1 truncate cursor-pointer hover:opacity-80"
       style={{ backgroundColor: `${event.color || '#7B68EE'}30` }}
       onClick={handleClick}
-      onTouchEnd={handleClick}
+      onTouchEnd={handleTouchEnd}
     >
       <Avatar className="h-4 w-4 mr-1">
         {event.user_profile?.avatar_url ? (
