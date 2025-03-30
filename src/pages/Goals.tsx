@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -35,27 +34,23 @@ const Goals = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [addGoalOpen, setAddGoalOpen] = useState(false);
   
-  // Filter and sort goals
   useEffect(() => {
     if (!goals) return;
     
     let result = [...goals];
     
-    // Apply category filter
     if (categoryFilter !== 'all') {
       result = result.filter(goal => goal.category === categoryFilter);
     }
     
-    // Apply status filter
     if (statusFilter === 'completed') {
       result = result.filter(goal => goal.completed);
     } else if (statusFilter === 'in-progress') {
-      result = result.filter(goal => goal.progress > 0 && !goal.completed);
+      result = result.filter(goal => (goal.progress || 0) > 0 && !goal.completed);
     } else if (statusFilter === 'not-started') {
-      result = result.filter(goal => goal.progress === 0 && !goal.completed);
+      result = result.filter(goal => (goal.progress || 0) === 0 && !goal.completed);
     }
     
-    // Apply search
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(goal => 
@@ -64,7 +59,6 @@ const Goals = () => {
       );
     }
     
-    // Apply sorting
     result.sort((a, b) => {
       let comparison = 0;
       
@@ -79,7 +73,6 @@ const Goals = () => {
           comparison = (a.progress || 0) - (b.progress || 0);
           break;
         case 'target_date':
-          // Handle null dates - sort them to the end regardless of direction
           if (!a.target_date && !b.target_date) return 0;
           if (!a.target_date) return 1;
           if (!b.target_date) return -1;

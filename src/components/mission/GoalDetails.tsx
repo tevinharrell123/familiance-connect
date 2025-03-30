@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -46,7 +45,6 @@ export function GoalDetails() {
     calculateProgress();
   });
   
-  // Fetch goal data
   useEffect(() => {
     if (!goalId) return;
     
@@ -101,7 +99,6 @@ export function GoalDetails() {
     if (!goalId) return;
     try {
       await calculateProgressFromTasks(goalId);
-      // Refresh goal data to get updated progress
       const { data, error } = await supabase
         .from('family_goals')
         .select('progress, completed')
@@ -111,11 +108,11 @@ export function GoalDetails() {
       if (error) throw error;
       
       if (goal) {
-        setGoal({
-          ...goal,
+        setGoal(prevGoal => ({
+          ...prevGoal,
           progress: data.progress || 0,
           completed: data.completed || false
-        });
+        }));
       }
     } catch (err: any) {
       console.error('Error calculating progress:', err);
@@ -134,7 +131,6 @@ export function GoalDetails() {
   
   const handleGoalUpdate = () => {
     setEditGoalOpen(false);
-    // Refresh goal data
     if (goalId) {
       const fetchGoal = async () => {
         const { data, error } = await supabase
@@ -199,14 +195,12 @@ export function GoalDetails() {
   const handleSaveTask = async (taskData: Partial<GoalTask>) => {
     try {
       if (taskData.id) {
-        // Update existing task
         await updateTask(taskData as GoalTask);
         toast({
           title: "Task updated",
           description: "Task has been updated successfully."
         });
       } else {
-        // Create new task
         await createTask(taskData as Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>);
         toast({
           title: "Task added",
@@ -401,7 +395,7 @@ export function GoalDetails() {
                     )}
                   </CardTitle>
                   <CardDescription>
-                    Progress: {goal.progress}%
+                    Progress: {goal.progress || 0}%
                   </CardDescription>
                 </div>
                 {goal.target_date && (
@@ -413,7 +407,7 @@ export function GoalDetails() {
               </div>
             </CardHeader>
             <CardContent>
-              <Progress value={goal.progress} className="h-2 mb-6" />
+              <Progress value={goal.progress || 0} className="h-2 mb-6" />
               
               {goal.description && (
                 <div className="mb-6">
@@ -514,9 +508,9 @@ export function GoalDetails() {
                   <p className="text-sm font-medium">Status</p>
                   <div className="text-sm">
                     {goal.completed ? (
-                      <Badge variant="success" className="mt-1">Completed</Badge>
-                    ) : goal.progress > 0 ? (
-                      <Badge variant="secondary" className="mt-1">In Progress ({goal.progress}%)</Badge>
+                      <Badge variant="secondary" className="mt-1 bg-green-500 text-white">Completed</Badge>
+                    ) : goal.progress && goal.progress > 0 ? (
+                      <Badge variant="secondary" className="mt-1">In Progress ({goal.progress || 0}%)</Badge>
                     ) : (
                       <Badge variant="outline" className="mt-1">Not Started</Badge>
                     )}
@@ -535,7 +529,6 @@ export function GoalDetails() {
         </div>
       </div>
       
-      {/* Edit Goal Dialog */}
       <EditGoalDialog 
         goal={goal}
         open={editGoalOpen}
@@ -543,7 +536,6 @@ export function GoalDetails() {
         onSave={handleGoalUpdate}
       />
       
-      {/* Task Dialog */}
       <TaskDialog 
         open={taskDialogOpen}
         onOpenChange={setTaskDialogOpen}
@@ -553,7 +545,6 @@ export function GoalDetails() {
         isLoading={taskActionLoading}
       />
       
-      {/* Delete Alert Dialog */}
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
