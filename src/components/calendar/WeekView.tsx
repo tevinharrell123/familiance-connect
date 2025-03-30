@@ -1,30 +1,16 @@
 
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
-import { 
-  format, 
-  addDays, 
-  addWeeks,
-  subWeeks,
-  startOfWeek, 
-  endOfWeek, 
-  eachDayOfInterval, 
-  isSameDay, 
-  parseISO, 
-  differenceInDays 
-} from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, differenceInDays } from 'date-fns';
 import { CalendarEventCard } from './CalendarEventCard';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface WeekViewProps {
   currentDate: Date;
   events?: CalendarEvent[];
   onEventClick?: (event: CalendarEvent) => void;
-  onDateChange?: (date: Date) => void;
 }
 
-export function WeekView({ currentDate, events = [], onEventClick, onDateChange }: WeekViewProps) {
+export function WeekView({ currentDate, events = [], onEventClick }: WeekViewProps) {
   // Get start and end of the week
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // 0 = Sunday
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
@@ -63,53 +49,19 @@ export function WeekView({ currentDate, events = [], onEventClick, onDateChange 
       onEventClick(event);
     }
   };
-  
-  const goToPreviousWeek = () => {
-    if (onDateChange) {
-      const previousWeek = subWeeks(currentDate, 1);
-      onDateChange(previousWeek);
-    }
-  };
-
-  const goToNextWeek = () => {
-    if (onDateChange) {
-      const nextWeek = addWeeks(currentDate, 1);
-      onDateChange(nextWeek);
-    }
-  };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={goToPreviousWeek}
-          disabled={!onDateChange}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        
-        <h2 className="text-xl font-semibold text-center">
-          {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
-        </h2>
-        
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={goToNextWeek}
-          disabled={!onDateChange}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <h2 className="text-xl font-semibold text-center mb-4">
+        {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+      </h2>
       
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-7 overflow-x-auto min-w-full">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-7">
         {weekDays.map((day, index) => {
           const dayEvents = getEventsForDay(day);
           
           return (
-            <div key={index} className="border rounded-md overflow-hidden min-w-[140px]">
+            <div key={index} className="border rounded-md overflow-hidden">
               <div className="bg-muted p-2 text-center font-medium">
                 <div>{format(day, 'EEE')}</div>
                 <div className={`text-lg ${isSameDay(day, new Date()) ? 'text-primary font-bold' : ''}`}>

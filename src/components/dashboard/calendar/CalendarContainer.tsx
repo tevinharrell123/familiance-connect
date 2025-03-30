@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
@@ -17,9 +18,9 @@ export function CalendarWidget() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { household } = useAuth();
   
+  // Add a ref to prevent too frequent refreshes
   const lastRefreshTimeRef = useRef<number>(0);
   const isRefreshingRef = useRef<boolean>(false);
   const initialLoadRef = useRef<boolean>(false);
@@ -37,14 +38,17 @@ export function CalendarWidget() {
     refetch
   } = useCalendarEvents();
 
+  // Refresh function to update calendar events
   const refreshData = useCallback(async () => {
+    // Don't refresh if we're already refreshing
     if (isRefreshingRef.current) {
       console.log('Skipping refresh - already in progress');
       return;
     }
     
+    // Throttle refreshes to prevent loops
     const now = Date.now();
-    if (now - lastRefreshTimeRef.current < 10000) {
+    if (now - lastRefreshTimeRef.current < 10000) { // 10 seconds minimum between refreshes
       console.log('Skipping refresh - too soon after last refresh');
       return;
     }
@@ -62,6 +66,7 @@ export function CalendarWidget() {
     }
   }, [refetch]);
 
+  // Initial data fetch on mount - do this only once
   useEffect(() => {
     if (!initialLoadRef.current) {
       console.log('Fetching calendar events on mount');
@@ -70,17 +75,20 @@ export function CalendarWidget() {
     }
   }, [refreshData]);
 
+  // Refetch events when household changes - but only once per household change
   const householdIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (household && household.id !== householdIdRef.current) {
       console.log('Household changed, refetching calendar events');
       householdIdRef.current = household.id;
+      // Wait a tick to avoid potential race conditions
       setTimeout(() => {
         refreshData();
       }, 100);
     }
   }, [household?.id, refreshData]);
 
+  // Calculate dates for different views
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   
@@ -93,6 +101,7 @@ export function CalendarWidget() {
     createEvent(values, {
       onSuccess: () => {
         console.log('Event created successfully, refreshing data');
+        // Wait a tick to avoid potential race conditions
         setTimeout(() => {
           refreshData();
         }, 100);
@@ -120,6 +129,7 @@ export function CalendarWidget() {
     }, {
       onSuccess: () => {
         console.log('Event updated successfully, refreshing data');
+        // Wait a tick to avoid potential race conditions
         setTimeout(() => {
           refreshData();
         }, 100);
@@ -140,6 +150,7 @@ export function CalendarWidget() {
     deleteEvent(editingEvent, {
       onSuccess: () => {
         console.log('Event deleted successfully, refreshing data');
+        // Wait a tick to avoid potential race conditions
         setTimeout(() => {
           refreshData();
         }, 100);
@@ -164,46 +175,17 @@ export function CalendarWidget() {
     setDialogOpen(true);
   };
 
-  const handleDateClick = (date: Date) => {
-    console.log('Date clicked:', date);
-    setSelectedDate(date);
-    setEditingEvent(null);
-    setDialogOpen(true);
-  };
-
-  const handleDateChange = (date: Date) => {
-    console.log('Date changed:', date);
-    setCurrentDate(date);
-  };
-
   const getEventDialogDefaultValues = (): Partial<CalendarFormValues> => {
-    if (editingEvent) {
-      return {
-        title: editingEvent.title,
-        description: editingEvent.description || '',
-        start_date: new Date(editingEvent.start_date),
-        end_date: new Date(editingEvent.end_date),
-        color: editingEvent.color || '#7B68EE',
-        is_household_event: editingEvent.is_household_event
-      };
-    }
+    if (!editingEvent) return {};
     
-    if (selectedDate) {
-      const startDate = selectedDate;
-      const endDate = new Date(startDate);
-      endDate.setHours(startDate.getHours() + 1);
-      
-      return {
-        title: '',
-        description: '',
-        start_date: startDate,
-        end_date: endDate,
-        color: '#7B68EE',
-        is_household_event: false
-      };
-    }
-    
-    return {};
+    return {
+      title: editingEvent.title,
+      description: editingEvent.description || '',
+      start_date: new Date(editingEvent.start_date),
+      end_date: new Date(editingEvent.end_date),
+      color: editingEvent.color || '#7B68EE',
+      is_household_event: editingEvent.is_household_event
+    };
   };
 
   return (
@@ -213,7 +195,6 @@ export function CalendarWidget() {
         onDateChange={setCurrentDate}
         onAddEvent={() => {
           setEditingEvent(null);
-          setSelectedDate(null);
           setDialogOpen(true);
         }}
       />
@@ -227,18 +208,11 @@ export function CalendarWidget() {
         selectedView={selectedView}
         onViewChange={(view) => setSelectedView(view as CalendarViewType)}
         onEventClick={handleEventClick}
-        onDateClick={handleDateClick}
-        onDateChange={handleDateChange}
       />
       
       <CalendarEventDialog
         open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) {
-            setSelectedDate(null);
-          }
-        }}
+        onOpenChange={setDialogOpen}
         onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent}
         onDelete={editingEvent ? handleDeleteEvent : undefined}
         isEditing={!!editingEvent}
