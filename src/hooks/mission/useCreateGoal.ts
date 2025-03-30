@@ -51,13 +51,16 @@ export function useCreateGoal() {
         imageUrl = await uploadImage(imageFile);
       }
 
+      // Convert "unassigned" to null for the database
+      const actualAssignedTo = assignedTo === "unassigned" ? null : assignedTo;
+
       const goalData = {
         household_id: householdId,
         title,
         description,
         category,
         target_date: targetDate || null,
-        assigned_to: assignedTo || null,
+        assigned_to: actualAssignedTo || null,
         image_url: imageUrl
       };
 

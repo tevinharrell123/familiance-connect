@@ -214,7 +214,8 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                 <SelectValue placeholder="Optional: Assign to member" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
+                {/* Fix: Replace empty string with a non-empty string value */}
+                <SelectItem key="unassigned" value="unassigned">Unassigned</SelectItem>
                 {members?.map((member) => (
                   <SelectItem key={member.id} value={member.user_id}>
                     {member.user_profiles?.full_name || 'Unknown Member'}
