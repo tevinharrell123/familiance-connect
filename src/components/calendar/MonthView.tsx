@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { CalendarEvent } from '@/types/calendar';
-import { format, isSameDay, parseISO, isSameMonth, differenceInDays } from 'date-fns';
+import { format, isSameDay, parseISO, isSameMonth, differenceInDays, startOfDay } from 'date-fns';
 import { getEventsForDay, getWeeklyEvents } from './utils/calendarEventUtils';
 import { EventIndicator } from './EventIndicator';
 import { MultiDayEvent } from './MultiDayEvent';
@@ -31,9 +31,22 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Normalize all dates to start of day to avoid time issues
+  const normalizedDays = days.map(day => startOfDay(day));
+  const normalizedEvents = events.map(event => ({
+    ...event,
+    normalizedStart: startOfDay(parseISO(event.start_date)),
+    normalizedEnd: startOfDay(parseISO(event.end_date))
+  }));
+  
+  // Log calendar range for debugging
+  console.log("Calendar month view range:", normalizedDays[0], "to", normalizedDays[normalizedDays.length - 1]);
+  console.log("Total events:", events.length);
   
   // Get weekly events for multi-day rendering
-  const weeklyEvents = getWeeklyEvents(days, events);
+  const weeklyEvents = getWeeklyEvents(normalizedDays, events);
+  console.log("Processed multiday events:", weeklyEvents.length);
 
   const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked in MonthView:', event.id);
@@ -75,7 +88,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
           </div>
         ))}
         
-        {days.map((day, i) => {
+        {normalizedDays.map((day, i) => {
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isToday = isSameDay(day, new Date());
           

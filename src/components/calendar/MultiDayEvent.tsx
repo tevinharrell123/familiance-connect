@@ -41,9 +41,18 @@ export function MultiDayEvent({ event, startIdx, endIdx, weekIdx, onClick }: Mul
   
   // Format time if needed
   const eventStart = parseISO(event.start_date);
-  const displayTitle = isMobile 
-    ? event.title 
-    : `${event.title} (${format(eventStart, 'MMM d')})`;
+  const eventEnd = parseISO(event.end_date);
+  
+  // Use display title based on device size
+  let displayTitle;
+  if (isMobile) {
+    displayTitle = event.title;
+  } else {
+    // Add date range info for desktop
+    displayTitle = `${event.title} (${format(eventStart, 'MMM d')}-${format(eventEnd, 'MMM d')})`;
+  }
+  
+  console.log(`Rendering event: ${event.title}, left: ${leftPercent}%, width: ${widthPercent}%, weekIdx: ${weekIdx}`);
   
   return (
     <div 
