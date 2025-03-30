@@ -34,12 +34,27 @@ export function useGenerateTasks(goalId: string, onSuccess?: () => void) {
         return;
       }
       
-      if (!data.tasks || !Array.isArray(data.tasks)) {
-        throw new Error('Invalid response from task generator');
+      if (!data || !data.tasks || !Array.isArray(data.tasks)) {
+        console.error('Invalid response format:', data);
+        toast({
+          title: 'Error generating tasks',
+          description: 'Received invalid response from the task generator',
+          variant: 'destructive'
+        });
+        return;
       }
       
       // Create each task in the database
       const generatedTasks = data.tasks as GeneratedTask[];
+      
+      if (generatedTasks.length === 0) {
+        toast({
+          title: 'No tasks generated',
+          description: 'The AI couldn\'t generate any tasks for this goal.',
+          variant: 'destructive'
+        });
+        return;
+      }
       
       for (const taskData of generatedTasks) {
         await createTask({

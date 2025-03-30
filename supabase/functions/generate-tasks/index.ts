@@ -39,7 +39,6 @@ serve(async (req) => {
     For each task, include:
     1. A clear, actionable title (keep it under 10 words)
     2. A brief description (1-2 sentences)
-    3. A reasonable timeframe for completion (when this makes sense)
     
     Format your response as a JSON array with objects containing "title" and "description" fields only.
     Example: [{"title": "Research options", "description": "Spend 30 minutes researching different approaches."}]
@@ -63,16 +62,17 @@ serve(async (req) => {
       }),
     });
 
-    const data = await response.json();
-    
     if (!response.ok) {
-      console.error('OpenAI API error:', data);
+      const errorData = await response.text();
+      console.error('OpenAI API error:', errorData);
       return new Response(
-        JSON.stringify({ error: 'Failed to generate tasks', details: data }),
+        JSON.stringify({ error: 'Failed to generate tasks', details: errorData }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const data = await response.json();
+    
     let generatedTasks;
     try {
       const aiResponse = data.choices[0].message.content;
@@ -85,6 +85,12 @@ serve(async (req) => {
       if (!Array.isArray(generatedTasks)) {
         throw new Error('Response is not an array');
       }
+      
+      // Ensure each task has the required fields
+      generatedTasks = generatedTasks.map(task => ({
+        title: String(task.title || '').trim(),
+        description: String(task.description || '').trim()
+      }));
     } catch (error) {
       console.error('Error parsing AI response:', error);
       return new Response(
