@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           assigned_to: string | null
           category: string
+          completed: boolean | null
           created_at: string
           description: string | null
           household_id: string
@@ -25,6 +26,7 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           category: string
+          completed?: boolean | null
           created_at?: string
           description?: string | null
           household_id: string
@@ -37,6 +39,7 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           category?: string
+          completed?: boolean | null
           created_at?: string
           description?: string | null
           household_id?: string

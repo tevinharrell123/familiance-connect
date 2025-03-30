@@ -11,5 +11,5 @@ export interface FamilyGoal {
   created_at: string;
   updated_at: string;
   assigned_to_name?: string | null;
-  completed: boolean;
+  completed: boolean; // Add this line
 }
