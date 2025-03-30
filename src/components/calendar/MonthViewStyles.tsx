@@ -66,6 +66,12 @@ export function MonthViewStyles() {
         .calendar-day {
           min-height: 70px;
         }
+        
+        .grid-container {
+          width: 100%;
+          min-width: 300px;
+          overflow-x: auto;
+        }
       }
       
       @media (max-width: 640px) {
@@ -77,11 +83,20 @@ export function MonthViewStyles() {
           font-size: 0.6rem;
           padding: 1px 2px;
         }
+        
+        .grid-container {
+          min-width: 400px;
+        }
       }
       
       @media (max-width: 480px) {
         .calendar-day {
           min-height: 50px;
+        }
+        
+        .month-view {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
         }
       }
       `}

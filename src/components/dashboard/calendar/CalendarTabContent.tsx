@@ -20,6 +20,7 @@ interface CalendarTabContentProps {
   onViewChange: (view: string) => void;
   onEventClick: (event: CalendarEvent) => void;
   onDateClick?: (date: Date) => void;
+  onDateChange?: (date: Date) => void;
 }
 
 export function CalendarTabContent({ 
@@ -31,7 +32,8 @@ export function CalendarTabContent({
   selectedView, 
   onViewChange,
   onEventClick,
-  onDateClick
+  onDateClick,
+  onDateChange
 }: CalendarTabContentProps) {
   return (
     <CardContent>
@@ -53,13 +55,15 @@ export function CalendarTabContent({
               <p>Error loading calendar events</p>
             </div>
           ) : (
-            <MonthView 
-              days={days} 
-              events={events} 
-              currentMonth={currentDate} 
-              onEventClick={onEventClick}
-              onDateClick={onDateClick}
-            />
+            <div className="overflow-x-auto">
+              <MonthView 
+                days={days} 
+                events={events} 
+                currentMonth={currentDate} 
+                onEventClick={onEventClick}
+                onDateClick={onDateClick}
+              />
+            </div>
           )}
         </TabsContent>
         
@@ -68,6 +72,7 @@ export function CalendarTabContent({
             currentDate={currentDate} 
             events={events} 
             onEventClick={onEventClick}
+            onDateChange={onDateChange}
           />
         </TabsContent>
         
@@ -76,6 +81,7 @@ export function CalendarTabContent({
             currentDate={currentDate} 
             events={events}
             onEventClick={onEventClick}
+            onDateChange={onDateChange}
           />
         </TabsContent>
       </Tabs>

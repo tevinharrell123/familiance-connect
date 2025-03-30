@@ -13,7 +13,7 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
   
   // Use different styles for multi-day and single-day events
   const style = {
-    backgroundColor: isMultiDay ? '#8B5CF6' : (event.color || '#7B68EE'),
+    backgroundColor: isMultiDay ? '#8B5CF6' : (event.color || '#D6BCFA'), // Purple for multi-day, light purple for single-day
     borderRadius: '4px',
     padding: '2px 4px',
     margin: '1px 0',
