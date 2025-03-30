@@ -3,7 +3,6 @@ import React from 'react';
 import { CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CalendarEvent, CalendarViewType } from '@/types/calendar';
-import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle } from 'lucide-react';
 import { MonthView } from '@/components/calendar/MonthView';
@@ -19,6 +18,7 @@ interface CalendarTabContentProps {
   selectedView: CalendarViewType;
   onViewChange: (view: string) => void;
   onEventClick: (event: CalendarEvent) => void;
+  onDateClick: (date: Date) => void;
 }
 
 export function CalendarTabContent({ 
@@ -29,12 +29,12 @@ export function CalendarTabContent({
   error, 
   selectedView, 
   onViewChange,
-  onEventClick 
+  onEventClick,
+  onDateClick
 }: CalendarTabContentProps) {
   return (
     <CardContent>
       <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-2">{format(currentDate, 'MMMM yyyy')}</h3>
         <Tabs defaultValue="month" value={selectedView} onValueChange={onViewChange}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="month">Month</TabsTrigger>
@@ -57,7 +57,8 @@ export function CalendarTabContent({
                 days={days} 
                 events={events} 
                 currentMonth={currentDate} 
-                onEventClick={onEventClick} 
+                onEventClick={onEventClick}
+                onDateClick={onDateClick}
               />
             )}
           </TabsContent>
