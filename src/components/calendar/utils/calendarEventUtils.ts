@@ -97,6 +97,9 @@ export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
       } else if (endIdx === -1 && startIdx !== -1) {
         // If end wasn't found but start was, set to end of week
         endIdx = 6;
+      } else if (endIdx > 0) {
+        // If end was found, adjust to the day before (since the found day is after the end)
+        endIdx = endIdx - 1;
       }
       
       // Only return valid events (events that appear in this week)
