@@ -1,10 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { CalendarEvent } from '@/types/calendar';
-import { format, isSameDay, parseISO, isSameMonth, differenceInDays } from 'date-fns';
-import { getEventsForDay, getWeeklyEvents } from './utils/calendarEventUtils';
+import { format, isSameDay, parseISO, isSameMonth } from 'date-fns';
+import { getEventsForDay } from './utils/calendarEventUtils';
 import { EventIndicator } from './EventIndicator';
-import { MultiDayEvent } from './MultiDayEvent';
 import { MonthViewStyles } from './MonthViewStyles';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -31,21 +30,11 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  
-  // Get weekly events for multi-day rendering
-  const weeklyEvents = getWeeklyEvents(days, events);
 
   const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked in MonthView:', event.id);
     onEventClick(event);
   };
-
-  // Filter out multi-day events for day cell rendering
-  const singleDayEvents = events.filter(event => {
-    const eventStart = parseISO(event.start_date);
-    const eventEnd = parseISO(event.end_date);
-    return differenceInDays(eventEnd, eventStart) === 0;
-  });
 
   // Dynamically set max visible events based on screen size
   let maxVisibleEvents = 3;
@@ -79,8 +68,8 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isToday = isSameDay(day, new Date());
           
-          // Get single-day events for this day
-          const dayEvents = getEventsForDay(day, singleDayEvents);
+          // Get events for this day
+          const dayEvents = getEventsForDay(day, events);
           
           return (
             <div 
@@ -111,20 +100,6 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
             </div>
           );
         })}
-      </div>
-      
-      {/* Overlay container for multi-day events */}
-      <div className="multi-day-events-container">
-        {weeklyEvents.map((weekEvent, idx) => (
-          <MultiDayEvent 
-            key={`${weekEvent.event.id}-${idx}`}
-            event={weekEvent.event}
-            startIdx={weekEvent.startIdx}
-            endIdx={weekEvent.endIdx}
-            weekIdx={weekEvent.weekIdx}
-            onClick={handleEventClick}
-          />
-        ))}
       </div>
       
       <MonthViewStyles />
