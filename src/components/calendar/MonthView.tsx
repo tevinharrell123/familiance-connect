@@ -48,11 +48,11 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
   });
 
   // Dynamically set max visible events based on screen size
-  let maxVisibleEvents = 2;
-  if (windowWidth <= 480) {
+  let maxVisibleEvents = 3;
+  if (windowWidth <= 640) {
     maxVisibleEvents = 1;
   } else if (windowWidth <= 768) {
-    maxVisibleEvents = 1;
+    maxVisibleEvents = 2;
   }
 
   // Determine day label format based on screen size
@@ -67,14 +67,14 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
 
   return (
     <div className="month-view relative">
+      {/* Regular day cells */}
       <div className="calendar-grid grid-container">
         {weekDays.map((day, i) => (
-          <div key={i} className="text-center py-2 font-medium text-sm">
+          <div key={i} className="text-center py-2 font-medium text-xs sm:text-sm">
             {getDayLabel(day)}
           </div>
         ))}
         
-        {/* Regular day cells */}
         {days.map((day, i) => {
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isToday = isSameDay(day, new Date());
@@ -89,7 +89,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
                 isCurrentMonth ? 'bg-white' : 'text-gray-300 bg-gray-50'
               } ${isToday ? 'border-primary' : ''}`}
             >
-              <div className={`text-sm p-1 ${isToday ? 'font-bold text-primary' : ''}`}>
+              <div className={`text-xs sm:text-sm p-1 ${isToday ? 'font-bold text-primary' : ''}`}>
                 {format(day, 'd')}
               </div>
               
@@ -103,7 +103,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
                 ))}
                 
                 {dayEvents.length > maxVisibleEvents && (
-                  <div className="text-xs text-center text-muted-foreground">
+                  <div className="text-[10px] text-center text-muted-foreground">
                     +{dayEvents.length - maxVisibleEvents} more
                   </div>
                 )}

@@ -32,9 +32,11 @@ export function MonthViewStyles() {
         pointer-events: auto;
         position: absolute;
         z-index: 10;
-        font-size: 11px;
+        font-size: 0.65rem;
         max-width: 100%;
         overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       
       .calendar-day {
@@ -67,7 +69,7 @@ export function MonthViewStyles() {
         }
         
         .multi-day-event {
-          font-size: 10px;
+          font-size: 0.6rem;
         }
       }
       
@@ -77,7 +79,7 @@ export function MonthViewStyles() {
         }
         
         .multi-day-event {
-          font-size: 9px;
+          font-size: 0.55rem;
         }
       }
       
@@ -87,7 +89,7 @@ export function MonthViewStyles() {
         }
         
         .multi-day-event {
-          font-size: 8px;
+          font-size: 0.5rem;
         }
       }
       `}
