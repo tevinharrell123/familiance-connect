@@ -4,15 +4,19 @@ import { FamilyGoal } from '@/types/goals';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { CameraIcon } from 'lucide-react';
+import { CameraIcon, CheckCircle } from 'lucide-react';
 
 interface GoalCardProps {
   goal: FamilyGoal;
+  onClick: (goal: FamilyGoal) => void;
 }
 
-export const GoalCard: React.FC<GoalCardProps> = ({ goal }) => {
+export const GoalCard: React.FC<GoalCardProps> = ({ goal, onClick }) => {
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <Card 
+      className={`overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer ${goal.completed ? 'opacity-60' : ''}`}
+      onClick={() => onClick(goal)}
+    >
       <div className="aspect-square relative overflow-hidden">
         {goal.image_url ? (
           <img 
@@ -31,6 +35,11 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal }) => {
         >
           {goal.category}
         </Badge>
+        {goal.completed && (
+          <div className="absolute top-2 left-2">
+            <CheckCircle className="h-6 w-6 text-green-500 bg-white rounded-full" />
+          </div>
+        )}
       </div>
       <CardContent className="p-3">
         <h3 className="font-medium text-sm line-clamp-1">{goal.title}</h3>

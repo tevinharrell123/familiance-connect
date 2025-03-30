@@ -8,9 +8,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface VisionBoardProps {
   goals: FamilyGoal[];
   isLoading: boolean;
+  onGoalClick: (goal: FamilyGoal) => void;
 }
 
-export const VisionBoard: React.FC<VisionBoardProps> = ({ goals, isLoading }) => {
+export const VisionBoard: React.FC<VisionBoardProps> = ({ goals, isLoading, onGoalClick }) => {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -37,7 +38,11 @@ export const VisionBoard: React.FC<VisionBoardProps> = ({ goals, isLoading }) =>
     <ScrollArea className="h-[70vh] pr-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {goals.map((goal) => (
-          <GoalCard key={goal.id} goal={goal} />
+          <GoalCard 
+            key={goal.id} 
+            goal={goal} 
+            onClick={onGoalClick}
+          />
         ))}
       </div>
     </ScrollArea>

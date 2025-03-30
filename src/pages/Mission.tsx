@@ -7,17 +7,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { VisionBoard } from '@/components/mission/VisionBoard';
 import { GoalCategories } from '@/components/mission/GoalCategories';
 import { AddGoalDialog } from '@/components/mission/AddGoalDialog';
+import { EditGoalDialog } from '@/components/mission/EditGoalDialog';
 import { useGoals } from '@/hooks/mission/useGoals';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
+import { FamilyGoal } from '@/types/goals';
 
 const Mission = () => {
   const { user, isLoading } = useRequireAuth();
   const { household } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedGoal, setSelectedGoal] = useState<FamilyGoal | null>(null);
   
   const { 
     goals, 
@@ -29,11 +33,21 @@ const Mission = () => {
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
-    setOpen(true);
+    setAddDialogOpen(true);
   };
 
   const handleDialogClose = () => {
-    setOpen(false);
+    setAddDialogOpen(false);
+    refreshGoals();
+  };
+
+  const handleGoalClick = (goal: FamilyGoal) => {
+    setSelectedGoal(goal);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditDialogClose = () => {
+    setEditDialogOpen(false);
     refreshGoals();
   };
 
@@ -86,7 +100,7 @@ const Mission = () => {
             </p>
           </div>
           <div className="mt-4 md:mt-0">
-            <Button onClick={() => setOpen(true)}>
+            <Button onClick={() => setAddDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> Add New Goal
             </Button>
           </div>
@@ -101,7 +115,11 @@ const Mission = () => {
                   <Info className="mr-1 h-3 w-3" /> How to use
                 </Button>
               </div>
-              <VisionBoard goals={goals} isLoading={isLoadingGoals} />
+              <VisionBoard 
+                goals={goals} 
+                isLoading={isLoadingGoals} 
+                onGoalClick={handleGoalClick}
+              />
             </div>
           </div>
           
@@ -120,10 +138,17 @@ const Mission = () => {
       </div>
 
       <AddGoalDialog 
-        open={open} 
-        onOpenChange={setOpen}
+        open={addDialogOpen} 
+        onOpenChange={setAddDialogOpen}
         onClose={handleDialogClose}
         initialCategory={selectedCategory}
+      />
+
+      <EditGoalDialog
+        goal={selectedGoal}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleEditDialogClose}
       />
     </MainLayout>
   );

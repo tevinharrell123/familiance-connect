@@ -45,7 +45,8 @@ export function useGoals() {
         image_url: goal.image_url,
         created_at: goal.created_at,
         updated_at: goal.updated_at,
-        assigned_to_name: goal.user_profiles?.full_name || null
+        assigned_to_name: goal.user_profiles?.full_name || null,
+        completed: goal.completed || false
       }));
 
       setGoals(formattedGoals);
