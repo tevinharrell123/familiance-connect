@@ -19,6 +19,7 @@ interface CalendarTabContentProps {
   selectedView: CalendarViewType;
   onViewChange: (view: string) => void;
   onEventClick: (event: CalendarEvent) => void;
+  onDateClick?: (date: Date) => void;
 }
 
 export function CalendarTabContent({ 
@@ -29,56 +30,55 @@ export function CalendarTabContent({
   error, 
   selectedView, 
   onViewChange,
-  onEventClick 
+  onEventClick,
+  onDateClick
 }: CalendarTabContentProps) {
   return (
     <CardContent>
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-2">{format(currentDate, 'MMMM yyyy')}</h3>
-        <Tabs defaultValue="month" value={selectedView} onValueChange={onViewChange}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="month">Month</TabsTrigger>
-            <TabsTrigger value="day">Day</TabsTrigger>
-            <TabsTrigger value="week">Week</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="month" className="mt-4">
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-[300px] w-full" />
-              </div>
-            ) : error ? (
-              <div className="text-center p-4 text-red-500 flex flex-col items-center">
-                <AlertTriangle className="h-8 w-8 mb-2" />
-                <p>Error loading calendar events</p>
-              </div>
-            ) : (
-              <MonthView 
-                days={days} 
-                events={events} 
-                currentMonth={currentDate} 
-                onEventClick={onEventClick} 
-              />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="day">
-            <DayView 
-              currentDate={currentDate} 
+      <Tabs defaultValue="month" value={selectedView} onValueChange={onViewChange}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="month">Month</TabsTrigger>
+          <TabsTrigger value="day">Day</TabsTrigger>
+          <TabsTrigger value="week">Week</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="month" className="mt-4">
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-[300px] w-full" />
+            </div>
+          ) : error ? (
+            <div className="text-center p-4 text-red-500 flex flex-col items-center">
+              <AlertTriangle className="h-8 w-8 mb-2" />
+              <p>Error loading calendar events</p>
+            </div>
+          ) : (
+            <MonthView 
+              days={days} 
               events={events} 
+              currentMonth={currentDate} 
               onEventClick={onEventClick}
+              onDateClick={onDateClick}
             />
-          </TabsContent>
-          
-          <TabsContent value="week">
-            <WeekView 
-              currentDate={currentDate} 
-              events={events}
-              onEventClick={onEventClick}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="day">
+          <DayView 
+            currentDate={currentDate} 
+            events={events} 
+            onEventClick={onEventClick}
+          />
+        </TabsContent>
+        
+        <TabsContent value="week">
+          <WeekView 
+            currentDate={currentDate} 
+            events={events}
+            onEventClick={onEventClick}
+          />
+        </TabsContent>
+      </Tabs>
     </CardContent>
   );
 }

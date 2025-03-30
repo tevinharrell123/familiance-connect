@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { parseISO, differenceInDays } from 'date-fns';
 
 interface EventIndicatorProps {
   event: CalendarEvent;
@@ -9,39 +9,34 @@ interface EventIndicatorProps {
 }
 
 export function EventIndicator({ event, onClick }: EventIndicatorProps) {
-  const userInitials = event.user_profile?.full_name
-    ? event.user_profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-    : '?';
-      
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Event indicator clicked:', event.id);
-    onClick(event);
-  };
+  const isMultiDay = differenceInDays(parseISO(event.end_date), parseISO(event.start_date)) > 0;
   
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault();
+  // Use different styles for multi-day and single-day events
+  const style = {
+    backgroundColor: isMultiDay ? '#8B5CF6' : (event.color || '#7B68EE'),
+    borderRadius: '4px',
+    padding: '2px 4px',
+    margin: '1px 0',
+    fontSize: '0.7rem',
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    color: 'white',
+    cursor: 'pointer',
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Event indicator touched:', event.id);
     onClick(event);
   };
 
   return (
     <div 
-      key={event.id} 
-      className="flex items-center text-xs rounded-full px-1 mt-1 truncate cursor-pointer hover:opacity-80 single-day-event"
-      style={{ backgroundColor: `${event.color || '#7B68EE'}30` }}
+      className="single-day-event" 
+      style={style} 
       onClick={handleClick}
-      onTouchEnd={handleTouchEnd}
     >
-      <Avatar className="h-4 w-4 mr-1">
-        {event.user_profile?.avatar_url ? (
-          <AvatarImage src={event.user_profile.avatar_url} alt={event.user_profile.full_name || ''} />
-        ) : null}
-        <AvatarFallback className="text-[8px]">{userInitials}</AvatarFallback>
-      </Avatar>
-      <span className="truncate">{event.title}</span>
+      {event.title}
     </div>
   );
 }

@@ -18,6 +18,7 @@ export function CalendarWidget() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { household } = useAuth();
   
   // Add a ref to prevent too frequent refreshes
@@ -175,17 +176,42 @@ export function CalendarWidget() {
     setDialogOpen(true);
   };
 
+  const handleDateClick = (date: Date) => {
+    console.log('Date clicked:', date);
+    setSelectedDate(date);
+    setEditingEvent(null);
+    setDialogOpen(true);
+  };
+
   const getEventDialogDefaultValues = (): Partial<CalendarFormValues> => {
-    if (!editingEvent) return {};
+    if (editingEvent) {
+      return {
+        title: editingEvent.title,
+        description: editingEvent.description || '',
+        start_date: new Date(editingEvent.start_date),
+        end_date: new Date(editingEvent.end_date),
+        color: editingEvent.color || '#7B68EE',
+        is_household_event: editingEvent.is_household_event
+      };
+    }
     
-    return {
-      title: editingEvent.title,
-      description: editingEvent.description || '',
-      start_date: new Date(editingEvent.start_date),
-      end_date: new Date(editingEvent.end_date),
-      color: editingEvent.color || '#7B68EE',
-      is_household_event: editingEvent.is_household_event
-    };
+    if (selectedDate) {
+      // Create a default event starting at the selected date
+      const startDate = selectedDate;
+      const endDate = new Date(startDate);
+      endDate.setHours(startDate.getHours() + 1); // Default 1 hour event
+      
+      return {
+        title: '',
+        description: '',
+        start_date: startDate,
+        end_date: endDate,
+        color: '#7B68EE',
+        is_household_event: false
+      };
+    }
+    
+    return {};
   };
 
   return (
@@ -195,6 +221,7 @@ export function CalendarWidget() {
         onDateChange={setCurrentDate}
         onAddEvent={() => {
           setEditingEvent(null);
+          setSelectedDate(null);
           setDialogOpen(true);
         }}
       />
@@ -208,11 +235,17 @@ export function CalendarWidget() {
         selectedView={selectedView}
         onViewChange={(view) => setSelectedView(view as CalendarViewType)}
         onEventClick={handleEventClick}
+        onDateClick={handleDateClick}
       />
       
       <CalendarEventDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setSelectedDate(null);
+          }
+        }}
         onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent}
         onDelete={editingEvent ? handleDeleteEvent : undefined}
         isEditing={!!editingEvent}

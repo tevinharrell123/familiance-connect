@@ -24,6 +24,12 @@ export function MonthViewStyles() {
         flex-direction: column;
         position: relative;
         z-index: 1;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      
+      .calendar-day:hover {
+        background-color: rgba(0, 0, 0, 0.03);
       }
       
       .day-events-container {
@@ -42,6 +48,20 @@ export function MonthViewStyles() {
         z-index: 30;
       }
       
+      .multi-day-event {
+        background-color: #8B5CF6;
+        color: white;
+        margin-top: 2px;
+        border-radius: 4px;
+        padding: 2px 4px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        z-index: 20;
+      }
+      
       @media (max-width: 768px) {
         .calendar-day {
           min-height: 70px;
@@ -51,6 +71,11 @@ export function MonthViewStyles() {
       @media (max-width: 640px) {
         .calendar-day {
           min-height: 60px;
+        }
+        
+        .multi-day-event {
+          font-size: 0.6rem;
+          padding: 1px 2px;
         }
       }
       
