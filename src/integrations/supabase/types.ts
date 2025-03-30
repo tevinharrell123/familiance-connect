@@ -19,6 +19,8 @@ export type Database = {
           household_id: string
           id: string
           image_url: string | null
+          progress: number | null
+          status: string | null
           target_date: string | null
           title: string
           updated_at: string
@@ -32,6 +34,8 @@ export type Database = {
           household_id: string
           id?: string
           image_url?: string | null
+          progress?: number | null
+          status?: string | null
           target_date?: string | null
           title: string
           updated_at?: string
@@ -45,6 +49,8 @@ export type Database = {
           household_id?: string
           id?: string
           image_url?: string | null
+          progress?: number | null
+          status?: string | null
           target_date?: string | null
           title?: string
           updated_at?: string
@@ -62,6 +68,57 @@ export type Database = {
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed: boolean | null
+          created_at: string
+          description: string | null
+          goal_id: string
+          id: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed?: boolean | null
+          created_at?: string
+          description?: string | null
+          goal_id: string
+          id?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed?: boolean | null
+          created_at?: string
+          description?: string | null
+          goal_id?: string
+          id?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_tasks_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "family_goals"
             referencedColumns: ["id"]
           },
         ]
