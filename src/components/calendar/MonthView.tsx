@@ -46,7 +46,9 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
 
   // Dynamically set max visible events based on screen size
   let maxVisibleEvents = 3;
-  if (windowWidth <= 640) {
+  if (windowWidth <= 480) {
+    maxVisibleEvents = 1;
+  } else if (windowWidth <= 640) {
     maxVisibleEvents = 1;
   } else if (windowWidth <= 768) {
     maxVisibleEvents = 2;
@@ -67,7 +69,7 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
       {/* Regular day cells */}
       <div className="calendar-grid grid-container">
         {weekDays.map((day, i) => (
-          <div key={i} className="text-center py-2 font-medium text-xs sm:text-sm">
+          <div key={i} className="text-center py-1 font-medium text-xs sm:text-sm">
             {getDayLabel(day)}
           </div>
         ))}
@@ -82,18 +84,18 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
           return (
             <div 
               key={i} 
-              className={`calendar-day border ${
+              className={`calendar-day border p-0.5 sm:p-1 ${
                 isCurrentMonth ? 'bg-white' : 'text-gray-300 bg-gray-50'
               } ${isToday ? 'border-primary' : ''} ${
                 isCurrentMonth ? 'cursor-pointer hover:bg-gray-50' : ''
               }`}
               onClick={() => isCurrentMonth && handleDayClick(day)}
             >
-              <div className={`text-xs sm:text-sm p-1 ${isToday ? 'font-bold text-primary' : ''}`}>
+              <div className={`text-xs sm:text-sm ${isToday ? 'font-bold text-primary' : ''}`}>
                 {format(day, 'd')}
               </div>
               
-              <div className="px-1 overflow-visible day-events-container">
+              <div className="overflow-visible day-events-container">
                 {dayEvents.length > 0 && dayEvents.slice(0, maxVisibleEvents).map(event => (
                   <EventIndicator 
                     key={event.id} 

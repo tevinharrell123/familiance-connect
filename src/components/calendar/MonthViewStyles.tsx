@@ -24,6 +24,7 @@ export function MonthViewStyles() {
         flex-direction: column;
         position: relative;
         z-index: 1;
+        aspect-ratio: auto; /* Remove fixed aspect ratio */
       }
       
       .day-events-container {
@@ -46,24 +47,40 @@ export function MonthViewStyles() {
         .calendar-day {
           min-height: 70px;
         }
+        
+        .grid-container {
+          grid-template-columns: repeat(7, minmax(40px, 1fr));
+        }
       }
       
       @media (max-width: 640px) {
         .calendar-day {
           min-height: 60px;
+          padding: 2px;
         }
         
         /* Improve mobile wrapping for calendar grid */
         .grid-container {
           width: 100%;
-          overflow-x: auto;
+          grid-template-columns: repeat(7, minmax(30px, 1fr));
         }
       }
       
       @media (max-width: 480px) {
         .calendar-day {
           min-height: 50px;
+          font-size: 0.75rem;
         }
+        
+        .grid-container {
+          grid-template-columns: repeat(7, minmax(25px, 1fr));
+        }
+      }
+      
+      /* Fix for ensuring the days wrap properly without horizontal scrolling */
+      .month-view, .calendar-grid {
+        max-width: 100vw;
+        width: 100%;
       }
       `}
     </style>

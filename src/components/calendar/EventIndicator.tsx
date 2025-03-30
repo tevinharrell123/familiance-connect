@@ -30,18 +30,18 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
   return (
     <div 
       key={event.id} 
-      className="flex items-center text-xs rounded-full px-1 mt-1 truncate cursor-pointer hover:opacity-80 single-day-event"
+      className="flex items-center text-xs rounded-full px-1 mt-0.5 truncate cursor-pointer hover:opacity-80 single-day-event"
       style={{ backgroundColor: `${event.color || '#7B68EE'}30` }}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
     >
-      <Avatar className="h-4 w-4 mr-1">
+      <Avatar className="h-3 w-3 mr-0.5 sm:h-4 sm:w-4 sm:mr-1">
         {event.user_profile?.avatar_url ? (
           <AvatarImage src={event.user_profile.avatar_url} alt={event.user_profile.full_name || ''} />
         ) : null}
-        <AvatarFallback className="text-[8px]">{userInitials}</AvatarFallback>
+        <AvatarFallback className="text-[6px] sm:text-[8px]">{userInitials}</AvatarFallback>
       </Avatar>
-      <span className="truncate">{event.title}</span>
+      <span className="truncate text-[9px] sm:text-xs">{event.title}</span>
     </div>
   );
 }

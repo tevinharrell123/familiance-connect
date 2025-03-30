@@ -58,7 +58,7 @@ export function CalendarTabContent({
   };
 
   return (
-    <CardContent>
+    <CardContent className="px-2 sm:px-6">
       <div className="mb-4">
         <div className="flex items-center justify-between mb-4">
           <Button
@@ -97,7 +97,7 @@ export function CalendarTabContent({
             <TabsTrigger value="week">Week</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="month" className="mt-4">
+          <TabsContent value="month" className="mt-2 overflow-x-hidden">
             {isLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-[300px] w-full" />
