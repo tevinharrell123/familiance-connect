@@ -10,6 +10,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { HouseholdRole } from '@/types/household';
 import { HOUSEHOLD_ROLES, formatRoleName } from '@/utils/household-roles';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HouseholdMemberRoleSelectProps {
   userId: string;
@@ -25,6 +26,7 @@ export const HouseholdMemberRoleSelect: React.FC<HouseholdMemberRoleSelectProps>
   const [isChanging, setIsChanging] = useState(false);
   const [selectedRole, setSelectedRole] = useState<HouseholdRole>(currentRole);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // Update local state only when props change and component is not in the middle of an update
   useEffect(() => {
@@ -72,10 +74,10 @@ export const HouseholdMemberRoleSelect: React.FC<HouseholdMemberRoleSelectProps>
         onValueChange={handleRoleChange}
         disabled={isChanging}
       >
-        <SelectTrigger className={`w-[180px] ${isChanging ? 'opacity-70' : ''}`}>
+        <SelectTrigger className={`w-[120px] ${isMobile ? 'text-xs' : 'text-sm'} h-8 ${isChanging ? 'opacity-70' : ''}`}>
           <SelectValue placeholder="Select role" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className={isMobile ? 'text-xs' : 'text-sm'}>
           {HOUSEHOLD_ROLES.map((role) => (
             <SelectItem key={role} value={role}>
               {formatRoleName(role)}
@@ -85,7 +87,7 @@ export const HouseholdMemberRoleSelect: React.FC<HouseholdMemberRoleSelectProps>
       </Select>
       {isChanging && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-md">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
         </div>
       )}
     </div>

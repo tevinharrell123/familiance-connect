@@ -35,31 +35,31 @@ export const HouseholdDetails = ({
   const isMobile = useIsMobile();
   
   return (
-    <Card>
-      <CardHeader className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+    <Card className="w-full">
+      <CardHeader className="p-4 pb-0">
+        <div className="flex flex-col gap-3">
           <div>
             <CardTitle className="text-xl sm:text-2xl">{household.name}</CardTitle>
             <CardDescription className="text-sm">
               {userRole === 'admin' ? 'You are the admin of this household' : 'You are a member of this household'}
             </CardDescription>
           </div>
-          <div className="flex gap-2 self-end sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 self-start">
             <Button 
               variant="outline" 
-              size={isMobile ? "sm" : "default"}
+              size="sm"
               onClick={onRefreshHousehold}
               disabled={isRefreshing}
-              className="h-8 sm:h-9 px-2 sm:px-4 text-xs sm:text-sm"
+              className="h-9 sm:h-10 px-3 text-xs sm:text-sm"
             >
-              <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isRefreshing ? 'animate-spin' : ''}`} /> 
+              <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} /> 
               Refresh
             </Button>
             <InviteMembersDialog inviteCode={household.invite_code} />
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 sm:p-6 pt-0">
+      <CardContent className="p-4 pt-3">
         <HouseholdMembersList 
           members={householdMembers}
           isAdmin={userRole === 'admin'}
@@ -69,7 +69,7 @@ export const HouseholdDetails = ({
           isRefreshing={isRefreshing}
         />
       </CardContent>
-      <CardFooter className="flex justify-between border-t p-4 sm:p-6 pt-4 sm:pt-6">
+      <CardFooter className="flex justify-center sm:justify-between border-t p-4">
         <LeaveHouseholdDialog 
           userRole={userRole}
           membersCount={householdMembers?.length || 0}

@@ -43,27 +43,29 @@ export const HouseholdMemberItem = ({
   const initials = getInitials(member.user_profiles?.full_name);
   
   return (
-    <div className="flex items-center justify-between p-2 sm:p-3 bg-card border rounded-lg">
-      <div className="flex items-center space-x-2 sm:space-x-3">
-        <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+    <div className="flex items-center justify-between p-2 bg-card border rounded-lg">
+      <div className="flex items-center space-x-2">
+        <Avatar className="h-8 w-8">
           <AvatarImage src={member.user_profiles?.avatar_url || ''} alt={fullName} />
-          <AvatarFallback className="text-xs sm:text-sm">{initials}</AvatarFallback>
+          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
-        <div>
-          <p className="font-medium text-sm sm:text-base">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-sm truncate">
             {fullName} 
-            {isCurrentUser && <span className="text-xs sm:text-sm text-muted-foreground ml-1">(You)</span>}
+            {isCurrentUser && <span className="text-xs text-muted-foreground ml-1">(You)</span>}
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground capitalize">{member.role}</p>
+          <p className="text-xs text-muted-foreground capitalize truncate">{member.role}</p>
         </div>
       </div>
       
       {isAdmin && !isCurrentUser && (
-        <HouseholdMemberRoleSelect 
-          userId={member.user_id}
-          currentRole={member.role}
-          onRoleChange={onRoleChange}
-        />
+        <div className="ml-2 flex-shrink-0">
+          <HouseholdMemberRoleSelect 
+            userId={member.user_id}
+            currentRole={member.role}
+            onRoleChange={onRoleChange}
+          />
+        </div>
       )}
     </div>
   );
