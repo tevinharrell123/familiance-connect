@@ -42,8 +42,10 @@ export function CalendarEventCard({ event, onClick, showMultiDayBadge = false }:
   const eventDuration = duration || 
     (isMultiDayEvent ? differenceInDays(parseISO(end_date), parseISO(start_date)) + 1 : 1);
   
-  const userInitials = user_profile?.full_name
-    ? user_profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+  // Handle cases where user_profile or full_name might be null or undefined
+  const fullName = user_profile?.full_name || '';
+  const userInitials = fullName
+    ? fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
     : '?';
     
   const cardStyle = {
@@ -93,7 +95,7 @@ export function CalendarEventCard({ event, onClick, showMultiDayBadge = false }:
         </div>
         <Avatar className="h-5 w-5">
           {user_profile?.avatar_url ? (
-            <AvatarImage src={user_profile.avatar_url} alt={user_profile.full_name || ''} />
+            <AvatarImage src={user_profile.avatar_url} alt={user_profile.full_name || 'User'} />
           ) : null}
           <AvatarFallback className="text-[10px]">{userInitials}</AvatarFallback>
         </Avatar>

@@ -36,6 +36,20 @@ export function usePersonalEvents() {
         
         console.log(`Found ${data.length} personal events`);
         
+        // Fetch the user profile separately to ensure we have the latest data
+        const { data: userProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .eq('id', user.id)
+          .single();
+          
+        if (profileError) {
+          console.error('Error fetching user profile for personal events:', profileError);
+        }
+        
+        // Use the fetched profile or fall back to the context profile
+        const eventUserProfile = userProfile || profile;
+        
         return data.map(event => ({
           id: event.id,
           title: event.title,
@@ -46,9 +60,9 @@ export function usePersonalEvents() {
           is_household_event: false,
           created_at: event.created_at,
           user_id: user.id,
-          user_profile: profile ? {
-            full_name: profile.full_name,
-            avatar_url: profile.avatar_url
+          user_profile: eventUserProfile ? {
+            full_name: eventUserProfile.full_name,
+            avatar_url: eventUserProfile.avatar_url
           } : null
         }));
       } catch (error) {

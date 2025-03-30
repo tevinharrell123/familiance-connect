@@ -68,7 +68,7 @@ export function useSharedHouseholdMemberEvents() {
 
         console.log(`Found ${sharedEvents.length} shared events from household members`);
 
-        // Fetch profile data for all members
+        // Immediately fetch profile data for all members in a single query
         const { data: memberProfiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url')
@@ -80,10 +80,12 @@ export function useSharedHouseholdMemberEvents() {
         }
 
         // Create a map of profiles for faster lookup
-        const profilesMap = (memberProfiles || []).reduce((map, profile) => {
-          map[profile.id] = profile;
-          return map;
-        }, {});
+        const profilesMap = {};
+        if (memberProfiles) {
+          memberProfiles.forEach(profile => {
+            profilesMap[profile.id] = profile;
+          });
+        }
         
         return sharedEvents.map((event) => ({
           id: event.id,

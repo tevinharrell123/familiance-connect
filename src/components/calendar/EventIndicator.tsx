@@ -9,8 +9,10 @@ interface EventIndicatorProps {
 }
 
 export function EventIndicator({ event, onClick }: EventIndicatorProps) {
-  const userInitials = event.user_profile?.full_name
-    ? event.user_profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+  // Handle cases where user_profile or full_name might be null or undefined
+  const fullName = event.user_profile?.full_name || '';
+  const userInitials = fullName
+    ? fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
     : '?';
       
   const handleClick = (e: React.MouseEvent) => {
@@ -37,7 +39,10 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
     >
       <Avatar className="h-3 w-3 mr-0.5 sm:h-4 sm:w-4 sm:mr-1">
         {event.user_profile?.avatar_url ? (
-          <AvatarImage src={event.user_profile.avatar_url} alt={event.user_profile.full_name || ''} />
+          <AvatarImage 
+            src={event.user_profile.avatar_url} 
+            alt={event.user_profile.full_name || 'User'} 
+          />
         ) : null}
         <AvatarFallback className="text-[6px] sm:text-[8px]">{userInitials}</AvatarFallback>
       </Avatar>

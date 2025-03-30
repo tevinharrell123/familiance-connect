@@ -15,6 +15,7 @@ import { User, Users, Calendar, Clock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface EventDetailsDialogProps {
   open: boolean;
@@ -40,9 +41,10 @@ export function EventDetailsDialog({
   
   const isCurrentUserEvent = event.user_id === user?.id;
   
-  // Get user initials for avatar
-  const userInitials = event.user_profile?.full_name
-    ? event.user_profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+  // Get user initials for avatar - handle cases where full_name might be null or undefined
+  const fullName = event.user_profile?.full_name || '';
+  const userInitials = fullName
+    ? fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
     : '?';
   
   const handleEditClick = () => {
@@ -111,7 +113,7 @@ export function EventDetailsDialog({
               {event.user_profile?.avatar_url ? (
                 <AvatarImage 
                   src={event.user_profile.avatar_url} 
-                  alt={event.user_profile.full_name || ''} 
+                  alt={event.user_profile.full_name || 'User'} 
                 />
               ) : null}
               <AvatarFallback>{userInitials}</AvatarFallback>
