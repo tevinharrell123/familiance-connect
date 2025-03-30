@@ -18,6 +18,7 @@ export function CalendarWidget() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const { household } = useAuth();
   
   // Add a ref to prevent too frequent refreshes
@@ -89,13 +90,17 @@ export function CalendarWidget() {
   }, [household?.id, refreshData]);
 
   // Calculate dates for different views
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
+  const calculateDays = () => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    
+    const firstDay = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const lastDay = endOfWeek(monthEnd, { weekStartsOn: 0 });
+    return eachDayOfInterval({ start: firstDay, end: lastDay });
+  };
   
-  const firstDay = startOfWeek(monthStart, { weekStartsOn: 0 });
-  const lastDay = endOfWeek(monthEnd, { weekStartsOn: 0 });
-  const days = eachDayOfInterval({ start: firstDay, end: lastDay });
-  
+  const days = calculateDays();
+
   const handleCreateEvent = (values: CalendarFormValues) => {
     console.log('Creating event:', values);
     createEvent(values, {
@@ -174,18 +179,41 @@ export function CalendarWidget() {
     setEditingEvent(event);
     setDialogOpen(true);
   };
+  
+  const handleDayClick = (day: Date) => {
+    console.log('Day clicked:', format(day, 'yyyy-MM-dd'));
+    setSelectedDay(day);
+    setEditingEvent(null);
+    setDialogOpen(true);
+  };
 
   const getEventDialogDefaultValues = (): Partial<CalendarFormValues> => {
-    if (!editingEvent) return {};
+    if (editingEvent) {
+      return {
+        title: editingEvent.title,
+        description: editingEvent.description || '',
+        start_date: new Date(editingEvent.start_date),
+        end_date: new Date(editingEvent.end_date),
+        color: editingEvent.color || '#7B68EE',
+        is_household_event: editingEvent.is_household_event
+      };
+    }
     
-    return {
-      title: editingEvent.title,
-      description: editingEvent.description || '',
-      start_date: new Date(editingEvent.start_date),
-      end_date: new Date(editingEvent.end_date),
-      color: editingEvent.color || '#7B68EE',
-      is_household_event: editingEvent.is_household_event
-    };
+    if (selectedDay) {
+      // Initialize with the selected day
+      const startDate = new Date(selectedDay);
+      const endDate = new Date(selectedDay);
+      return {
+        title: '',
+        description: '',
+        start_date: startDate,
+        end_date: endDate,
+        color: '#7B68EE',
+        is_household_event: false
+      };
+    }
+    
+    return {};
   };
 
   return (
@@ -195,6 +223,7 @@ export function CalendarWidget() {
         onDateChange={setCurrentDate}
         onAddEvent={() => {
           setEditingEvent(null);
+          setSelectedDay(null);
           setDialogOpen(true);
         }}
       />
@@ -208,6 +237,8 @@ export function CalendarWidget() {
         selectedView={selectedView}
         onViewChange={(view) => setSelectedView(view as CalendarViewType)}
         onEventClick={handleEventClick}
+        onDateChange={setCurrentDate}
+        onDayClick={handleDayClick}
       />
       
       <CalendarEventDialog

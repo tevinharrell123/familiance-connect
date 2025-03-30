@@ -52,6 +52,12 @@ export function MonthViewStyles() {
         .calendar-day {
           min-height: 60px;
         }
+        
+        /* Improve mobile wrapping for calendar grid */
+        .grid-container {
+          width: 100%;
+          overflow-x: auto;
+        }
       }
       
       @media (max-width: 480px) {
