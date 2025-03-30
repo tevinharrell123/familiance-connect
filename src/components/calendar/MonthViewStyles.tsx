@@ -38,13 +38,16 @@ export function MonthViewStyles() {
         text-overflow: ellipsis;
         white-space: nowrap;
         cursor: pointer;
-        padding: 2px 4px;
-        border-radius: 3px;
-        transition: background-color 0.2s;
+        padding: 0;
+        border-radius: 4px;
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       }
       
       .multi-day-event:hover {
         filter: brightness(1.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transform: translateY(-1px);
       }
       
       .calendar-day {
@@ -63,6 +66,7 @@ export function MonthViewStyles() {
         flex-direction: column;
         overflow: visible;
         flex-grow: 1;
+        margin-top: 24px; /* Space for multi-day events */
       }
       
       .single-day-event {
@@ -78,7 +82,10 @@ export function MonthViewStyles() {
         
         .multi-day-event {
           font-size: 0.65rem;
-          padding: 1px 2px;
+        }
+        
+        .day-events-container {
+          margin-top: 18px;
         }
       }
       
@@ -89,7 +96,10 @@ export function MonthViewStyles() {
         
         .multi-day-event {
           font-size: 0.6rem;
-          padding: 1px;
+        }
+        
+        .day-events-container {
+          margin-top: 16px;
         }
       }
       
@@ -100,7 +110,10 @@ export function MonthViewStyles() {
         
         .multi-day-event {
           font-size: 0.5rem;
-          padding: 0px 1px;
+        }
+        
+        .day-events-container {
+          margin-top: 14px;
         }
       }
       `}

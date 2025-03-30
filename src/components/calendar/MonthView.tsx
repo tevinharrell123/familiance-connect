@@ -93,7 +93,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
                 {format(day, 'd')}
               </div>
               
-              <div className="px-1 overflow-visible day-events-container">
+              <div className="px-1 overflow-visible day-events-container mt-6">
                 {dayEvents.length > 0 && dayEvents.slice(0, maxVisibleEvents).map(event => (
                   <EventIndicator 
                     key={event.id} 
@@ -122,6 +122,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
             startIdx={weekEvent.startIdx}
             endIdx={weekEvent.endIdx}
             weekIdx={weekEvent.weekIdx}
+            rowPosition={weekEvent.rowPosition || 0}
             onClick={handleEventClick}
           />
         ))}

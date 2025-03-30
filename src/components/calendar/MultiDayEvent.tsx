@@ -9,10 +9,18 @@ interface MultiDayEventProps {
   startIdx: number;
   endIdx: number;
   weekIdx: number;
+  rowPosition: number;
   onClick: (event: CalendarEvent) => void;
 }
 
-export function MultiDayEvent({ event, startIdx, endIdx, weekIdx, onClick }: MultiDayEventProps) {
+export function MultiDayEvent({ 
+  event, 
+  startIdx, 
+  endIdx, 
+  weekIdx, 
+  rowPosition = 0, 
+  onClick 
+}: MultiDayEventProps) {
   const isMobile = useIsMobile();
   
   // Calculate width based on days spanned
@@ -20,10 +28,14 @@ export function MultiDayEvent({ event, startIdx, endIdx, weekIdx, onClick }: Mul
   const widthPercent = (span / 7) * 100;
   const leftPercent = (startIdx / 7) * 100;
   
-  // Calculate top position based on week index and a fixed height for multi-day events
-  const multiDayEventHeight = isMobile ? 14 : 18;
+  // Calculate top position based on week index, row position and a fixed height for multi-day events
+  const multiDayEventHeight = isMobile ? 16 : 22;
   const headerHeight = 32; // Height of the day header
-  const topOffset = (weekIdx * 1.5 * multiDayEventHeight) + headerHeight;
+  const eventMargin = 2; // Margin between events
+  const weekHeight = isMobile ? 50 : 80; // Height of each week row
+  const weekOffset = weekIdx * weekHeight;
+  const rowOffset = rowPosition * (multiDayEventHeight + eventMargin);
+  const topOffset = weekOffset + headerHeight + rowOffset;
   
   const backgroundColor = event.color || '#7B68EE';
   
@@ -39,11 +51,17 @@ export function MultiDayEvent({ event, startIdx, endIdx, weekIdx, onClick }: Mul
     onClick(event);
   };
   
-  // Format time if needed
+  // Format date range for display
   const eventStart = parseISO(event.start_date);
+  const eventEnd = parseISO(event.end_date);
+  
   const displayTitle = isMobile 
     ? event.title 
-    : `${event.title} (${format(eventStart, 'MMM d')})`;
+    : `${event.title} (${format(eventStart, 'MMM d')}${
+        format(eventStart, 'MMM d') !== format(eventEnd, 'MMM d') 
+          ? ` - ${format(eventEnd, 'MMM d')}` 
+          : ''
+      })`;
   
   return (
     <div 
@@ -52,15 +70,16 @@ export function MultiDayEvent({ event, startIdx, endIdx, weekIdx, onClick }: Mul
         left: `${leftPercent}%`,
         width: `${widthPercent}%`,
         top: `${topOffset}px`,
-        backgroundColor: `${backgroundColor}`,
+        backgroundColor,
         color: '#fff',
         height: `${multiDayEventHeight}px`,
-        lineHeight: `${multiDayEventHeight}px`
+        lineHeight: `${multiDayEventHeight}px`,
+        zIndex: 10 + rowPosition,
       }}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
     >
-      {displayTitle}
+      <span className="px-1">{displayTitle}</span>
     </div>
   );
 }
