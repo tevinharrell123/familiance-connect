@@ -42,6 +42,8 @@ serve(async (req) => {
     
     Format your response as a JSON array with objects containing "title" and "description" fields only.
     Example: [{"title": "Research options", "description": "Spend 30 minutes researching different approaches."}]
+    
+    IMPORTANT: Return ONLY the JSON array without any markdown formatting, code blocks, or additional text.
     `;
 
     // Call OpenAI API
@@ -55,7 +57,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are a helpful assistant that generates practical tasks for family goals.' },
+          { role: 'system', content: 'You are a helpful assistant that generates practical tasks for family goals. Always return valid JSON without any markdown formatting.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -78,8 +80,14 @@ serve(async (req) => {
       const aiResponse = data.choices[0].message.content;
       console.log('AI response:', aiResponse);
       
-      // Extract the JSON array from the response
-      generatedTasks = JSON.parse(aiResponse);
+      // Strip any markdown formatting that might be present
+      let cleanedResponse = aiResponse;
+      
+      // Remove markdown code block markers if present
+      cleanedResponse = cleanedResponse.replace(/```json\n|\n```|```/g, '');
+      
+      // Attempt to parse the response
+      generatedTasks = JSON.parse(cleanedResponse);
       
       // Validate the response format
       if (!Array.isArray(generatedTasks)) {
