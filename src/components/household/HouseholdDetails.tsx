@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
@@ -6,6 +7,7 @@ import { Household, HouseholdMember, HouseholdRole } from '@/types/household';
 import { HouseholdMembersList } from './HouseholdMembersList';
 import { InviteMembersDialog } from './InviteMembersDialog';
 import { LeaveHouseholdDialog } from './LeaveHouseholdDialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HouseholdDetailsProps {
   household: Household;
@@ -30,31 +32,34 @@ export const HouseholdDetails = ({
   isRefreshing,
   isLeaving
 }: HouseholdDetailsProps) => {
+  const isMobile = useIsMobile();
+  
   return (
     <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
-            <CardTitle>{household.name}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl sm:text-2xl">{household.name}</CardTitle>
+            <CardDescription className="text-sm">
               {userRole === 'admin' ? 'You are the admin of this household' : 'You are a member of this household'}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 self-end sm:self-auto">
             <Button 
               variant="outline" 
-              size="sm" 
+              size={isMobile ? "sm" : "default"}
               onClick={onRefreshHousehold}
               disabled={isRefreshing}
+              className="h-8 sm:h-9 px-2 sm:px-4 text-xs sm:text-sm"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} /> 
+              <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isRefreshing ? 'animate-spin' : ''}`} /> 
               Refresh
             </Button>
             <InviteMembersDialog inviteCode={household.invite_code} />
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 sm:p-6 pt-0">
         <HouseholdMembersList 
           members={householdMembers}
           isAdmin={userRole === 'admin'}
@@ -64,7 +69,7 @@ export const HouseholdDetails = ({
           isRefreshing={isRefreshing}
         />
       </CardContent>
-      <CardFooter className="flex justify-between border-t pt-6">
+      <CardFooter className="flex justify-between border-t p-4 sm:p-6 pt-4 sm:pt-6">
         <LeaveHouseholdDialog 
           userRole={userRole}
           membersCount={householdMembers?.length || 0}
