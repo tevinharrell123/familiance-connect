@@ -32,11 +32,10 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
     };
   }, []);
   
-  // Get weekly events for multi-day rendering
-  const weeklyEvents = getWeeklyEvents(days, events);
+  // Get weekly events for multi-day rendering, passing isMobile flag
+  const weeklyEvents = getWeeklyEvents(days, events, isMobile);
 
   const handleEventClick = (event: CalendarEvent) => {
-    console.log('Event clicked in MonthView:', event.id);
     onEventClick(event);
   };
 
@@ -93,7 +92,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
                 {format(day, 'd')}
               </div>
               
-              <div className="px-1 overflow-visible day-events-container mt-6">
+              <div className="px-1 overflow-visible day-events-container">
                 {dayEvents.length > 0 && dayEvents.slice(0, maxVisibleEvents).map(event => (
                   <EventIndicator 
                     key={event.id} 

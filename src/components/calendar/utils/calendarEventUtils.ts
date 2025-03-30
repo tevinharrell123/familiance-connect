@@ -34,7 +34,7 @@ export const getEventsForDay = (day: Date, events: CalendarEvent[]): CalendarEve
 export const addEventDurationInfo = (event: CalendarEvent): CalendarEvent & { isMultiDay: boolean; duration: number } => {
   const eventStart = parseISO(event.start_date);
   const eventEnd = parseISO(event.end_date);
-  const duration = differenceInDays(eventEnd, eventStart);
+  const duration = differenceInDays(endOfDay(eventEnd), startOfDay(eventStart));
   
   return {
     ...event,
@@ -46,14 +46,14 @@ export const addEventDurationInfo = (event: CalendarEvent): CalendarEvent & { is
 /**
  * Group events by week for multi-day rendering
  */
-export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
+export const getWeeklyEvents = (days: Date[], events: CalendarEvent[], isMobile = false) => {
   if (!events || events.length === 0) return [];
   
   // Filter for multi-day events only
   const multiDayEvents = events.filter(event => {
     const eventStart = parseISO(event.start_date);
     const eventEnd = parseISO(event.end_date);
-    return differenceInDays(eventEnd, eventStart) > 0;
+    return differenceInDays(endOfDay(eventEnd), startOfDay(eventStart)) > 0;
   });
   
   if (multiDayEvents.length === 0) return [];
@@ -63,6 +63,9 @@ export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
   for (let i = 0; i < days.length; i += 7) {
     weeks.push(days.slice(i, i + 7));
   }
+  
+  // Calculate max rows to show based on mobile/desktop
+  const maxRows = isMobile ? 2 : 5; // Limit to fewer rows on mobile
   
   // Process each week
   const processedEvents = weeks.flatMap((week, weekIdx) => {
@@ -78,6 +81,20 @@ export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
         { start: weekStart, end: weekEnd },
         { start: eventStart, end: eventEnd }
       );
+    });
+    
+    // Sort events by duration (longest first) for better layout
+    overlappingEvents.sort((a, b) => {
+      const aStart = startOfDay(parseISO(a.start_date));
+      const aEnd = endOfDay(parseISO(a.end_date));
+      const bStart = startOfDay(parseISO(b.start_date));
+      const bEnd = endOfDay(parseISO(b.end_date));
+      
+      const aDuration = differenceInDays(aEnd, aStart);
+      const bDuration = differenceInDays(bEnd, bStart);
+      
+      // Sort by duration first (longer events first)
+      return bDuration - aDuration;
     });
     
     // Group events by rows to prevent overlapping
@@ -103,20 +120,15 @@ export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
       }
       
       let endIdx = week.findIndex(day => 
-        endOfDay(day) >= eventEnd && startOfDay(day) <= eventEnd
+        isSameDay(day, eventEnd) || startOfDay(day) > eventEnd
       );
       
-      if (endIdx === -1) {
-        // Find if any day in this week is before the end date
-        const anyDayBeforeEnd = week.some(day => startOfDay(day) <= eventEnd);
-        
-        if (anyDayBeforeEnd) {
-          // Event ends after this week
-          endIdx = 6;
-        } else {
-          // Event doesn't appear in this week
-          return;
-        }
+      // If event ends after this week or on the last day
+      if (endIdx === -1 || eventEnd > weekEnd) {
+        endIdx = 6; // Event ends after this week
+      } else if (endIdx > 0) {
+        // If we found the day after the end, correct it
+        endIdx = endIdx - 1;
       }
       
       // Ensure startIdx is valid
@@ -132,7 +144,7 @@ export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
       let rowPosition = 0;
       let placed = false;
       
-      while (!placed && rowPosition < 10) { // Limit to 10 rows to prevent infinite loops
+      while (!placed && rowPosition < maxRows) { // Limit rows based on mobile/desktop
         if (!rows[rowPosition]) {
           rows[rowPosition] = [];
         }
@@ -156,6 +168,9 @@ export const getWeeklyEvents = (days: Date[], events: CalendarEvent[]) => {
           rowPosition++;
         }
       }
+      
+      // If we couldn't place it in any row, skip this event
+      // This ensures we don't show too many events on small screens
     });
     
     // Flatten rows into events with row position

@@ -29,10 +29,11 @@ export function MultiDayEvent({
   const leftPercent = (startIdx / 7) * 100;
   
   // Calculate top position based on week index, row position and a fixed height for multi-day events
-  const multiDayEventHeight = isMobile ? 16 : 22;
-  const headerHeight = 32; // Height of the day header
-  const eventMargin = 2; // Margin between events
-  const weekHeight = isMobile ? 50 : 80; // Height of each week row
+  const multiDayEventHeight = isMobile ? 14 : 22; // Reduced height on mobile
+  const headerHeight = isMobile ? 24 : 32; // Reduced header height on mobile
+  const eventMargin = isMobile ? 1 : 2; // Reduced margin on mobile
+  const weekHeight = isMobile ? 50 : 80; // Week height matches the calendar day cell height
+  
   const weekOffset = weekIdx * weekHeight;
   const rowOffset = rowPosition * (multiDayEventHeight + eventMargin);
   const topOffset = weekOffset + headerHeight + rowOffset;
@@ -41,13 +42,11 @@ export function MultiDayEvent({
   
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Multi-day event clicked:', event.id);
     onClick(event);
   };
   
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.stopPropagation();
-    console.log('Multi-day event touched:', event.id);
     onClick(event);
   };
   
@@ -55,8 +54,9 @@ export function MultiDayEvent({
   const eventStart = parseISO(event.start_date);
   const eventEnd = parseISO(event.end_date);
   
+  // On mobile, just show the title to save space
   const displayTitle = isMobile 
-    ? event.title 
+    ? event.title.substring(0, 12) + (event.title.length > 12 ? '...' : '')
     : `${event.title} (${format(eventStart, 'MMM d')}${
         format(eventStart, 'MMM d') !== format(eventEnd, 'MMM d') 
           ? ` - ${format(eventEnd, 'MMM d')}` 
@@ -75,11 +75,12 @@ export function MultiDayEvent({
         height: `${multiDayEventHeight}px`,
         lineHeight: `${multiDayEventHeight}px`,
         zIndex: 10 + rowPosition,
+        fontSize: isMobile ? '0.6rem' : '0.7rem', // Smaller font on mobile
       }}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
     >
-      <span className="px-1">{displayTitle}</span>
+      <span className="px-1 truncate block">{displayTitle}</span>
     </div>
   );
 }

@@ -66,7 +66,7 @@ export function MonthViewStyles() {
         flex-direction: column;
         overflow: visible;
         flex-grow: 1;
-        margin-top: 24px; /* Space for multi-day events */
+        margin-top: 28px; /* Space for multi-day events */
       }
       
       .single-day-event {
@@ -77,21 +77,7 @@ export function MonthViewStyles() {
       
       @media (max-width: 768px) {
         .calendar-day {
-          min-height: 70px;
-        }
-        
-        .multi-day-event {
-          font-size: 0.65rem;
-        }
-        
-        .day-events-container {
-          margin-top: 18px;
-        }
-      }
-      
-      @media (max-width: 640px) {
-        .calendar-day {
-          min-height: 60px;
+          min-height: 50px; /* Reduced height on mobile */
         }
         
         .multi-day-event {
@@ -99,7 +85,21 @@ export function MonthViewStyles() {
         }
         
         .day-events-container {
-          margin-top: 16px;
+          margin-top: 22px; /* Reduced margin on mobile but still enough for 2 rows of events */
+        }
+      }
+      
+      @media (max-width: 640px) {
+        .calendar-day {
+          min-height: 50px;
+        }
+        
+        .multi-day-event {
+          font-size: 0.55rem;
+        }
+        
+        .day-events-container {
+          margin-top: 20px;
         }
       }
       
@@ -113,7 +113,7 @@ export function MonthViewStyles() {
         }
         
         .day-events-container {
-          margin-top: 14px;
+          margin-top: 18px;
         }
       }
       `}
