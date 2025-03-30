@@ -35,12 +35,40 @@ export function MultiDayEvent({
     onClick(event);
   };
 
-  // Calculate responsive dimensions
-  const rowHeight = isMobile ? '60px' : '80px';
-  const eventHeight = isMobile ? '18px' : '22px';
-  const topPosition = `calc(${weekIdx} * ${rowHeight} + ${isMobile ? '25px' : '30px'})`;
-  const fontSize = isMobile ? '9px' : '11px';
-  const avatarSize = isMobile ? '3' : '4'; 
+  // Calculate responsive dimensions based on screen size
+  let rowHeight, eventHeight, topOffset, fontSize, avatarSize;
+  
+  if (window.innerWidth <= 480) {
+    // Extra small screens
+    rowHeight = '50px';
+    eventHeight = '16px';
+    topOffset = '22px';
+    fontSize = '8px';
+    avatarSize = '3';
+  } else if (window.innerWidth <= 640) {
+    // Small screens
+    rowHeight = '60px';
+    eventHeight = '18px';
+    topOffset = '25px';
+    fontSize = '9px';
+    avatarSize = '3';
+  } else if (window.innerWidth <= 768) {
+    // Medium screens
+    rowHeight = '70px';
+    eventHeight = '20px';
+    topOffset = '28px';
+    fontSize = '10px';
+    avatarSize = '4';
+  } else {
+    // Large screens
+    rowHeight = '80px';
+    eventHeight = '22px';
+    topOffset = '30px';
+    fontSize = '11px';
+    avatarSize = '4';
+  }
+  
+  const topPosition = `calc(${weekIdx} * ${rowHeight} + ${topOffset})`;
 
   return (
     <div 
@@ -58,11 +86,11 @@ export function MultiDayEvent({
       }}
       onClick={handleClick}
     >
-      <Avatar className={`h-${avatarSize} w-${avatarSize} mr-1`}>
+      <Avatar className={`h-${avatarSize} w-${avatarSize} mr-1`} style={{ height: avatarSize + 'px', width: avatarSize + 'px', minWidth: avatarSize + 'px' }}>
         {event.user_profile?.avatar_url ? (
           <AvatarImage src={event.user_profile.avatar_url} alt={event.user_profile.full_name || ''} />
         ) : null}
-        <AvatarFallback className={`text-[${isMobile ? '7px' : '8px'}]`}>{userInitials}</AvatarFallback>
+        <AvatarFallback style={{ fontSize: isMobile ? '7px' : '8px' }}>{userInitials}</AvatarFallback>
       </Avatar>
       <span className="truncate">{event.title}</span>
     </div>

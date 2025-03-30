@@ -33,6 +33,8 @@ export function MonthViewStyles() {
         position: absolute;
         z-index: 10;
         font-size: 11px;
+        max-width: 100%;
+        overflow: hidden;
       }
       
       .calendar-day {
@@ -57,6 +59,16 @@ export function MonthViewStyles() {
         pointer-events: auto;
         cursor: pointer;
         z-index: 30;
+      }
+      
+      @media (max-width: 768px) {
+        .calendar-day {
+          min-height: 70px;
+        }
+        
+        .multi-day-event {
+          font-size: 10px;
+        }
       }
       
       @media (max-width: 640px) {

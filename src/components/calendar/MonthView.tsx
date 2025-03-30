@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { format, isSameDay, parseISO, isSameMonth, differenceInDays } from 'date-fns';
 import { getEventsForDay, getWeeklyEvents } from './utils/calendarEventUtils';
@@ -18,6 +18,19 @@ interface MonthViewProps {
 export function MonthView({ days, events, currentMonth, onEventClick }: MonthViewProps) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const isMobile = useIsMobile();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  
+  // Update window width state when resized
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
   
   // Get weekly events for multi-day rendering
   const weeklyEvents = getWeeklyEvents(days, events);
@@ -34,15 +47,30 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
     return differenceInDays(eventEnd, eventStart) === 0;
   });
 
-  // Set max visible events based on screen size
-  const maxVisibleEvents = isMobile ? 1 : 2;
+  // Dynamically set max visible events based on screen size
+  let maxVisibleEvents = 2;
+  if (windowWidth <= 480) {
+    maxVisibleEvents = 1;
+  } else if (windowWidth <= 768) {
+    maxVisibleEvents = 1;
+  }
+
+  // Determine day label format based on screen size
+  const getDayLabel = (day: string) => {
+    if (windowWidth <= 480) {
+      return day.charAt(0);
+    } else if (windowWidth <= 640) {
+      return day.charAt(0);
+    }
+    return day;
+  };
 
   return (
     <div className="month-view relative">
       <div className="calendar-grid grid-container">
         {weekDays.map((day, i) => (
           <div key={i} className="text-center py-2 font-medium text-sm">
-            {isMobile ? day.charAt(0) : day}
+            {getDayLabel(day)}
           </div>
         ))}
         
