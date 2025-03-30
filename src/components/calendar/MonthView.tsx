@@ -6,6 +6,7 @@ import { getEventsForDay, getWeeklyEvents } from './utils/calendarEventUtils';
 import { EventIndicator } from './EventIndicator';
 import { MultiDayEvent } from './MultiDayEvent';
 import { MonthViewStyles } from './MonthViewStyles';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MonthViewProps {
   days: Date[];
@@ -16,6 +17,7 @@ interface MonthViewProps {
 
 export function MonthView({ days, events, currentMonth, onEventClick }: MonthViewProps) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const isMobile = useIsMobile();
   
   // Get weekly events for multi-day rendering
   const weeklyEvents = getWeeklyEvents(days, events);
@@ -32,12 +34,15 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
     return differenceInDays(eventEnd, eventStart) === 0;
   });
 
+  // Set max visible events based on screen size
+  const maxVisibleEvents = isMobile ? 1 : 2;
+
   return (
     <div className="month-view relative">
       <div className="calendar-grid grid-container">
         {weekDays.map((day, i) => (
           <div key={i} className="text-center py-2 font-medium text-sm">
-            {day}
+            {isMobile ? day.charAt(0) : day}
           </div>
         ))}
         
@@ -61,7 +66,7 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
               </div>
               
               <div className="px-1 overflow-visible day-events-container">
-                {dayEvents.length > 0 && dayEvents.slice(0, 2).map(event => (
+                {dayEvents.length > 0 && dayEvents.slice(0, maxVisibleEvents).map(event => (
                   <EventIndicator 
                     key={event.id} 
                     event={event} 
@@ -69,9 +74,9 @@ export function MonthView({ days, events, currentMonth, onEventClick }: MonthVie
                   />
                 ))}
                 
-                {dayEvents.length > 2 && (
+                {dayEvents.length > maxVisibleEvents && (
                   <div className="text-xs text-center text-muted-foreground">
-                    +{dayEvents.length - 2} more
+                    +{dayEvents.length - maxVisibleEvents} more
                   </div>
                 )}
               </div>

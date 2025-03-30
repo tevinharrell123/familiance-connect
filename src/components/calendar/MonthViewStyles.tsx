@@ -7,12 +7,15 @@ export function MonthViewStyles() {
       {`
       .month-view {
         position: relative;
+        width: 100%;
+        overflow: hidden;
       }
       
       .grid-container {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         position: relative;
+        width: 100%;
       }
       
       .multi-day-events-container {
@@ -29,6 +32,7 @@ export function MonthViewStyles() {
         pointer-events: auto;
         position: absolute;
         z-index: 10;
+        font-size: 11px;
       }
       
       .calendar-day {
@@ -59,8 +63,22 @@ export function MonthViewStyles() {
         .calendar-day {
           min-height: 60px;
         }
+        
+        .multi-day-event {
+          font-size: 9px;
+        }
       }
-    `}
+      
+      @media (max-width: 480px) {
+        .calendar-day {
+          min-height: 50px;
+        }
+        
+        .multi-day-event {
+          font-size: 8px;
+        }
+      }
+      `}
     </style>
   );
 }

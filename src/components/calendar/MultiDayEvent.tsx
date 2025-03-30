@@ -35,29 +35,34 @@ export function MultiDayEvent({
     onClick(event);
   };
 
-  // Calculate the top position based on week index
-  const topPosition = `calc(${weekIdx} * (${isMobile ? '60px' : '80px'}) + ${isMobile ? '25px' : '30px'})`;
+  // Calculate responsive dimensions
+  const rowHeight = isMobile ? '60px' : '80px';
+  const eventHeight = isMobile ? '18px' : '22px';
+  const topPosition = `calc(${weekIdx} * ${rowHeight} + ${isMobile ? '25px' : '30px'})`;
+  const fontSize = isMobile ? '9px' : '11px';
+  const avatarSize = isMobile ? '3' : '4'; 
 
   return (
     <div 
-      className="absolute flex items-center rounded-md px-2 text-xs truncate cursor-pointer hover:opacity-90 multi-day-event"
+      className="absolute flex items-center rounded-md px-1 truncate cursor-pointer hover:opacity-90 multi-day-event"
       style={{
         backgroundColor: event.color || '#7B68EE',
         color: 'white',
-        height: '22px',
+        height: eventHeight,
         margin: '2px 0',
         left: `${startIdx * (100/7)}%`,
         width: `calc(${span * (100/7)}% - 4px)`,
         top: topPosition,
-        zIndex: 10
+        zIndex: 10,
+        fontSize: fontSize,
       }}
       onClick={handleClick}
     >
-      <Avatar className="h-4 w-4 mr-1">
+      <Avatar className={`h-${avatarSize} w-${avatarSize} mr-1`}>
         {event.user_profile?.avatar_url ? (
           <AvatarImage src={event.user_profile.avatar_url} alt={event.user_profile.full_name || ''} />
         ) : null}
-        <AvatarFallback className="text-[8px]">{userInitials}</AvatarFallback>
+        <AvatarFallback className={`text-[${isMobile ? '7px' : '8px'}]`}>{userInitials}</AvatarFallback>
       </Avatar>
       <span className="truncate">{event.title}</span>
     </div>
