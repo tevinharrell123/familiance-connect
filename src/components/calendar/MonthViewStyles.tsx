@@ -24,7 +24,6 @@ export function MonthViewStyles() {
         flex-direction: column;
         position: relative;
         z-index: 1;
-        cursor: pointer;
       }
       
       .day-events-container {
@@ -43,21 +42,9 @@ export function MonthViewStyles() {
         z-index: 30;
       }
       
-      .month-navigation {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-      }
-      
       @media (max-width: 768px) {
         .calendar-day {
           min-height: 70px;
-        }
-        
-        .grid-container {
-          max-width: 100%;
-          overflow-x: auto;
         }
       }
       

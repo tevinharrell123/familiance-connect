@@ -18,8 +18,6 @@ export function CalendarWidget() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  // New state for tracking selected date from calendar
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { household } = useAuth();
   
   // Add a ref to prevent too frequent refreshes
@@ -39,13 +37,6 @@ export function CalendarWidget() {
     isDeleting,
     refetch
   } = useCalendarEvents();
-
-  // Update selected date when creating an event from date click
-  useEffect(() => {
-    if (selectedDate) {
-      setDialogOpen(true);
-    }
-  }, [selectedDate]);
 
   // Refresh function to update calendar events
   const refreshData = useCallback(async () => {
@@ -115,7 +106,6 @@ export function CalendarWidget() {
           refreshData();
         }, 100);
         setDialogOpen(false);
-        setSelectedDate(null);
         toast({
           title: "Event created",
           description: "Your event has been successfully created"
@@ -185,42 +175,17 @@ export function CalendarWidget() {
     setDialogOpen(true);
   };
 
-  const handleDateClick = (date: Date) => {
-    setEditingEvent(null);
-    setSelectedDate(date);
-  };
-
   const getEventDialogDefaultValues = (): Partial<CalendarFormValues> => {
-    if (editingEvent) {
-      return {
-        title: editingEvent.title,
-        description: editingEvent.description || '',
-        start_date: new Date(editingEvent.start_date),
-        end_date: new Date(editingEvent.end_date),
-        color: editingEvent.color || '#7B68EE',
-        is_household_event: editingEvent.is_household_event
-      };
-    }
+    if (!editingEvent) return {};
     
-    if (selectedDate) {
-      // Set start and end date to the selected date
-      const date = new Date(selectedDate);
-      return {
-        title: '',
-        description: '',
-        start_date: date,
-        end_date: date,
-        color: '#7B68EE',
-        is_household_event: false
-      };
-    }
-    
-    return {};
-  };
-
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    setSelectedDate(null);
+    return {
+      title: editingEvent.title,
+      description: editingEvent.description || '',
+      start_date: new Date(editingEvent.start_date),
+      end_date: new Date(editingEvent.end_date),
+      color: editingEvent.color || '#7B68EE',
+      is_household_event: editingEvent.is_household_event
+    };
   };
 
   return (
@@ -230,10 +195,8 @@ export function CalendarWidget() {
         onDateChange={setCurrentDate}
         onAddEvent={() => {
           setEditingEvent(null);
-          setSelectedDate(null);
           setDialogOpen(true);
         }}
-        selectedView={selectedView}
       />
       
       <CalendarTabContent 
@@ -245,12 +208,11 @@ export function CalendarWidget() {
         selectedView={selectedView}
         onViewChange={(view) => setSelectedView(view as CalendarViewType)}
         onEventClick={handleEventClick}
-        onDateClick={handleDateClick}
       />
       
       <CalendarEventDialog
         open={dialogOpen}
-        onOpenChange={handleDialogClose}
+        onOpenChange={setDialogOpen}
         onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent}
         onDelete={editingEvent ? handleDeleteEvent : undefined}
         isEditing={!!editingEvent}

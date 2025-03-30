@@ -12,10 +12,9 @@ interface MonthViewProps {
   events: CalendarEvent[];
   currentMonth: Date;
   onEventClick: (event: CalendarEvent) => void;
-  onDateClick: (date: Date) => void;
 }
 
-export function MonthView({ days, events, currentMonth, onEventClick, onDateClick }: MonthViewProps) {
+export function MonthView({ days, events, currentMonth, onEventClick }: MonthViewProps) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const isMobile = useIsMobile();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -32,15 +31,9 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDateClic
     };
   }, []);
 
-  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the date click handler
+  const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked in MonthView:', event.id);
     onEventClick(event);
-  };
-
-  const handleDateClick = (day: Date) => {
-    console.log('Date clicked:', format(day, 'yyyy-MM-dd'));
-    onDateClick(day);
   };
 
   // Dynamically set max visible events based on screen size
@@ -84,7 +77,6 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDateClic
               className={`calendar-day border ${
                 isCurrentMonth ? 'bg-white' : 'text-gray-300 bg-gray-50'
               } ${isToday ? 'border-primary' : ''}`}
-              onClick={() => handleDateClick(day)}
             >
               <div className={`text-xs sm:text-sm p-1 ${isToday ? 'font-bold text-primary' : ''}`}>
                 {format(day, 'd')}
@@ -95,7 +87,7 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDateClic
                   <EventIndicator 
                     key={event.id} 
                     event={event} 
-                    onClick={(e) => handleEventClick(event, e)} 
+                    onClick={handleEventClick} 
                   />
                 ))}
                 
