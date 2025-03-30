@@ -9,11 +9,13 @@ import { GoalCategories } from '@/components/mission/GoalCategories';
 import { AddGoalDialog } from '@/components/mission/AddGoalDialog';
 import { useGoals } from '@/hooks/mission/useGoals';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 
 const Mission = () => {
-  const { user, isLoading, household } = useRequireAuth();
+  const { user, isLoading } = useRequireAuth();
+  const { household } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
