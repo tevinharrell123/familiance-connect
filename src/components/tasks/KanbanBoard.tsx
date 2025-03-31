@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { GoalTask } from '@/types/tasks';
 import { Chore } from '@/types/chores';
 import { FamilyGoal } from '@/types/goals';
-import { Plus, MoreHorizontal } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export type KanbanColumn = {
   id: string;

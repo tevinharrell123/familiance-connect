@@ -21,7 +21,7 @@ import { useGoals } from '@/hooks/mission/useGoals';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { GoalTask } from '@/types/tasks';
 import { Chore } from '@/types/chores';
-import { Calendar, KanbanSquare, List, LayoutDashboard, Plus, Trophy, Users } from 'lucide-react';
+import { Calendar, KanbanSquare, List, Plus, Trophy, Users } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 export default function Tasks() {
@@ -239,7 +239,8 @@ export default function Tasks() {
               </div>
             </div>
             
-            <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
+            {/* Use a single Tabs component with TabsContent for each view */}
+            <Tabs defaultValue={tabView} value={tabView} onValueChange={setTabView} className="mb-6">
               <TabsList className="grid w-full max-w-md grid-cols-3">
                 <TabsTrigger value="kanban">
                   <KanbanSquare className="h-4 w-4 mr-2" />
@@ -254,71 +255,71 @@ export default function Tasks() {
                   Weekly View
                 </TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="kanban" className="mt-0">
+                <KanbanBoard 
+                  tasks={filteredTasks}
+                  chores={filteredChores}
+                  goals={goals}
+                  defaultColumns={columns}
+                  onCompleteTask={handleToggleTaskCompletion}
+                  onEditTask={(task) => {
+                    setEditingTask(task);
+                    setIsTaskDialogOpen(true);
+                  }}
+                  onDeleteTask={handleDeleteTask}
+                  onCompleteChore={handleMarkChoreCompleted}
+                  onEditChore={(chore) => {
+                    setEditingChore(chore);
+                    setIsChoreDialogOpen(true);
+                  }}
+                  onDeleteChore={handleDeleteChore}
+                />
+              </TabsContent>
+              
+              <TabsContent value="list" className="mt-0">
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle>All Tasks</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TasksList
+                        tasks={filteredTasks}
+                        goals={goals}
+                        onComplete={handleToggleTaskCompletion}
+                        onEdit={(task) => {
+                          setEditingTask(task);
+                          setIsTaskDialogOpen(true);
+                        }}
+                        onDelete={handleDeleteTask}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="weekly" className="mt-0">
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle>Weekly Chores</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChoresWeeklyView
+                        chores={filteredChores}
+                        onComplete={handleMarkChoreCompleted}
+                        onEdit={(chore) => {
+                          setEditingChore(chore);
+                          setIsChoreDialogOpen(true);
+                        }}
+                        onDelete={handleDeleteChore}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
             </Tabs>
-            
-            <TabsContent value="kanban" className="mt-0">
-              <KanbanBoard 
-                tasks={filteredTasks}
-                chores={filteredChores}
-                goals={goals}
-                defaultColumns={columns}
-                onCompleteTask={handleToggleTaskCompletion}
-                onEditTask={(task) => {
-                  setEditingTask(task);
-                  setIsTaskDialogOpen(true);
-                }}
-                onDeleteTask={handleDeleteTask}
-                onCompleteChore={handleMarkChoreCompleted}
-                onEditChore={(chore) => {
-                  setEditingChore(chore);
-                  setIsChoreDialogOpen(true);
-                }}
-                onDeleteChore={handleDeleteChore}
-              />
-            </TabsContent>
-            
-            <TabsContent value="list" className="mt-0">
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle>All Tasks</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <TasksList
-                      tasks={filteredTasks}
-                      goals={goals}
-                      onComplete={handleToggleTaskCompletion}
-                      onEdit={(task) => {
-                        setEditingTask(task);
-                        setIsTaskDialogOpen(true);
-                      }}
-                      onDelete={handleDeleteTask}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="weekly" className="mt-0">
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle>Weekly Chores</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChoresWeeklyView
-                      chores={filteredChores}
-                      onComplete={handleMarkChoreCompleted}
-                      onEdit={(chore) => {
-                        setEditingChore(chore);
-                        setIsChoreDialogOpen(true);
-                      }}
-                      onDelete={handleDeleteChore}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
           </div>
           
           {/* Scoreboard */}
