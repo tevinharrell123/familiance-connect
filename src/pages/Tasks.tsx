@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { WeekDayBoard } from '@/components/tasks/WeekDayBoard';
+import { TasksList } from '@/components/tasks/TasksList';
+import { ChoresWeeklyView } from '@/components/tasks/ChoresWeeklyView';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,8 +15,6 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ChoreDialog } from '@/components/tasks/ChoreDialog';
-import { TaskCard } from '@/components/tasks/TaskCard';
-import { ChoreCard } from '@/components/tasks/ChoreCard';
 import { useTasks } from '@/hooks/mission/useTasks';
 import { useTaskActions } from '@/hooks/mission/useTaskActions';
 import { useChores } from '@/hooks/mission/useChores';
@@ -38,6 +38,9 @@ export default function Tasks() {
   // State for filters
   const [filterMember, setFilterMember] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  
+  // State for tabs
+  const [tabView, setTabView] = useState<string>('weekly-view');
   
   // Load data
   const { tasks, refreshTasks, isLoading: tasksLoading } = useTasks();
@@ -118,18 +121,6 @@ export default function Tasks() {
   
   // Get all unique categories from goals
   const categories = Array.from(new Set(goals.map(goal => goal.category)));
-  
-  // Check if a chore is completed today
-  const isChoreCompletedToday = (chore: Chore) => {
-    const today = new Date().toISOString().split('T')[0];
-    return chore.completed_dates.includes(today);
-  };
-  
-  // Find goal title by id
-  const getGoalTitle = (goalId: string) => {
-    const goal = goals.find(g => g.id === goalId);
-    return goal?.title || '';
-  };
   
   // Calculate points data for the scoreboard
   const memberPoints = members?.map(member => {
@@ -212,23 +203,75 @@ export default function Tasks() {
               </div>
             </div>
             
-            <WeekDayBoard 
-              tasks={filteredTasks}
-              chores={filteredChores}
-              goals={goals}
-              onCompleteTask={handleToggleTaskCompletion}
-              onEditTask={(task) => {
-                setEditingTask(task);
-                setIsTaskDialogOpen(true);
-              }}
-              onDeleteTask={handleDeleteTask}
-              onCompleteChore={handleMarkChoreCompleted}
-              onEditChore={(chore) => {
-                setEditingChore(chore);
-                setIsChoreDialogOpen(true);
-              }}
-              onDeleteChore={handleDeleteChore}
-            />
+            <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="weekly-view">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Week View
+                </TabsTrigger>
+                <TabsTrigger value="list-view">
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  All Items
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            {tabView === 'weekly-view' ? (
+              <WeekDayBoard 
+                tasks={filteredTasks}
+                chores={filteredChores}
+                goals={goals}
+                onCompleteTask={handleToggleTaskCompletion}
+                onEditTask={(task) => {
+                  setEditingTask(task);
+                  setIsTaskDialogOpen(true);
+                }}
+                onDeleteTask={handleDeleteTask}
+                onCompleteChore={handleMarkChoreCompleted}
+                onEditChore={(chore) => {
+                  setEditingChore(chore);
+                  setIsChoreDialogOpen(true);
+                }}
+                onDeleteChore={handleDeleteChore}
+              />
+            ) : (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle>All Tasks</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <TasksList
+                      tasks={filteredTasks}
+                      goals={goals}
+                      onComplete={handleToggleTaskCompletion}
+                      onEdit={(task) => {
+                        setEditingTask(task);
+                        setIsTaskDialogOpen(true);
+                      }}
+                      onDelete={handleDeleteTask}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Weekly Chores</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChoresWeeklyView
+                      chores={filteredChores}
+                      onComplete={handleMarkChoreCompleted}
+                      onEdit={(chore) => {
+                        setEditingChore(chore);
+                        setIsChoreDialogOpen(true);
+                      }}
+                      onDelete={handleDeleteChore}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
           
           {/* Scoreboard */}
@@ -323,79 +366,6 @@ export default function Tasks() {
             </Card>
           </div>
         </div>
-        
-        <Tabs defaultValue="tasks" className="mt-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
-            <TabsTrigger value="tasks">All Tasks</TabsTrigger>
-            <TabsTrigger value="chores">All Chores</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="tasks" className="mt-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tasks ({filteredTasks.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {filteredTasks.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No tasks found. Create a new task to get started!
-                  </p>
-                ) : (
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredTasks.map(task => (
-                        <TaskCard
-                          key={task.id}
-                          task={task}
-                          goalTitle={getGoalTitle(task.goal_id)}
-                          onComplete={() => handleToggleTaskCompletion(task)}
-                          onEdit={() => {
-                            setEditingTask(task);
-                            setIsTaskDialogOpen(true);
-                          }}
-                          onDelete={() => handleDeleteTask(task.id)}
-                        />
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="chores" className="mt-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Chores ({filteredChores.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {filteredChores.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No chores found. Create a new chore to get started!
-                  </p>
-                ) : (
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredChores.map(chore => (
-                        <ChoreCard
-                          key={chore.id}
-                          chore={chore}
-                          isCompletedToday={isChoreCompletedToday(chore)}
-                          onComplete={() => handleMarkChoreCompleted(chore)}
-                          onEdit={() => {
-                            setEditingChore(chore);
-                            setIsChoreDialogOpen(true);
-                          }}
-                          onDelete={() => handleDeleteChore(chore.id)}
-                        />
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </div>
       
       {/* Task dialog */}

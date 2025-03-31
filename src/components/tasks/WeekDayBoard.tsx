@@ -1,14 +1,16 @@
 
 import { useState } from 'react';
-import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
+import { format, startOfWeek, addDays, isSameDay, addWeeks, subWeeks } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { GoalTask } from '@/types/tasks';
 import { Chore, WeekDay } from '@/types/chores';
 import { TaskCard } from './TaskCard';
 import { ChoreCard } from './ChoreCard';
 import { FamilyGoal } from '@/types/goals';
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 
 interface WeekDayBoardProps {
   tasks: GoalTask[];
@@ -34,12 +36,31 @@ export function WeekDayBoard({
   onDeleteChore
 }: WeekDayBoardProps) {
   const today = new Date();
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(today, { weekStartsOn: 1 }));
   const [selectedDay, setSelectedDay] = useState<Date>(today);
   
+  // Week navigation handlers
+  const goToPreviousWeek = () => {
+    const newWeekStart = subWeeks(currentWeekStart, 1);
+    setCurrentWeekStart(newWeekStart);
+    setSelectedDay(addDays(newWeekStart, 0)); // Select first day of new week
+  };
+  
+  const goToNextWeek = () => {
+    const newWeekStart = addWeeks(currentWeekStart, 1);
+    setCurrentWeekStart(newWeekStart);
+    setSelectedDay(addDays(newWeekStart, 0)); // Select first day of new week
+  };
+  
+  const goToCurrentWeek = () => {
+    const newWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+    setCurrentWeekStart(newWeekStart);
+    setSelectedDay(today);
+  };
+  
   // Generate the days of the week
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Start from Monday
   const weekDays = Array.from({ length: 7 }).map((_, i) => {
-    const day = addDays(weekStart, i);
+    const day = addDays(currentWeekStart, i);
     return {
       date: day,
       name: format(day, 'EEEE'),
@@ -84,7 +105,35 @@ export function WeekDayBoard({
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue={format(today, 'EEEE').toLowerCase()} className="w-full">
+      <div className="flex items-center justify-between mb-2 bg-card p-2 rounded-lg">
+        <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Previous
+        </Button>
+        
+        <div className="flex items-center">
+          <CalendarDays className="h-4 w-4 mr-2" />
+          <span className="font-medium">
+            {format(currentWeekStart, 'MMM d')} - {format(addDays(currentWeekStart, 6), 'MMM d, yyyy')}
+          </span>
+          {!isSameDay(startOfWeek(today, { weekStartsOn: 1 }), currentWeekStart) && (
+            <Button variant="ghost" size="sm" onClick={goToCurrentWeek} className="ml-2">
+              Today
+            </Button>
+          )}
+        </div>
+        
+        <Button variant="outline" size="sm" onClick={goToNextWeek}>
+          Next
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
+      
+      <Tabs 
+        defaultValue={format(today, 'EEEE').toLowerCase()} 
+        value={format(selectedDay, 'EEEE').toLowerCase()}
+        className="w-full"
+      >
         <TabsList className="grid grid-cols-7 mb-4">
           {weekDays.map((day) => (
             <TabsTrigger 
