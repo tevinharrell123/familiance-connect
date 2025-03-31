@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { KanbanBoard, KanbanColumn as KanbanColumnType } from '@/components/tasks/KanbanBoard';
@@ -103,6 +102,17 @@ export default function Tasks() {
   
   const handleDeleteChore = async (choreId: string) => {
     await deleteChore(choreId);
+  };
+  
+  // Handlers for opening dialogs from Kanban columns
+  const handleAddTaskFromColumn = () => {
+    setEditingTask(null);
+    setIsTaskDialogOpen(true);
+  };
+  
+  const handleAddChoreFromColumn = () => {
+    setEditingChore(null);
+    setIsChoreDialogOpen(true);
   };
   
   // Filter tasks and chores
@@ -239,7 +249,6 @@ export default function Tasks() {
               </div>
             </div>
             
-            {/* Use a single Tabs component with TabsContent for each view */}
             <Tabs defaultValue={tabView} value={tabView} onValueChange={setTabView} className="mb-6">
               <TabsList className="grid w-full max-w-md grid-cols-3">
                 <TabsTrigger value="kanban">
@@ -274,6 +283,8 @@ export default function Tasks() {
                     setIsChoreDialogOpen(true);
                   }}
                   onDeleteChore={handleDeleteChore}
+                  onAddTask={handleAddTaskFromColumn}
+                  onAddChore={handleAddChoreFromColumn}
                 />
               </TabsContent>
               
@@ -322,7 +333,6 @@ export default function Tasks() {
             </Tabs>
           </div>
           
-          {/* Scoreboard */}
           <div className="lg:col-span-1">
             <Card className="shadow-lg">
               <CardHeader className="pb-3">
@@ -416,7 +426,6 @@ export default function Tasks() {
         </div>
       </div>
       
-      {/* Task dialog */}
       <TaskDialog
         isOpen={isTaskDialogOpen}
         onClose={() => {
@@ -428,7 +437,6 @@ export default function Tasks() {
         title={editingTask ? 'Edit Task' : 'Create New Task'}
       />
       
-      {/* Chore dialog */}
       <ChoreDialog
         isOpen={isChoreDialogOpen}
         onClose={() => {

@@ -33,6 +33,8 @@ interface KanbanBoardProps {
   onCompleteChore: (chore: Chore) => void;
   onEditChore: (chore: Chore) => void;
   onDeleteChore: (choreId: string) => void;
+  onAddTask?: () => void;
+  onAddChore?: () => void;
 }
 
 export function KanbanBoard({ 
@@ -45,7 +47,9 @@ export function KanbanBoard({
   onDeleteTask,
   onCompleteChore,
   onEditChore,
-  onDeleteChore
+  onDeleteChore,
+  onAddTask,
+  onAddChore
 }: KanbanBoardProps) {
   // Initialize columns: if defaultColumns provided, use them, otherwise create default columns
   const [columns, setColumns] = useState<KanbanColumn[]>(defaultColumns || [
@@ -170,6 +174,8 @@ export function KanbanBoard({
                 onCompleteChore={onCompleteChore}
                 onEditChore={onEditChore}
                 onDeleteChore={onDeleteChore}
+                onAddTask={onAddTask}
+                onAddChore={onAddChore}
               />
             </ResizablePanel>
             {index < columns.length - 1 && (

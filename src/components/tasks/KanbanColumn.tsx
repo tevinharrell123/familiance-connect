@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from './TaskCard';
@@ -25,6 +25,8 @@ interface KanbanColumnProps {
   onCompleteChore: (chore: Chore) => void;
   onEditChore: (chore: Chore) => void;
   onDeleteChore: (choreId: string) => void;
+  onAddTask?: () => void;
+  onAddChore?: () => void;
 }
 
 export function KanbanColumn({
@@ -35,7 +37,9 @@ export function KanbanColumn({
   onDeleteTask,
   onCompleteChore,
   onEditChore,
-  onDeleteChore
+  onDeleteChore,
+  onAddTask,
+  onAddChore
 }: KanbanColumnProps) {
   // Check if a chore is completed today
   const isChoreCompletedToday = (chore: Chore) => {
@@ -47,6 +51,19 @@ export function KanbanColumn({
   const getGoalTitle = (goalId: string) => {
     const goal = goals.find(g => g.id === goalId);
     return goal?.title || '';
+  };
+
+  // Determine which add button to show based on column type
+  const handleAddItem = () => {
+    if (column.type === 'tasks') {
+      onAddTask?.();
+    } else if (column.type === 'chores') {
+      onAddChore?.();
+    } else {
+      // For mixed columns, we'll show a dialog with both options
+      // Since we can't add multiple dialogs in the column footer, we'll use the first one
+      onAddTask?.();
+    }
   };
 
   return (
@@ -102,9 +119,14 @@ export function KanbanColumn({
       </ScrollArea>
       
       <div className="p-3 border-t mt-auto">
-        <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="w-full justify-start text-muted-foreground"
+          onClick={handleAddItem}
+        >
           <Plus className="h-4 w-4 mr-1" />
-          Add Item
+          Add {column.type === 'tasks' ? 'Task' : column.type === 'chores' ? 'Chore' : 'Item'}
         </Button>
       </div>
     </div>
