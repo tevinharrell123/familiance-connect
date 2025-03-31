@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Chore } from '@/types/chores';
+import { Chore, WeekDay } from '@/types/chores';
 import { toast } from '@/components/ui/use-toast';
 
 export function useChoreActions(onSuccess?: () => void) {
@@ -35,7 +35,11 @@ export function useChoreActions(onSuccess?: () => void) {
         description: "The chore has been created successfully.",
       });
       
-      return data as Chore;
+      // Cast the result to the correct type
+      return {
+        ...data,
+        weekdays: data.weekdays as WeekDay[]
+      } as Chore;
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +74,11 @@ export function useChoreActions(onSuccess?: () => void) {
         description: "The chore has been updated successfully.",
       });
       
-      return data as Chore;
+      // Cast the result to the correct type
+      return {
+        ...data,
+        weekdays: data.weekdays as WeekDay[]
+      } as Chore;
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +111,11 @@ export function useChoreActions(onSuccess?: () => void) {
         description: "Great job! The chore has been marked as completed for today.",
       });
       
-      return data as Chore;
+      // Cast the result to the correct type
+      return {
+        ...data,
+        weekdays: data.weekdays as WeekDay[]
+      } as Chore;
     } finally {
       setIsLoading(false);
     }
