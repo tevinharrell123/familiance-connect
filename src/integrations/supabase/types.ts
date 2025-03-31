@@ -126,6 +126,63 @@ export type Database = {
           },
         ]
       }
+      household_chores: {
+        Row: {
+          assigned_to: string | null
+          completed_dates: string[]
+          created_at: string
+          description: string | null
+          frequency: string
+          household_id: string
+          id: string
+          points: number
+          title: string
+          updated_at: string
+          weekdays: string[]
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_dates?: string[]
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          household_id: string
+          id?: string
+          points?: number
+          title: string
+          updated_at?: string
+          weekdays?: string[]
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_dates?: string[]
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          household_id?: string
+          id?: string
+          points?: number
+          title?: string
+          updated_at?: string
+          weekdays?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_chores_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_chores_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_events: {
         Row: {
           color: string | null

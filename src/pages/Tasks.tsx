@@ -303,7 +303,7 @@ export default function Tasks() {
                     <Badge variant="outline">
                       {chores.filter(c => {
                         const today = new Date();
-                        const dayName = today.toLocaleDateString('en-US', { weekday: 'lowercase' });
+                        const dayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
                         return c.weekdays.includes(dayName as any);
                       }).length}
                     </Badge>

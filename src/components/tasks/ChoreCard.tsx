@@ -5,31 +5,30 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Chore } from '@/types/chores';
-import { Check, Edit, Trash2, Trophy } from 'lucide-react';
-import { format } from 'date-fns';
+import { Calendar, Check, Edit, Trash2, Star } from 'lucide-react';
 
 interface ChoreCardProps {
   chore: Chore;
+  isCompletedToday: boolean;
   onComplete: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  isCompletedToday: boolean;
 }
 
-export function ChoreCard({ chore, onComplete, onEdit, onDelete, isCompletedToday }: ChoreCardProps) {
+export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelete }: ChoreCardProps) {
   // Get the initials from the assigned person's name
   const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  // Format the weekdays to display nicely
+  // Format weekdays for display
   const formatWeekdays = (weekdays: string[]) => {
-    if (weekdays.length === 7) return 'Everyday';
-    if (weekdays.length <= 3) {
-      return weekdays.map(day => day.charAt(0).toUpperCase() + day.slice(1, 3)).join(', ');
-    }
-    return `${weekdays.length} days/week`;
+    if (weekdays.length === 7) return 'Every day';
+    if (weekdays.length === 0) return 'No days set';
+    
+    // Abbreviate weekday names
+    return weekdays.map(day => day.substring(0, 3)).join(', ');
   };
 
   return (
@@ -37,8 +36,8 @@ export function ChoreCard({ chore, onComplete, onEdit, onDelete, isCompletedToda
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-bold truncate">{chore.title}</CardTitle>
-          <Badge variant={isCompletedToday ? "outline" : "default"} className="ml-2">
-            {isCompletedToday ? "Completed Today" : formatWeekdays(chore.weekdays)}
+          <Badge className="ml-2" variant="outline">
+            {chore.points} {chore.points === 1 ? 'point' : 'points'}
           </Badge>
         </div>
       </CardHeader>
@@ -54,11 +53,14 @@ export function ChoreCard({ chore, onComplete, onEdit, onDelete, isCompletedToda
             </AvatarFallback>
           </Avatar>
           <span className="text-sm font-medium truncate">{chore.assigned_to_name || 'Unassigned'}</span>
-          
-          <div className="ml-auto flex items-center">
-            <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-            <span className="text-sm font-bold">{chore.points}</span>
-          </div>
+        </div>
+        
+        <div className="flex items-center mt-2 text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4 mr-1" />
+          <span>{formatWeekdays(chore.weekdays)}</span>
+          <Badge variant="outline" className="ml-auto">
+            {chore.frequency}
+          </Badge>
         </div>
       </CardContent>
       <CardFooter className="pt-0 flex justify-between">
@@ -84,11 +86,10 @@ export function ChoreCard({ chore, onComplete, onEdit, onDelete, isCompletedToda
           variant={isCompletedToday ? "outline" : "default"} 
           size="sm"
           onClick={onComplete}
-          disabled={isCompletedToday}
           className={`${isCompletedToday ? 'bg-green-100 text-green-800 border-green-300' : ''}`}
         >
           <Check className="h-4 w-4 mr-1" />
-          {isCompletedToday ? 'Done' : 'Complete'}
+          {isCompletedToday ? 'Completed' : 'Complete'}
         </Button>
       </CardFooter>
     </Card>
