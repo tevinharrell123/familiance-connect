@@ -25,7 +25,7 @@ export function useGoalProgress() {
     }
   };
 
-  const calculateProgressFromTasks = async (goalId: string): Promise<void> => {
+  const calculateProgressFromTasks = async (goalId: string): Promise<number> => {
     try {
       setIsLoading(true);
       
@@ -40,7 +40,7 @@ export function useGoalProgress() {
       if (!tasks || tasks.length === 0) {
         // No tasks, set progress to 0
         await updateGoalProgress(goalId, 0);
-        return;
+        return 0;
       }
       
       // Calculate percentage of completed tasks
@@ -50,6 +50,8 @@ export function useGoalProgress() {
       
       // Update goal progress
       await updateGoalProgress(goalId, progressPercentage);
+      
+      return progressPercentage;
     } finally {
       setIsLoading(false);
     }

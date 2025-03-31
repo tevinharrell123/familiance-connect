@@ -46,7 +46,8 @@ export function useGoals() {
         created_at: goal.created_at,
         updated_at: goal.updated_at,
         assigned_to_name: goal.user_profiles?.full_name || null,
-        completed: goal.completed || false // Ensure completed is always a boolean
+        completed: goal.completed || false,
+        progress: goal.progress || 0 // Ensure progress is included
       }));
 
       setGoals(formattedGoals);
