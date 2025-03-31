@@ -20,6 +20,7 @@ export type Database = {
           id: string
           image_url: string | null
           progress: number | null
+          show_on_vision_board: boolean | null
           status: string | null
           target_date: string | null
           title: string
@@ -35,6 +36,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           progress?: number | null
+          show_on_vision_board?: boolean | null
           status?: string | null
           target_date?: string | null
           title: string
@@ -50,6 +52,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           progress?: number | null
+          show_on_vision_board?: boolean | null
           status?: string | null
           target_date?: string | null
           title?: string
