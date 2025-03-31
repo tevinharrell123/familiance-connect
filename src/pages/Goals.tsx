@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -18,6 +19,7 @@ import { FamilyGoal } from '@/types/goals';
 import { GoalDetails } from '@/components/mission/GoalDetails';
 import { AddGoalDialog } from '@/components/mission/AddGoalDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { GoalStatsDashboard } from '@/components/mission/GoalStatsDashboard';
 
 const Goals = () => {
   const { user, isLoading: authLoading } = useRequireAuth();
@@ -149,6 +151,9 @@ const Goals = () => {
                 </Button>
               </div>
             </div>
+            
+            {/* Add the Goals Stats Dashboard */}
+            <GoalStatsDashboard goals={goals} />
             
             <Card className="mb-8">
               <CardHeader>
