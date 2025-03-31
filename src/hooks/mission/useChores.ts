@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Chore, WeekDay } from '@/types/chores';
+import { Chore, WeekDay, ChoreFrequency } from '@/types/chores';
 
 export function useChores() {
   const [chores, setChores] = useState<Chore[]>([]);
@@ -40,7 +40,7 @@ export function useChores() {
         description: chore.description,
         assigned_to: chore.assigned_to,
         weekdays: (chore.weekdays || []) as WeekDay[], // Cast to WeekDay[]
-        frequency: chore.frequency || 'weekly',
+        frequency: (chore.frequency || 'weekly') as ChoreFrequency, // Cast to ChoreFrequency
         points: chore.points || 1,
         completed_dates: chore.completed_dates || [],
         created_at: chore.created_at,

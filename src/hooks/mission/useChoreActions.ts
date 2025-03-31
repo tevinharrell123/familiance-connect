@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Chore, WeekDay } from '@/types/chores';
+import { Chore, WeekDay, ChoreFrequency } from '@/types/chores';
 import { toast } from '@/components/ui/use-toast';
 
 export function useChoreActions(onSuccess?: () => void) {
@@ -38,7 +38,8 @@ export function useChoreActions(onSuccess?: () => void) {
       // Cast the result to the correct type
       return {
         ...data,
-        weekdays: data.weekdays as WeekDay[]
+        weekdays: data.weekdays as WeekDay[],
+        frequency: data.frequency as ChoreFrequency
       } as Chore;
     } finally {
       setIsLoading(false);
@@ -77,7 +78,8 @@ export function useChoreActions(onSuccess?: () => void) {
       // Cast the result to the correct type
       return {
         ...data,
-        weekdays: data.weekdays as WeekDay[]
+        weekdays: data.weekdays as WeekDay[],
+        frequency: data.frequency as ChoreFrequency
       } as Chore;
     } finally {
       setIsLoading(false);
@@ -114,7 +116,8 @@ export function useChoreActions(onSuccess?: () => void) {
       // Cast the result to the correct type
       return {
         ...data,
-        weekdays: data.weekdays as WeekDay[]
+        weekdays: data.weekdays as WeekDay[],
+        frequency: data.frequency as ChoreFrequency
       } as Chore;
     } finally {
       setIsLoading(false);
