@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useGoals } from '@/hooks/mission/useGoals';
+import { useGoalActions } from '@/hooks/mission/useGoalActions';
 import { Navigate, useNavigate, Link, Routes, Route } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

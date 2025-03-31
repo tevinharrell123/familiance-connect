@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Plus, Info } from 'lucide-react';
+import { Plus, Info, Star, StarOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { VisionBoard } from '@/components/mission/VisionBoard';
 import { GoalCategories } from '@/components/mission/GoalCategories';
 import { AddGoalDialog } from '@/components/mission/AddGoalDialog';
 import { EditGoalDialog } from '@/components/mission/EditGoalDialog';
 import { useGoals } from '@/hooks/mission/useGoals';
+import { useGoalActions } from '@/hooks/mission/useGoalActions';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
