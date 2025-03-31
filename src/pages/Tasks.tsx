@@ -1,18 +1,16 @@
 
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { WeekDayBoard } from '@/components/tasks/WeekDayBoard';
-import { TasksList } from '@/components/tasks/TasksList';
-import { ChoresWeeklyView } from '@/components/tasks/ChoresWeeklyView';
+import { KanbanBoard, KanbanColumn as KanbanColumnType } from '@/components/tasks/KanbanBoard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TasksList } from '@/components/tasks/TasksList';
+import { ChoresWeeklyView } from '@/components/tasks/ChoresWeeklyView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ChoreDialog } from '@/components/tasks/ChoreDialog';
 import { useTasks } from '@/hooks/mission/useTasks';
@@ -23,7 +21,7 @@ import { useGoals } from '@/hooks/mission/useGoals';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { GoalTask } from '@/types/tasks';
 import { Chore } from '@/types/chores';
-import { Calendar, CalendarDays, Plus, Trophy, Users } from 'lucide-react';
+import { Calendar, KanbanSquare, List, LayoutDashboard, Plus, Trophy, Users } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 export default function Tasks() {
@@ -40,7 +38,10 @@ export default function Tasks() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   
   // State for tabs
-  const [tabView, setTabView] = useState<string>('weekly-view');
+  const [tabView, setTabView] = useState<string>('kanban');
+  
+  // State for kanban board columns
+  const [columns, setColumns] = useState<KanbanColumnType[]>([]);
   
   // Load data
   const { tasks, refreshTasks, isLoading: tasksLoading } = useTasks();
@@ -121,6 +122,41 @@ export default function Tasks() {
   
   // Get all unique categories from goals
   const categories = Array.from(new Set(goals.map(goal => goal.category)));
+  
+  // Initialize default columns when data is loaded
+  useEffect(() => {
+    if (tasks.length > 0 || chores.length > 0) {
+      // Only set columns if they haven't been set yet
+      if (columns.length === 0) {
+        setColumns([
+          {
+            id: 'to-do',
+            title: 'To Do',
+            items: filteredTasks.filter(task => !task.completed),
+            type: 'tasks'
+          },
+          {
+            id: 'in-progress',
+            title: 'In Progress',
+            items: [],
+            type: 'tasks'
+          },
+          {
+            id: 'completed',
+            title: 'Completed',
+            items: filteredTasks.filter(task => task.completed),
+            type: 'tasks'
+          },
+          {
+            id: 'daily-chores',
+            title: 'Daily Chores',
+            items: filteredChores,
+            type: 'chores'
+          }
+        ]);
+      }
+    }
+  }, [tasks, chores, filteredTasks, filteredChores]);
   
   // Calculate points data for the scoreboard
   const memberPoints = members?.map(member => {
@@ -204,23 +240,28 @@ export default function Tasks() {
             </div>
             
             <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
-              <TabsList className="grid w-full max-w-md grid-cols-2">
-                <TabsTrigger value="weekly-view">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Week View
+              <TabsList className="grid w-full max-w-md grid-cols-3">
+                <TabsTrigger value="kanban">
+                  <KanbanSquare className="h-4 w-4 mr-2" />
+                  Kanban Board
                 </TabsTrigger>
-                <TabsTrigger value="list-view">
-                  <CalendarDays className="h-4 w-4 mr-2" />
-                  All Items
+                <TabsTrigger value="list">
+                  <List className="h-4 w-4 mr-2" />
+                  List View
+                </TabsTrigger>
+                <TabsTrigger value="weekly">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Weekly View
                 </TabsTrigger>
               </TabsList>
             </Tabs>
             
-            {tabView === 'weekly-view' ? (
-              <WeekDayBoard 
+            <TabsContent value="kanban" className="mt-0">
+              <KanbanBoard 
                 tasks={filteredTasks}
                 chores={filteredChores}
                 goals={goals}
+                defaultColumns={columns}
                 onCompleteTask={handleToggleTaskCompletion}
                 onEditTask={(task) => {
                   setEditingTask(task);
@@ -234,7 +275,9 @@ export default function Tasks() {
                 }}
                 onDeleteChore={handleDeleteChore}
               />
-            ) : (
+            </TabsContent>
+            
+            <TabsContent value="list" className="mt-0">
               <div className="space-y-6">
                 <Card>
                   <CardHeader className="pb-3">
@@ -253,7 +296,11 @@ export default function Tasks() {
                     />
                   </CardContent>
                 </Card>
-                
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="weekly" className="mt-0">
+              <div className="space-y-6">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle>Weekly Chores</CardTitle>
@@ -271,7 +318,7 @@ export default function Tasks() {
                   </CardContent>
                 </Card>
               </div>
-            )}
+            </TabsContent>
           </div>
           
           {/* Scoreboard */}
@@ -329,7 +376,7 @@ export default function Tasks() {
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                        <CalendarDays className="h-4 w-4" />
+                        <KanbanSquare className="h-4 w-4" />
                       </div>
                       <span>Pending Tasks</span>
                     </div>
