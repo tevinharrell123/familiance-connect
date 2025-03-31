@@ -47,7 +47,8 @@ export function useGoals() {
         updated_at: goal.updated_at,
         assigned_to_name: goal.user_profiles?.full_name || null,
         completed: goal.completed || false,
-        progress: goal.progress || 0 // Ensure progress is included
+        progress: goal.progress || 0,
+        show_on_vision_board: goal.show_on_vision_board || false
       }));
 
       setGoals(formattedGoals);

@@ -12,5 +12,6 @@ export interface FamilyGoal {
   updated_at: string;
   assigned_to_name?: string | null;
   completed: boolean;
-  progress?: number; // Add progress property
+  progress?: number;
+  show_on_vision_board?: boolean; // Add this field
 }

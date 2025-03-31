@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -13,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, Edit, Plus, Search, ArrowUp, ArrowDown, Calendar } from 'lucide-react';
+import { CheckCircle, Edit, Plus, Search, ArrowUp, ArrowDown, Calendar, Star, StarOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { FamilyGoal } from '@/types/goals';
 import { GoalDetails } from '@/components/mission/GoalDetails';
@@ -152,7 +151,6 @@ const Goals = () => {
               </div>
             </div>
             
-            {/* Add the Goals Stats Dashboard */}
             <GoalStatsDashboard goals={goals} />
             
             <Card className="mb-8">
@@ -289,6 +287,7 @@ const Goals = () => {
                           </div>
                         </TableHead>
                         <TableHead>Assigned To</TableHead>
+                        <TableHead>Vision Board</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -339,6 +338,23 @@ const Goals = () => {
                             ) : (
                               <span className="text-muted-foreground text-sm">Unassigned</span>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <div 
+                              className="inline-flex"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const { updateVisionBoardStatus } = useGoalActions();
+                                updateVisionBoardStatus(goal);
+                                refreshGoals();
+                              }}
+                            >
+                              {goal.show_on_vision_board ? (
+                                <Star className="h-5 w-5 text-amber-500" />
+                              ) : (
+                                <StarOff className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <Button

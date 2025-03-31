@@ -4,14 +4,24 @@ import { FamilyGoal } from '@/types/goals';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { CameraIcon, CheckCircle } from 'lucide-react';
+import { CameraIcon, CheckCircle, Star, StarOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useGoalActions } from '@/hooks/mission/useGoalActions';
 
 interface GoalCardProps {
   goal: FamilyGoal;
   onClick: (goal: FamilyGoal) => void;
+  showVisionBoardToggle?: boolean;
 }
 
-export const GoalCard: React.FC<GoalCardProps> = ({ goal, onClick }) => {
+export const GoalCard: React.FC<GoalCardProps> = ({ goal, onClick, showVisionBoardToggle = false }) => {
+  const { updateVisionBoardStatus } = useGoalActions();
+
+  const handleVisionBoardToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the card click event
+    await updateVisionBoardStatus(goal);
+  };
+
   return (
     <Card 
       className={`overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer ${goal.completed ? 'opacity-60' : ''}`}
@@ -39,6 +49,21 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal, onClick }) => {
           <div className="absolute top-2 left-2">
             <CheckCircle className="h-6 w-6 text-green-500 bg-white rounded-full" />
           </div>
+        )}
+        {showVisionBoardToggle && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 left-2 bg-white/80 hover:bg-white rounded-full p-1"
+            onClick={handleVisionBoardToggle}
+            title={goal.show_on_vision_board ? "Remove from Vision Board" : "Add to Vision Board"}
+          >
+            {goal.show_on_vision_board ? (
+              <Star className="h-5 w-5 text-amber-500" />
+            ) : (
+              <StarOff className="h-5 w-5 text-muted-foreground" />
+            )}
+          </Button>
         )}
       </div>
       <CardContent className="p-3">

@@ -12,6 +12,10 @@ interface VisionBoardProps {
 }
 
 export const VisionBoard: React.FC<VisionBoardProps> = ({ goals, isLoading, onGoalClick }) => {
+  // Filter to show only goals marked for vision board, or show all if none are marked
+  const visionBoardGoals = goals.filter(goal => goal.show_on_vision_board);
+  const displayGoals = visionBoardGoals.length > 0 ? visionBoardGoals : goals.slice(0, 12);
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -37,7 +41,7 @@ export const VisionBoard: React.FC<VisionBoardProps> = ({ goals, isLoading, onGo
   return (
     <ScrollArea className="h-[70vh] pr-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {goals.map((goal) => (
+        {displayGoals.map((goal) => (
           <GoalCard 
             key={goal.id} 
             goal={goal} 
