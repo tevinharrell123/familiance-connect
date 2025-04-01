@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GoalTask, TaskProperty } from '@/types/tasks';
+import { GoalTask } from '@/types/tasks';
 
 export function useTasks(goalId?: string) {
   const [tasks, setTasks] = useState<GoalTask[]>([]);
@@ -29,7 +29,7 @@ export function useTasks(goalId?: string) {
 
       if (error) throw error;
 
-      // Transform data into GoalTask type with parsed properties
+      // Transform data into GoalTask type
       const formattedTasks: GoalTask[] = data.map(task => ({
         id: task.id,
         goal_id: task.goal_id,
@@ -40,8 +40,7 @@ export function useTasks(goalId?: string) {
         completed: task.completed || false,
         created_at: task.created_at,
         updated_at: task.updated_at,
-        assigned_to_name: task.user_profiles?.full_name || null,
-        properties: task.properties ? JSON.parse(task.properties.toString()) : undefined
+        assigned_to_name: task.user_profiles?.full_name || null
       }));
 
       setTasks(formattedTasks);

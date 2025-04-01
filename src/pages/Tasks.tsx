@@ -1,16 +1,20 @@
 
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { KanbanBoard, KanbanColumn as KanbanColumnType } from '@/components/tasks/KanbanBoard';
+import { WeekDayBoard } from '@/components/tasks/WeekDayBoard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TasksList } from '@/components/tasks/TasksList';
-import { ChoresWeeklyView } from '@/components/tasks/ChoresWeeklyView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { 
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ChoreDialog } from '@/components/tasks/ChoreDialog';
-import { OrphanedItemsHolder } from '@/components/tasks/OrphanedItemsHolder';
+import { TaskCard } from '@/components/tasks/TaskCard';
+import { ChoreCard } from '@/components/tasks/ChoreCard';
 import { useTasks } from '@/hooks/mission/useTasks';
 import { useTaskActions } from '@/hooks/mission/useTaskActions';
 import { useChores } from '@/hooks/mission/useChores';
@@ -19,9 +23,8 @@ import { useGoals } from '@/hooks/mission/useGoals';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { GoalTask } from '@/types/tasks';
 import { Chore } from '@/types/chores';
-import { Calendar, KanbanSquare, List, Plus, Trophy, Users } from 'lucide-react';
+import { Calendar, CalendarDays, Plus, Trophy, Users } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { toast } from '@/components/ui/use-toast';
 
 export default function Tasks() {
   useRequireAuth();
@@ -32,12 +35,9 @@ export default function Tasks() {
   const [editingTask, setEditingTask] = useState<GoalTask | null>(null);
   const [editingChore, setEditingChore] = useState<Chore | null>(null);
   
-  // State for tabs
-  const [tabView, setTabView] = useState<string>('kanban');
-  
-  // State for kanban board columns and orphaned items
-  const [columns, setColumns] = useState<KanbanColumnType[]>([]);
-  const [orphanedItems, setOrphanedItems] = useState<(GoalTask | Chore)[]>([]);
+  // State for filters
+  const [filterMember, setFilterMember] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   
   // Load data
   const { tasks, refreshTasks, isLoading: tasksLoading } = useTasks();
@@ -53,23 +53,10 @@ export default function Tasks() {
   
   // Handlers for task operations
   const handleCreateTask = async (data: any) => {
-    try {
-      await createTask({
-        ...data,
-        completed: false
-      });
-      toast({
-        title: "Task created",
-        description: "New task has been added successfully."
-      });
-    } catch (error) {
-      console.error("Error creating task:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create task. Please try again.",
-        variant: "destructive"
-      });
-    }
+    await createTask({
+      ...data,
+      completed: false
+    });
   };
   
   const handleUpdateTask = async (data: any) => {
@@ -87,33 +74,14 @@ export default function Tasks() {
   
   const handleDeleteTask = async (taskId: string) => {
     await deleteTask(taskId);
-    // Also remove from orphaned items if it exists there
-    setOrphanedItems(prevItems => 
-      prevItems.filter(item => 
-        !('goal_id' in item) || item.id !== taskId
-      )
-    );
   };
   
   // Handlers for chore operations
   const handleCreateChore = async (data: any) => {
-    try {
-      await createChore({
-        ...data,
-        completed_dates: []
-      });
-      toast({
-        title: "Chore created",
-        description: "New chore has been added successfully."
-      });
-    } catch (error) {
-      console.error("Error creating chore:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create chore. Please try again.",
-        variant: "destructive"
-      });
-    }
+    await createChore({
+      ...data,
+      completed_dates: []
+    });
   };
   
   const handleUpdateChore = async (data: any) => {
@@ -131,78 +99,37 @@ export default function Tasks() {
   
   const handleDeleteChore = async (choreId: string) => {
     await deleteChore(choreId);
-    // Also remove from orphaned items if it exists there
-    setOrphanedItems(prevItems => 
-      prevItems.filter(item => 
-        ('goal_id' in item) || item.id !== choreId
-      )
-    );
   };
   
-  // Handler for orphaned items
-  const handleMoveItemsToOrphaned = (items: (GoalTask | Chore)[]) => {
-    setOrphanedItems(prevItems => [...prevItems, ...items]);
-  };
-  
-  // Initialize default columns when data is loaded
-  useEffect(() => {
-    if (tasks.length > 0 || chores.length > 0) {
-      // Only set columns if they haven't been set yet
-      if (columns.length === 0) {
-        setColumns([
-          {
-            id: 'to-do',
-            title: 'To Do',
-            items: tasks.filter(task => !task.completed),
-            type: 'tasks'
-          },
-          {
-            id: 'in-progress',
-            title: 'In Progress',
-            items: [],
-            type: 'tasks'
-          },
-          {
-            id: 'completed',
-            title: 'Completed',
-            items: tasks.filter(task => task.completed),
-            type: 'tasks'
-          },
-          {
-            id: 'daily-chores',
-            title: 'Daily Chores',
-            items: chores,
-            type: 'chores'
-          }
-        ]);
-      } else {
-        // Update existing columns with new data
-        setColumns(prevColumns => 
-          prevColumns.map(column => {
-            if (column.type === 'tasks') {
-              if (column.id === 'completed') {
-                return {
-                  ...column,
-                  items: tasks.filter(task => task.completed)
-                };
-              } else if (column.id === 'to-do') {
-                return {
-                  ...column,
-                  items: tasks.filter(task => !task.completed)
-                };
-              }
-            } else if (column.type === 'chores') {
-              return {
-                ...column,
-                items: chores
-              };
-            }
-            return column;
-          })
-        );
-      }
+  // Filter tasks and chores
+  const filteredTasks = tasks.filter(task => {
+    if (filterMember !== 'all' && task.assigned_to !== filterMember) return false;
+    if (filterCategory !== 'all') {
+      const goal = goals.find(g => g.id === task.goal_id);
+      if (goal?.category !== filterCategory) return false;
     }
-  }, [tasks, chores]);
+    return true;
+  });
+  
+  const filteredChores = chores.filter(chore => {
+    if (filterMember !== 'all' && chore.assigned_to !== filterMember) return false;
+    return true;
+  });
+  
+  // Get all unique categories from goals
+  const categories = Array.from(new Set(goals.map(goal => goal.category)));
+  
+  // Check if a chore is completed today
+  const isChoreCompletedToday = (chore: Chore) => {
+    const today = new Date().toISOString().split('T')[0];
+    return chore.completed_dates.includes(today);
+  };
+  
+  // Find goal title by id
+  const getGoalTitle = (goalId: string) => {
+    const goal = goals.find(g => g.id === goalId);
+    return goal?.title || '';
+  };
   
   // Calculate points data for the scoreboard
   const memberPoints = members?.map(member => {
@@ -223,28 +150,6 @@ export default function Tasks() {
       points: completedTasks + completedChores
     };
   }).sort((a, b) => b.points - a.points) || [];
-  
-  // Handle column operations
-  const handleEditColumn = (columnId: string, newTitle: string) => {
-    setColumns(prevColumns => 
-      prevColumns.map(column => 
-        column.id === columnId ? { ...column, title: newTitle } : column
-      )
-    );
-    toast({
-      title: "Column updated",
-      description: "Column title has been updated."
-    });
-  };
-  
-  const handleDeleteColumn = (columnId: string) => {
-    // Filter out the deleted column
-    setColumns(prevColumns => prevColumns.filter(column => column.id !== columnId));
-    toast({
-      title: "Column deleted",
-      description: "Column has been removed and its items have been moved to the orphaned items section."
-    });
-  };
   
   return (
     <MainLayout>
@@ -268,112 +173,62 @@ export default function Tasks() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           <div className="lg:col-span-3">
-            <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
-              <TabsList className="grid w-full max-w-md grid-cols-3">
-                <TabsTrigger value="kanban">
-                  <KanbanSquare className="h-4 w-4 mr-2" />
-                  Kanban Board
-                </TabsTrigger>
-                <TabsTrigger value="list">
-                  <List className="h-4 w-4 mr-2" />
-                  List View
-                </TabsTrigger>
-                <TabsTrigger value="weekly">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Weekly View
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="kanban" className="mt-0">
-                <KanbanBoard 
-                  tasks={tasks}
-                  chores={chores}
-                  goals={goals}
-                  defaultColumns={columns}
-                  onCompleteTask={handleToggleTaskCompletion}
-                  onEditTask={(task) => {
-                    setEditingTask(task);
-                    setIsTaskDialogOpen(true);
-                  }}
-                  onDeleteTask={handleDeleteTask}
-                  onCompleteChore={handleMarkChoreCompleted}
-                  onEditChore={(chore) => {
-                    setEditingChore(chore);
-                    setIsChoreDialogOpen(true);
-                  }}
-                  onDeleteChore={handleDeleteChore}
-                  onAddTask={handleCreateTask}
-                  onAddChore={handleCreateChore}
-                  onEditColumn={handleEditColumn}
-                  onDeleteColumn={handleDeleteColumn}
-                  onMoveItemsToOrphaned={handleMoveItemsToOrphaned}
-                />
-                
-                {orphanedItems.length > 0 && (
-                  <OrphanedItemsHolder
-                    items={orphanedItems}
-                    goals={goals}
-                    onCompleteTask={handleToggleTaskCompletion}
-                    onEditTask={(task) => {
-                      setEditingTask(task);
-                      setIsTaskDialogOpen(true);
-                    }}
-                    onDeleteTask={handleDeleteTask}
-                    onCompleteChore={handleMarkChoreCompleted}
-                    onEditChore={(chore) => {
-                      setEditingChore(chore);
-                      setIsChoreDialogOpen(true);
-                    }}
-                    onDeleteChore={handleDeleteChore}
-                  />
-                )}
-              </TabsContent>
-              
-              <TabsContent value="list" className="mt-0">
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle>All Tasks</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <TasksList
-                        tasks={tasks}
-                        goals={goals}
-                        onComplete={handleToggleTaskCompletion}
-                        onEdit={(task) => {
-                          setEditingTask(task);
-                          setIsTaskDialogOpen(true);
-                        }}
-                        onDelete={handleDeleteTask}
-                      />
-                    </CardContent>
-                  </Card>
+            <div className="bg-card rounded-lg p-4 mb-6">
+              <div className="flex flex-col md:flex-row gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">Filter by Member</label>
+                  <Select value={filterMember} onValueChange={setFilterMember}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All members" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All members</SelectItem>
+                      {members?.map(member => (
+                        <SelectItem key={member.user_id} value={member.user_id}>
+                          {member.user_profiles?.full_name || 'Unnamed Member'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="weekly" className="mt-0">
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle>Weekly Chores</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ChoresWeeklyView
-                        chores={chores}
-                        onComplete={handleMarkChoreCompleted}
-                        onEdit={(chore) => {
-                          setEditingChore(chore);
-                          setIsChoreDialogOpen(true);
-                        }}
-                        onDelete={handleDeleteChore}
-                      />
-                    </CardContent>
-                  </Card>
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">Filter by Category</label>
+                  <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All categories</SelectItem>
+                      {categories.map(category => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
+            
+            <WeekDayBoard 
+              tasks={filteredTasks}
+              chores={filteredChores}
+              goals={goals}
+              onCompleteTask={handleToggleTaskCompletion}
+              onEditTask={(task) => {
+                setEditingTask(task);
+                setIsTaskDialogOpen(true);
+              }}
+              onDeleteTask={handleDeleteTask}
+              onCompleteChore={handleMarkChoreCompleted}
+              onEditChore={(chore) => {
+                setEditingChore(chore);
+                setIsChoreDialogOpen(true);
+              }}
+              onDeleteChore={handleDeleteChore}
+            />
           </div>
           
           {/* Scoreboard */}
@@ -431,7 +286,7 @@ export default function Tasks() {
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                        <KanbanSquare className="h-4 w-4" />
+                        <CalendarDays className="h-4 w-4" />
                       </div>
                       <span>Pending Tasks</span>
                     </div>
@@ -468,6 +323,79 @@ export default function Tasks() {
             </Card>
           </div>
         </div>
+        
+        <Tabs defaultValue="tasks" className="mt-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
+            <TabsTrigger value="tasks">All Tasks</TabsTrigger>
+            <TabsTrigger value="chores">All Chores</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="tasks" className="mt-0">
+            <Card>
+              <CardHeader>
+                <CardTitle>Tasks ({filteredTasks.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {filteredTasks.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No tasks found. Create a new task to get started!
+                  </p>
+                ) : (
+                  <ScrollArea className="h-[400px] pr-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredTasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          goalTitle={getGoalTitle(task.goal_id)}
+                          onComplete={() => handleToggleTaskCompletion(task)}
+                          onEdit={() => {
+                            setEditingTask(task);
+                            setIsTaskDialogOpen(true);
+                          }}
+                          onDelete={() => handleDeleteTask(task.id)}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="chores" className="mt-0">
+            <Card>
+              <CardHeader>
+                <CardTitle>Chores ({filteredChores.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {filteredChores.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No chores found. Create a new chore to get started!
+                  </p>
+                ) : (
+                  <ScrollArea className="h-[400px] pr-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredChores.map(chore => (
+                        <ChoreCard
+                          key={chore.id}
+                          chore={chore}
+                          isCompletedToday={isChoreCompletedToday(chore)}
+                          onComplete={() => handleMarkChoreCompleted(chore)}
+                          onEdit={() => {
+                            setEditingChore(chore);
+                            setIsChoreDialogOpen(true);
+                          }}
+                          onDelete={() => handleDeleteChore(chore.id)}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
       
       {/* Task dialog */}
