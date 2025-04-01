@@ -12,7 +12,20 @@ import { Label } from '@/components/ui/label';
 import { GoalTask } from '@/types/tasks';
 import { Chore } from '@/types/chores';
 import { FamilyGoal } from '@/types/goals';
-import { Plus } from 'lucide-react';
+import { Plus, Filter, Columns } from 'lucide-react';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 export type KanbanColumn = {
   id: string;
@@ -50,7 +63,6 @@ export function KanbanBoard({
   onAddTask,
   onAddChore
 }: KanbanBoardProps) {
-  // Initialize columns: if defaultColumns provided, use them, otherwise create default columns
   const [columns, setColumns] = useState<KanbanColumn[]>(defaultColumns || [
     {
       id: 'todo',
@@ -77,11 +89,13 @@ export function KanbanBoard({
       type: 'chores'
     }
   ]);
-  
-  // Update columns when tasks or chores change
+
+  const [columnFilterType, setColumnFilterType] = useState<'all' | 'name' | 'progress'>('all');
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [progressFilter, setProgressFilter] = useState<'all' | 'todo' | 'in-progress' | 'completed'>('all');
+
   useEffect(() => {
     if (defaultColumns) {
-      // Create a new array with updated items
       const updatedColumns = defaultColumns.map(column => {
         if (column.type === 'tasks') {
           return {
@@ -96,17 +110,13 @@ export function KanbanBoard({
             items: chores
           };
         } else {
-          // For mixed columns, we need to keep track of what was previously there
-          // and update accordingly
           return {
             ...column,
             items: column.items.map(item => {
               if ('goal_id' in item) {
-                // It's a task, find the updated version
                 const updatedTask = tasks.find(task => task.id === item.id);
                 return updatedTask || item;
               } else {
-                // It's a chore, find the updated version
                 const updatedChore = chores.find(chore => chore.id === item.id);
                 return updatedChore || item;
               }
@@ -118,11 +128,10 @@ export function KanbanBoard({
       setColumns(updatedColumns);
     }
   }, [tasks, chores, defaultColumns]);
-  
+
   const [newColumnOpen, setNewColumnOpen] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
-  
-  // Add a new column
+
   const addColumn = () => {
     if (!newColumnTitle.trim()) return;
     
@@ -137,8 +146,7 @@ export function KanbanBoard({
     setNewColumnTitle('');
     setNewColumnOpen(false);
   };
-  
-  // Move an item between columns
+
   const moveItem = (itemId: string, sourceColumnId: string, targetColumnId: string, itemType: 'task' | 'chore') => {
     const sourceColumn = columns.find(col => col.id === sourceColumnId);
     const targetColumn = columns.find(col => col.id === targetColumnId);
@@ -173,13 +181,10 @@ export function KanbanBoard({
     
     setColumns(newColumns);
   };
-  
-  // Handle completion of a task
+
   const handleCompleteTask = (task: GoalTask) => {
     onCompleteTask(task);
     
-    // If we're in a Kanban board with specific columns for completion states,
-    // we should also move the task to the appropriate column
     if (task.completed && columns.some(col => col.id === 'completed')) {
       const sourceColumnId = columns.find(col => 
         col.items.some(item => 'goal_id' in item && item.id === task.id)
@@ -191,65 +196,143 @@ export function KanbanBoard({
     }
   };
 
-  // Add a new task to a specific column
   const handleAddTaskToColumn = (columnId: string, task: Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>) => {
     if (onAddTask) {
       onAddTask(task);
       
-      // Note: We'll update the columns when the tasks list changes via useEffect
       console.log("Task being added to column:", columnId, task);
     }
   };
 
-  // Add a new chore to a specific column
   const handleAddChoreToColumn = (columnId: string, chore: Omit<Chore, 'id' | 'created_at' | 'updated_at'>) => {
     if (onAddChore) {
       onAddChore(chore);
       
-      // Note: We'll update the columns when the chores list changes via useEffect
       console.log("Chore being added to column:", columnId, chore);
     }
   };
+
+  useEffect(() => {
+    setSelectedColumns(columns.map(col => col.id));
+  }, [columns]);
+
+  const progressTypes = Array.from(new Set(columns.map(col => col.id)))
+    .filter(id => ['todo', 'in-progress', 'completed'].includes(id));
+
+  const filteredColumns = columns.filter(column => {
+    if (columnFilterType === 'name') {
+      return selectedColumns.includes(column.id);
+    }
+    
+    if (columnFilterType === 'progress') {
+      if (progressFilter === 'all') return true;
+      return column.id === progressFilter;
+    }
+    
+    return true;
+  });
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Task Board</h2>
-        <Button size="sm" onClick={() => setNewColumnOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Add Column
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-md">
+            <Label htmlFor="column-filter" className="text-xs whitespace-nowrap">Filter by:</Label>
+            <Select value={columnFilterType} onValueChange={(value: 'all' | 'name' | 'progress') => setColumnFilterType(value)}>
+              <SelectTrigger id="column-filter" className="h-8 w-[120px]">
+                <SelectValue placeholder="Filter type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Columns</SelectItem>
+                <SelectItem value="name">Column Names</SelectItem>
+                <SelectItem value="progress">Progress Status</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {columnFilterType === 'name' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 flex gap-1">
+                    <Columns className="h-4 w-4" />
+                    <span>Columns</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {columns.map(column => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={selectedColumns.includes(column.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedColumns([...selectedColumns, column.id]);
+                        } else {
+                          setSelectedColumns(selectedColumns.filter(id => id !== column.id));
+                        }
+                      }}
+                    >
+                      {column.title}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
+            {columnFilterType === 'progress' && (
+              <Select value={progressFilter} onValueChange={(value: 'all' | 'todo' | 'in-progress' | 'completed') => setProgressFilter(value)}>
+                <SelectTrigger className="h-8 w-[130px]">
+                  <SelectValue placeholder="Progress" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Progress</SelectItem>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <Button size="sm" onClick={() => setNewColumnOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Add Column
+          </Button>
+        </div>
       </div>
       
-      <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
-        {columns.map((column, index) => (
-          <React.Fragment key={column.id}>
-            <ResizablePanel defaultSize={100 / columns.length} minSize={20}>
-              <KanbanColumn
-                column={column}
-                goals={goals}
-                onCompleteTask={handleCompleteTask}
-                onEditTask={onEditTask}
-                onDeleteTask={onDeleteTask}
-                onCompleteChore={onCompleteChore}
-                onEditChore={onEditChore}
-                onDeleteChore={onDeleteChore}
-                onAddTask={(task) => {
-                  handleAddTaskToColumn(column.id, task);
-                }}
-                onAddChore={(chore) => {
-                  handleAddChoreToColumn(column.id, chore);
-                }}
-              />
-            </ResizablePanel>
-            {index < columns.length - 1 && (
-              <ResizableHandle withHandle />
-            )}
-          </React.Fragment>
-        ))}
-      </ResizablePanelGroup>
+      {filteredColumns.length === 0 ? (
+        <div className="flex items-center justify-center p-8 border rounded-md bg-muted/30 text-muted-foreground">
+          No columns match your current filters. Try adjusting your filter settings.
+        </div>
+      ) : (
+        <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
+          {filteredColumns.map((column, index) => (
+            <React.Fragment key={column.id}>
+              <ResizablePanel defaultSize={100 / filteredColumns.length} minSize={20}>
+                <KanbanColumn
+                  column={column}
+                  goals={goals}
+                  onCompleteTask={handleCompleteTask}
+                  onEditTask={onEditTask}
+                  onDeleteTask={onDeleteTask}
+                  onCompleteChore={onCompleteChore}
+                  onEditChore={onEditChore}
+                  onDeleteChore={onDeleteChore}
+                  onAddTask={(task) => {
+                    handleAddTaskToColumn(column.id, task);
+                  }}
+                  onAddChore={(chore) => {
+                    handleAddChoreToColumn(column.id, chore);
+                  }}
+                />
+              </ResizablePanel>
+              {index < filteredColumns.length - 1 && (
+                <ResizableHandle withHandle />
+              )}
+            </React.Fragment>
+          ))}
+        </ResizablePanelGroup>
+      )}
       
-      {/* Dialog for adding a new column */}
       <Dialog open={newColumnOpen} onOpenChange={setNewColumnOpen}>
         <DialogContent>
           <DialogHeader>
