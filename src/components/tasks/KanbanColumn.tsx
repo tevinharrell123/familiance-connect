@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from './TaskCard';
@@ -15,6 +15,9 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { KanbanColumn as KanbanColumnType } from './KanbanBoard';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TaskDialog } from './TaskDialog';
+import { ChoreDialog } from './ChoreDialog';
 
 interface KanbanColumnProps {
   column: KanbanColumnType;
@@ -25,6 +28,8 @@ interface KanbanColumnProps {
   onCompleteChore: (chore: Chore) => void;
   onEditChore: (chore: Chore) => void;
   onDeleteChore: (choreId: string) => void;
+  onAddTask?: (task: Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>) => void;
+  onAddChore?: (chore: Omit<Chore, 'id' | 'created_at' | 'updated_at'>) => void;
 }
 
 export function KanbanColumn({
@@ -35,8 +40,13 @@ export function KanbanColumn({
   onDeleteTask,
   onCompleteChore,
   onEditChore,
-  onDeleteChore
+  onDeleteChore,
+  onAddTask,
+  onAddChore
 }: KanbanColumnProps) {
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addItemType, setAddItemType] = useState<'task' | 'chore'>('task');
+  
   // Check if a chore is completed today
   const isChoreCompletedToday = (chore: Chore) => {
     const today = new Date().toISOString().split('T')[0];
@@ -47,6 +57,34 @@ export function KanbanColumn({
   const getGoalTitle = (goalId: string) => {
     const goal = goals.find(g => g.id === goalId);
     return goal?.title || '';
+  };
+
+  // Handle opening the appropriate dialog
+  const handleAddItem = (type: 'task' | 'chore') => {
+    setAddItemType(type);
+    setAddDialogOpen(true);
+  };
+
+  // Handle adding a new task
+  const handleAddTask = (data: any) => {
+    if (onAddTask) {
+      onAddTask({
+        ...data,
+        completed: false
+      });
+    }
+    setAddDialogOpen(false);
+  };
+
+  // Handle adding a new chore
+  const handleAddChore = (data: any) => {
+    if (onAddChore) {
+      onAddChore({
+        ...data,
+        completed_dates: []
+      });
+    }
+    setAddDialogOpen(false);
   };
 
   return (
@@ -102,11 +140,68 @@ export function KanbanColumn({
       </ScrollArea>
       
       <div className="p-3 border-t mt-auto">
-        <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground">
-          <Plus className="h-4 w-4 mr-1" />
-          Add Item
-        </Button>
+        {column.type === 'tasks' ? (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full justify-start text-muted-foreground"
+            onClick={() => handleAddItem('task')}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add Task
+          </Button>
+        ) : column.type === 'chores' ? (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full justify-start text-muted-foreground"
+            onClick={() => handleAddItem('chore')}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add Chore
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex-1 justify-start text-muted-foreground"
+              onClick={() => handleAddItem('task')}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Task
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex-1 justify-start text-muted-foreground"
+              onClick={() => handleAddItem('chore')}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Chore
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Dialog for adding a new task or chore */}
+      {addDialogOpen && addItemType === 'task' && (
+        <TaskDialog
+          isOpen={addDialogOpen}
+          onClose={() => setAddDialogOpen(false)}
+          onSubmit={handleAddTask}
+          title="Add Task to Column"
+        />
+      )}
+
+      {addDialogOpen && addItemType === 'chore' && (
+        <ChoreDialog
+          isOpen={addDialogOpen}
+          onClose={() => setAddDialogOpen(false)}
+          onSubmit={handleAddChore}
+          title="Add Chore to Column"
+        />
+      )}
     </div>
   );
 }

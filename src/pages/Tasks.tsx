@@ -240,7 +240,7 @@ export default function Tasks() {
             </div>
             
             {/* Use a single Tabs component with TabsContent for each view */}
-            <Tabs defaultValue={tabView} value={tabView} onValueChange={setTabView} className="mb-6">
+            <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
               <TabsList className="grid w-full max-w-md grid-cols-3">
                 <TabsTrigger value="kanban">
                   <KanbanSquare className="h-4 w-4 mr-2" />
@@ -274,6 +274,8 @@ export default function Tasks() {
                     setIsChoreDialogOpen(true);
                   }}
                   onDeleteChore={handleDeleteChore}
+                  onAddTask={handleCreateTask}
+                  onAddChore={handleCreateChore}
                 />
               </TabsContent>
               

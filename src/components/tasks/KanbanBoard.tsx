@@ -33,6 +33,8 @@ interface KanbanBoardProps {
   onCompleteChore: (chore: Chore) => void;
   onEditChore: (chore: Chore) => void;
   onDeleteChore: (choreId: string) => void;
+  onAddTask?: (task: Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>) => void;
+  onAddChore?: (chore: Omit<Chore, 'id' | 'created_at' | 'updated_at'>) => void;
 }
 
 export function KanbanBoard({ 
@@ -45,7 +47,9 @@ export function KanbanBoard({
   onDeleteTask,
   onCompleteChore,
   onEditChore,
-  onDeleteChore
+  onDeleteChore,
+  onAddTask,
+  onAddChore
 }: KanbanBoardProps) {
   // Initialize columns: if defaultColumns provided, use them, otherwise create default columns
   const [columns, setColumns] = useState<KanbanColumn[]>(defaultColumns || [
@@ -147,6 +151,20 @@ export function KanbanBoard({
     }
   };
 
+  // Add a new task to a specific column
+  const handleAddTaskToColumn = (columnId: string, task: Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>) => {
+    if (onAddTask) {
+      onAddTask(task);
+    }
+  };
+
+  // Add a new chore to a specific column
+  const handleAddChoreToColumn = (columnId: string, chore: Omit<Chore, 'id' | 'created_at' | 'updated_at'>) => {
+    if (onAddChore) {
+      onAddChore(chore);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -170,6 +188,12 @@ export function KanbanBoard({
                 onCompleteChore={onCompleteChore}
                 onEditChore={onEditChore}
                 onDeleteChore={onDeleteChore}
+                onAddTask={(task) => {
+                  handleAddTaskToColumn(column.id, task);
+                }}
+                onAddChore={(chore) => {
+                  handleAddChoreToColumn(column.id, chore);
+                }}
               />
             </ResizablePanel>
             {index < columns.length - 1 && (
