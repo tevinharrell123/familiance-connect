@@ -7,7 +7,7 @@ import { ChoreCard } from './ChoreCard';
 import { GoalTask } from '@/types/tasks';
 import { Chore } from '@/types/chores';
 import { FamilyGoal } from '@/types/goals';
-import { Plus, MoreHorizontal } from 'lucide-react';
+import { Plus, MoreHorizontal, Check, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,18 @@ import { KanbanColumn as KanbanColumnType } from './KanbanBoard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TaskDialog } from './TaskDialog';
 import { ChoreDialog } from './ChoreDialog';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface KanbanColumnProps {
   column: KanbanColumnType;
@@ -30,6 +42,8 @@ interface KanbanColumnProps {
   onDeleteChore: (choreId: string) => void;
   onAddTask?: (task: Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>) => void;
   onAddChore?: (chore: Omit<Chore, 'id' | 'created_at' | 'updated_at'>) => void;
+  onEditColumn?: (columnId: string, newTitle: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
 }
 
 export function KanbanColumn({
@@ -42,10 +56,15 @@ export function KanbanColumn({
   onEditChore,
   onDeleteChore,
   onAddTask,
-  onAddChore
+  onAddChore,
+  onEditColumn,
+  onDeleteColumn
 }: KanbanColumnProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addItemType, setAddItemType] = useState<'task' | 'chore'>('task');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(column.title);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   // Check if a chore is completed today
   const isChoreCompletedToday = (chore: Chore) => {
@@ -89,10 +108,49 @@ export function KanbanColumn({
     return Promise.resolve();
   };
 
+  // Handle saving edited column title
+  const handleSaveTitle = () => {
+    if (onEditColumn && editedTitle.trim() !== '') {
+      onEditColumn(column.id, editedTitle);
+    }
+    setIsEditing(false);
+  };
+
+  // Handle canceling edit
+  const handleCancelEdit = () => {
+    setEditedTitle(column.title);
+    setIsEditing(false);
+  };
+
+  // Handle deleting a column
+  const handleDeleteColumn = () => {
+    if (onDeleteColumn) {
+      onDeleteColumn(column.id);
+    }
+    setDeleteDialogOpen(false);
+  };
+
   return (
     <div className="flex flex-col h-full border-r bg-muted/10">
       <div className="flex justify-between items-center p-4 border-b bg-muted/30">
-        <h3 className="font-semibold text-sm uppercase tracking-wider">{column.title}</h3>
+        {isEditing ? (
+          <div className="flex items-center space-x-1 w-full">
+            <Input
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              className="h-7 text-sm"
+              autoFocus
+            />
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSaveTitle}>
+              <Check className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCancelEdit}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ) : (
+          <h3 className="font-semibold text-sm uppercase tracking-wider">{column.title}</h3>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -100,8 +158,15 @@ export function KanbanColumn({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Edit Column</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">Delete Column</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsEditing(true)}>
+              Edit Column
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              Delete Column
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -204,6 +269,27 @@ export function KanbanColumn({
           title="Add Chore to Column"
         />
       )}
+
+      {/* Alert Dialog for confirming column deletion */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Column</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this column? This action cannot be undone and any tasks or chores in this column will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteColumn}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

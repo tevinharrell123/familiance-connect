@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ResizablePanelGroup,
@@ -64,15 +63,12 @@ export function KanbanBoard({
   onAddTask,
   onAddChore
 }: KanbanBoardProps) {
-  // Create default columns based on task status properties if available
   const createDefaultColumns = (): KanbanColumn[] => {
-    // Check if any tasks have status properties
     const hasStatusProperties = tasks.some(task => 
       task.properties?.some(prop => prop.type === 'status' && prop.value)
     );
 
     if (hasStatusProperties) {
-      // Get unique status values
       const statusValues = new Set<string>();
       tasks.forEach(task => {
         const statusProp = task.properties?.find(prop => prop.type === 'status');
@@ -81,7 +77,6 @@ export function KanbanBoard({
         }
       });
 
-      // Create a column for each status
       const statusColumns: KanbanColumn[] = Array.from(statusValues).map(status => ({
         id: status.toLowerCase().replace(/\s+/g, '-'),
         title: status,
@@ -92,7 +87,6 @@ export function KanbanBoard({
         type: 'tasks'
       }));
 
-      // Add default columns for tasks without status and chores
       return [
         ...statusColumns,
         {
@@ -111,7 +105,6 @@ export function KanbanBoard({
         }
       ];
     } else {
-      // Default columns if no status properties
       return [
         {
           id: 'todo',
@@ -152,7 +145,6 @@ export function KanbanBoard({
     if (defaultColumns) {
       const updatedColumns = defaultColumns.map(column => {
         if (column.type === 'tasks') {
-          // For status-based columns
           if (column.id !== 'todo' && column.id !== 'in-progress' && column.id !== 'completed' && column.id !== 'no-status') {
             return {
               ...column,
@@ -243,23 +235,18 @@ export function KanbanBoard({
         );
         
         if (item) {
-          // Update status property if target column is status-based
           if (itemType === 'task') {
             const taskItem = item as GoalTask;
             const targetColumnStatus = columns.find(col => col.id === targetColumnId)?.title;
             
-            // Only modify status if target column is a status column (not todo, in-progress, etc.)
             if (targetColumnStatus && 
                 !['To Do', 'In Progress', 'Completed', 'No Status', 'Daily Chores'].includes(targetColumnStatus)) {
               
-              // Clone the task to avoid mutating the original
               const updatedTask = { ...taskItem };
               
-              // Find and update status property or add a new one
               if (updatedTask.properties) {
                 const statusPropIndex = updatedTask.properties.findIndex(prop => prop.type === 'status');
                 if (statusPropIndex >= 0) {
-                  // Update existing status property
                   const updatedProperties = [...updatedTask.properties];
                   updatedProperties[statusPropIndex] = {
                     ...updatedProperties[statusPropIndex],
@@ -267,7 +254,6 @@ export function KanbanBoard({
                   };
                   updatedTask.properties = updatedProperties;
                 } else {
-                  // Add new status property
                   updatedTask.properties.push({
                     id: `status_${Date.now()}`,
                     name: 'Status',
@@ -276,7 +262,6 @@ export function KanbanBoard({
                   });
                 }
               } else {
-                // Create properties array with status
                 updatedTask.properties = [{
                   id: `status_${Date.now()}`,
                   name: 'Status',
@@ -285,7 +270,6 @@ export function KanbanBoard({
                 }];
               }
               
-              // Update the task in the database
               onEditTask(updatedTask);
               
               return {
@@ -324,12 +308,10 @@ export function KanbanBoard({
 
   const handleAddTaskToColumn = (columnId: string, task: Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>) => {
     if (onAddTask) {
-      // If adding to a status column, set the status property
       const column = columns.find(col => col.id === columnId);
       if (column && !['todo', 'in-progress', 'completed', 'no-status', 'chores'].includes(columnId)) {
         const taskWithStatus = { ...task };
         
-        // Add or update status property
         if (!taskWithStatus.properties) {
           taskWithStatus.properties = [];
         }
@@ -357,6 +339,25 @@ export function KanbanBoard({
     if (onAddChore) {
       onAddChore(chore);
     }
+  };
+
+  const handleEditColumn = (columnId: string, newTitle: string) => {
+    const updatedColumns = columns.map(column => {
+      if (column.id === columnId) {
+        return {
+          ...column,
+          title: newTitle
+        };
+      }
+      return column;
+    });
+    
+    setColumns(updatedColumns);
+  };
+
+  const handleDeleteColumn = (columnId: string) => {
+    const updatedColumns = columns.filter(column => column.id !== columnId);
+    setColumns(updatedColumns);
   };
 
   useEffect(() => {
@@ -470,6 +471,8 @@ export function KanbanBoard({
                   onAddChore={(chore) => {
                     handleAddChoreToColumn(column.id, chore);
                   }}
+                  onEditColumn={handleEditColumn}
+                  onDeleteColumn={handleDeleteColumn}
                 />
               </ResizablePanel>
               {index < filteredColumns.length - 1 && (
