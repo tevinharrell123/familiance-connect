@@ -32,10 +32,12 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
   };
 
   return (
-    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${isCompletedToday ? 'bg-green-50' : ''} w-full min-w-0`}>
+    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${isCompletedToday ? 'bg-green-50' : ''} w-full`}>
       <CardHeader className="pb-2 px-3 pt-3">
         <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-lg font-bold truncate max-w-[70%]">{chore.title}</CardTitle>
+          <CardTitle className="text-base font-bold line-clamp-2 break-words">
+            {chore.title}
+          </CardTitle>
           <Badge className="flex-shrink-0" variant="outline">
             {chore.points} {chore.points === 1 ? 'point' : 'points'}
           </Badge>
@@ -43,10 +45,12 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
       </CardHeader>
       <CardContent className="py-2 px-3 flex-1">
         {chore.description && (
-          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">{chore.description}</p>
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
+            {chore.description}
+          </p>
         )}
         <div className="flex items-center mt-2 flex-wrap gap-2">
-          <div className="flex items-center min-w-0 max-w-[50%]">
+          <div className="flex items-center min-w-0 max-w-full">
             <Avatar className="h-6 w-6 mr-2 flex-shrink-0">
               <AvatarImage src={undefined} alt={chore.assigned_to_name || 'Unassigned'} />
               <AvatarFallback className="text-xs bg-primary text-primary-foreground">
@@ -61,7 +65,7 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
           </Badge>
         </div>
         
-        <div className="flex items-center mt-2 text-sm text-muted-foreground overflow-hidden">
+        <div className="flex items-center mt-2 text-sm text-muted-foreground">
           <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
           <span className="truncate">{formatWeekdays(chore.weekdays)}</span>
         </div>

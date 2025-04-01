@@ -27,20 +27,24 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
   const statusProperty = task.properties?.find(prop => prop.type === 'status');
 
   return (
-    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${task.completed ? 'bg-green-50' : ''} w-full min-w-0`}>
+    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${task.completed ? 'bg-green-50' : ''} w-full`}>
       <CardHeader className="pb-2 px-3 pt-3">
         <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-lg font-bold truncate max-w-[70%]">{task.title}</CardTitle>
+          <CardTitle className="text-base font-bold line-clamp-2 break-words">
+            {task.title}
+          </CardTitle>
           {goalTitle && (
-            <Badge className="flex-shrink-0 max-w-[30%]" variant="outline">
-              <span className="truncate">{goalTitle}</span>
+            <Badge className="flex-shrink-0" variant="outline">
+              <span className="truncate max-w-[100px]">{goalTitle}</span>
             </Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className="py-2 px-3 flex-1">
         {task.description && (
-          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">{task.description}</p>
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
+            {task.description}
+          </p>
         )}
         
         {/* Display Properties */}
@@ -52,14 +56,13 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
                 <Badge 
                   key={property.id} 
                   variant="secondary" 
-                  className="text-xs flex items-center gap-1 max-w-full"
+                  className="text-xs flex items-center gap-1 overflow-hidden max-w-full"
                 >
-                  <span className="font-semibold truncate">{property.name}:</span>
-                  <span className="truncate">
+                  <span className="font-semibold truncate max-w-[40%]">{property.name}:</span>
+                  <span className="truncate max-w-[60%]">
                     {property.type === 'date' && property.value ? 
                       format(new Date(property.value), 'MMM d') :
-                      String(property.value).substring(0, 15)}
-                    {String(property.value).length > 15 && '...'}
+                      String(property.value)}
                   </span>
                 </Badge>
               ))}

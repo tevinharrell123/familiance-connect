@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   ResizablePanelGroup,
@@ -47,6 +48,9 @@ interface KanbanBoardProps {
   onDeleteChore: (choreId: string) => void;
   onAddTask?: (task: Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>) => void;
   onAddChore?: (chore: Omit<Chore, 'id' | 'created_at' | 'updated_at'>) => void;
+  onEditColumn?: (columnId: string, newTitle: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
+  onMoveItemsToOrphaned?: (items: (GoalTask | Chore)[]) => void;
 }
 
 export function KanbanBoard({ 
@@ -61,7 +65,10 @@ export function KanbanBoard({
   onEditChore,
   onDeleteChore,
   onAddTask,
-  onAddChore
+  onAddChore,
+  onEditColumn,
+  onDeleteColumn,
+  onMoveItemsToOrphaned
 }: KanbanBoardProps) {
   const createDefaultColumns = (): KanbanColumn[] => {
     const hasStatusProperties = tasks.some(task => 
@@ -211,6 +218,11 @@ export function KanbanBoard({
     setColumns([...columns, newColumn]);
     setNewColumnTitle('');
     setNewColumnOpen(false);
+    
+    // If parent has onEditColumn handler, call it
+    if (onEditColumn) {
+      onEditColumn(newColumn.id, newColumn.title);
+    }
   };
 
   const moveItem = (itemId: string, sourceColumnId: string, targetColumnId: string, itemType: 'task' | 'chore') => {
@@ -353,6 +365,11 @@ export function KanbanBoard({
     });
     
     setColumns(updatedColumns);
+    
+    // If parent has onEditColumn handler, call it
+    if (onEditColumn) {
+      onEditColumn(columnId, newTitle);
+    }
   };
 
   const handleDeleteColumn = (columnId: string) => {
@@ -360,8 +377,19 @@ export function KanbanBoard({
       return;
     }
     
+    // Get the items from the column being deleted
+    const columnToDelete = columns.find(col => col.id === columnId);
+    if (columnToDelete && columnToDelete.items.length > 0 && onMoveItemsToOrphaned) {
+      onMoveItemsToOrphaned(columnToDelete.items);
+    }
+    
     const updatedColumns = columns.filter(column => column.id !== columnId);
     setColumns(updatedColumns);
+    
+    // If parent has onDeleteColumn handler, call it
+    if (onDeleteColumn) {
+      onDeleteColumn(columnId);
+    }
   };
 
   useEffect(() => {
@@ -480,11 +508,8 @@ export function KanbanBoard({
                       handleAddChoreToColumn(column.id, chore);
                     }}
                     onEditColumn={handleEditColumn}
-                    onDeleteColumn={
-                      ['todo', 'in-progress', 'completed', 'no-status', 'chores', 'daily-chores', 'to-do'].includes(column.id)
-                      ? undefined 
-                      : handleDeleteColumn
-                    }
+                    onDeleteColumn={handleDeleteColumn}
+                    onMoveItemsToOrphaned={onMoveItemsToOrphaned}
                   />
                 </ResizablePanel>
                 {index < filteredColumns.length - 1 && (

@@ -42,6 +42,7 @@ interface KanbanColumnProps {
   onAddChore?: (chore: Omit<Chore, 'id' | 'created_at' | 'updated_at'>) => void;
   onEditColumn?: (columnId: string, newTitle: string) => void;
   onDeleteColumn?: (columnId: string) => void;
+  onMoveItemsToOrphaned?: (items: (GoalTask | Chore)[]) => void;
 }
 
 export function KanbanColumn({
@@ -56,7 +57,8 @@ export function KanbanColumn({
   onAddTask,
   onAddChore,
   onEditColumn,
-  onDeleteColumn
+  onDeleteColumn,
+  onMoveItemsToOrphaned
 }: KanbanColumnProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addItemType, setAddItemType] = useState<'task' | 'chore'>('task');
@@ -115,13 +117,20 @@ export function KanbanColumn({
 
   const handleDeleteColumn = () => {
     if (onDeleteColumn) {
+      // Move items to orphaned before deleting column
+      if (column.items.length > 0 && onMoveItemsToOrphaned) {
+        onMoveItemsToOrphaned(column.items);
+      }
       onDeleteColumn(column.id);
     }
     setDeleteDialogOpen(false);
   };
 
+  // Check if the column is a system column that shouldn't be deleted
+  const isSystemColumn = ['todo', 'in-progress', 'completed', 'no-status', 'chores', 'daily-chores', 'to-do'].includes(column.id);
+
   return (
-    <div className="flex flex-col h-full border-r bg-muted/10 min-w-[240px] max-w-full">
+    <div className="flex flex-col h-full border-r bg-muted/10 min-w-[220px] max-w-full">
       <div className="flex justify-between items-center p-3 border-b bg-muted/30">
         {isEditing ? (
           <div className="flex items-center space-x-1 w-full">
@@ -151,7 +160,7 @@ export function KanbanColumn({
             <DropdownMenuItem onClick={() => setIsEditing(true)}>
               Edit Column
             </DropdownMenuItem>
-            {onDeleteColumn && (
+            {!isSystemColumn && onDeleteColumn && (
               <DropdownMenuItem 
                 className="text-destructive"
                 onClick={() => setDeleteDialogOpen(true)}
@@ -263,7 +272,7 @@ export function KanbanColumn({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Column</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this column? This action cannot be undone and any tasks or chores in this column will be lost.
+              Are you sure you want to delete this column? Any tasks or chores in this column will be moved to the orphaned items section.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

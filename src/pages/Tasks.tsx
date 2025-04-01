@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ChoreDialog } from '@/components/tasks/ChoreDialog';
+import { OrphanedItemsHolder } from '@/components/tasks/OrphanedItemsHolder';
 import { useTasks } from '@/hooks/mission/useTasks';
 import { useTaskActions } from '@/hooks/mission/useTaskActions';
 import { useChores } from '@/hooks/mission/useChores';
@@ -41,8 +42,9 @@ export default function Tasks() {
   // State for tabs
   const [tabView, setTabView] = useState<string>('kanban');
   
-  // State for kanban board columns
+  // State for kanban board columns and orphaned items
   const [columns, setColumns] = useState<KanbanColumnType[]>([]);
+  const [orphanedItems, setOrphanedItems] = useState<(GoalTask | Chore)[]>([]);
   
   // Load data
   const { tasks, refreshTasks, isLoading: tasksLoading } = useTasks();
@@ -130,6 +132,11 @@ export default function Tasks() {
   
   const handleDeleteChore = async (choreId: string) => {
     await deleteChore(choreId);
+  };
+  
+  // Handler for orphaned items
+  const handleMoveItemsToOrphaned = (items: (GoalTask | Chore)[]) => {
+    setOrphanedItems(prevItems => [...prevItems, ...items]);
   };
   
   // Filter tasks and chores
@@ -230,6 +237,28 @@ export default function Tasks() {
     };
   }).sort((a, b) => b.points - a.points) || [];
   
+  // Handle column operations
+  const handleEditColumn = (columnId: string, newTitle: string) => {
+    setColumns(prevColumns => 
+      prevColumns.map(column => 
+        column.id === columnId ? { ...column, title: newTitle } : column
+      )
+    );
+    toast({
+      title: "Column updated",
+      description: "Column title has been updated."
+    });
+  };
+  
+  const handleDeleteColumn = (columnId: string) => {
+    // Filter out the deleted column
+    setColumns(prevColumns => prevColumns.filter(column => column.id !== columnId));
+    toast({
+      title: "Column deleted",
+      description: "Column has been removed and its items have been moved to the orphaned items section."
+    });
+  };
+  
   return (
     <MainLayout>
       <div className="container mx-auto py-6">
@@ -327,7 +356,31 @@ export default function Tasks() {
                   onDeleteChore={handleDeleteChore}
                   onAddTask={handleCreateTask}
                   onAddChore={handleCreateChore}
+                  onEditColumn={handleEditColumn}
+                  onDeleteColumn={handleDeleteColumn}
+                  onMoveItemsToOrphaned={handleMoveItemsToOrphaned}
                 />
+                
+                {orphanedItems.length > 0 && (
+                  <div className="mt-6">
+                    <OrphanedItemsHolder
+                      items={orphanedItems}
+                      goals={goals}
+                      onCompleteTask={handleToggleTaskCompletion}
+                      onEditTask={(task) => {
+                        setEditingTask(task);
+                        setIsTaskDialogOpen(true);
+                      }}
+                      onDeleteTask={handleDeleteTask}
+                      onCompleteChore={handleMarkChoreCompleted}
+                      onEditChore={(chore) => {
+                        setEditingChore(chore);
+                        setIsChoreDialogOpen(true);
+                      }}
+                      onDeleteChore={handleDeleteChore}
+                    />
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="list" className="mt-0">
