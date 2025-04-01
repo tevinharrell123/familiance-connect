@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GoalTask } from '@/types/tasks';
+import { GoalTask, TaskProperties } from '@/types/tasks';
 import { toast } from '@/components/ui/use-toast';
 
 export function useTaskActions(onSuccess?: () => void) {
@@ -19,7 +19,8 @@ export function useTaskActions(onSuccess?: () => void) {
           description: task.description,
           assigned_to: task.assigned_to === "unassigned" ? null : task.assigned_to,
           target_date: task.target_date,
-          completed: task.completed || false
+          completed: task.completed || false,
+          properties: task.properties || { status: task.status || 'todo' }
         })
         .select()
         .single();
