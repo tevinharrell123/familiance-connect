@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GoalTask, TaskProperties } from '@/types/tasks';
+import { GoalTask, TaskProperties, TaskStatus } from '@/types/tasks';
 import { toast } from '@/components/ui/use-toast';
 
 export function useTaskActions(onSuccess?: () => void) {
@@ -28,7 +28,20 @@ export function useTaskActions(onSuccess?: () => void) {
       if (error) throw error;
 
       if (onSuccess) onSuccess();
+      
+      toast({
+        title: "Task created",
+        description: "Your task has been created successfully.",
+      });
+      
       return data as GoalTask;
+    } catch (error: any) {
+      toast({
+        title: "Error creating task",
+        description: error.message,
+        variant: "destructive"
+      });
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -38,6 +51,12 @@ export function useTaskActions(onSuccess?: () => void) {
     try {
       setIsLoading(true);
 
+      // Ensure properties includes status
+      const properties: TaskProperties = {
+        ...(task.properties || {}),
+        status: task.status || (task.properties?.status || 'todo')
+      };
+
       const { data, error } = await supabase
         .from('goal_tasks')
         .update({
@@ -46,6 +65,7 @@ export function useTaskActions(onSuccess?: () => void) {
           assigned_to: task.assigned_to === "unassigned" ? null : task.assigned_to,
           target_date: task.target_date,
           completed: task.completed,
+          properties: properties,
           updated_at: new Date().toISOString()
         })
         .eq('id', task.id)
@@ -55,7 +75,20 @@ export function useTaskActions(onSuccess?: () => void) {
       if (error) throw error;
 
       if (onSuccess) onSuccess();
+      
+      toast({
+        title: "Task updated",
+        description: "Your task has been updated successfully.",
+      });
+      
       return data as GoalTask;
+    } catch (error: any) {
+      toast({
+        title: "Error updating task",
+        description: error.message,
+        variant: "destructive"
+      });
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -65,10 +98,17 @@ export function useTaskActions(onSuccess?: () => void) {
     try {
       setIsLoading(true);
       
+      // Update properties to reflect the new status
+      const properties: TaskProperties = {
+        ...(task.properties || {}),
+        status: !task.completed ? 'done' : 'todo'
+      };
+      
       const { data, error } = await supabase
         .from('goal_tasks')
         .update({
           completed: !task.completed,
+          properties: properties,
           updated_at: new Date().toISOString()
         })
         .eq('id', task.id)
@@ -78,7 +118,20 @@ export function useTaskActions(onSuccess?: () => void) {
       if (error) throw error;
 
       if (onSuccess) onSuccess();
+      
+      toast({
+        title: task.completed ? "Task reopened" : "Task completed",
+        description: task.completed ? "Task has been marked as incomplete." : "Task has been marked as complete!",
+      });
+      
       return data as GoalTask;
+    } catch (error: any) {
+      toast({
+        title: "Error updating task",
+        description: error.message,
+        variant: "destructive"
+      });
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -96,6 +149,18 @@ export function useTaskActions(onSuccess?: () => void) {
       if (error) throw error;
       
       if (onSuccess) onSuccess();
+      
+      toast({
+        title: "Task deleted",
+        description: "Your task has been deleted.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error deleting task",
+        description: error.message,
+        variant: "destructive"
+      });
+      throw error;
     } finally {
       setIsLoading(false);
     }

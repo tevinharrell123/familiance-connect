@@ -45,9 +45,9 @@ export function KanbanItem({ item, columnId }: KanbanItemProps) {
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      className={`bg-card border rounded-md p-3 cursor-grab select-none transition-all
+      className={`bg-white border rounded-lg p-3 cursor-grab select-none transition-all shadow-sm
         ${isDragging ? 'opacity-50 ring-2 ring-primary' : ''}
-        hover:border-primary hover:shadow-sm`}
+        hover:border-primary hover:shadow-md`}
     >
       <div className="space-y-2">
         <div className="flex items-start justify-between">
@@ -72,19 +72,19 @@ export function KanbanItem({ item, columnId }: KanbanItemProps) {
           )}
           
           {isChore && (
-            <Badge variant="outline" className="flex items-center gap-1 text-xs">
+            <Badge variant="outline" className="flex items-center gap-1 text-xs bg-purple-50 text-purple-700 border-purple-200">
               {(item as Chore).points} {(item as Chore).points === 1 ? 'point' : 'points'}
             </Badge>
           )}
           
           {item.assigned_to_name && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 ml-auto">
               <Avatar className="h-5 w-5">
-                <AvatarFallback className="text-[10px]">
+                <AvatarFallback className="text-[10px] bg-purple-200">
                   {item.assigned_to_name.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs truncate max-w-[100px]">{item.assigned_to_name}</span>
+              <span className="text-xs truncate max-w-[80px]">{item.assigned_to_name}</span>
             </div>
           )}
         </div>

@@ -6,6 +6,7 @@ import { Chore, ChoreGroupByOption } from '@/types/chores';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LayoutGrid } from 'lucide-react';
 
 type KanbanViewProps = {
   tasks: GoalTask[];
@@ -53,7 +54,10 @@ export function KanbanView({
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <CardTitle>Kanban Board</CardTitle>
+            <CardTitle className="flex items-center">
+              <LayoutGrid className="h-5 w-5 mr-2" />
+              Kanban Board
+            </CardTitle>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Tabs 
                 value={activeTab} 

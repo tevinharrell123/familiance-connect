@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { GoalTask, TaskProperties, TaskStatus } from '@/types/tasks';
+import { toast } from '@/components/ui/use-toast';
 
 export function useTasks(goalId?: string) {
   const [tasks, setTasks] = useState<GoalTask[]>([]);
@@ -25,16 +26,16 @@ export function useTasks(goalId?: string) {
         query = query.eq('goal_id', goalId);
       }
 
-      const { data, error } = await query;
+      const { data, error: fetchError } = await query;
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
       // Transform data into GoalTask type
       const formattedTasks: GoalTask[] = data.map(task => {
         // Ensure properties is an object or set default
         const properties: TaskProperties = task.properties && typeof task.properties === 'object' 
           ? task.properties as TaskProperties 
-          : {};
+          : { status: 'todo' };
         
         // Get status from properties if it exists, otherwise use completed state
         const status: TaskStatus = properties.status || (task.completed ? 'done' : 'todo');
@@ -59,6 +60,11 @@ export function useTasks(goalId?: string) {
     } catch (err: any) {
       console.error('Error fetching tasks:', err);
       setError(err);
+      toast({
+        title: "Error fetching tasks",
+        description: err.message,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }

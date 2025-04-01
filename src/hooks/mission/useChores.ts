@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Chore, WeekDay, ChoreFrequency, ChoreProperties, ChoreStatus } from '@/types/chores';
+import { toast } from '@/components/ui/use-toast';
 
 export function useChores() {
   const [chores, setChores] = useState<Chore[]>([]);
@@ -21,7 +22,7 @@ export function useChores() {
       setIsLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('household_chores')
         .select(`
           *,
@@ -30,12 +31,15 @@ export function useChores() {
         .eq('household_id', household.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
       // Transform data into Chore type
       const formattedChores: Chore[] = data.map(chore => {
         // Create default properties object
-        const properties: ChoreProperties = {};
+        const properties: ChoreProperties = {
+          status: isChoreCompletedToday(chore) ? 'done' : 'todo',
+          priority: 'medium'
+        };
         
         // Determine status based on completion
         const status: ChoreStatus = isChoreCompletedToday(chore) ? 'done' : 'todo';
@@ -62,6 +66,11 @@ export function useChores() {
     } catch (err: any) {
       console.error('Error fetching chores:', err);
       setError(err);
+      toast({
+        title: "Error fetching chores",
+        description: err.message,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
