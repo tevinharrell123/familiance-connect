@@ -32,11 +32,11 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
   };
 
   return (
-    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${isCompletedToday ? 'bg-green-50' : ''}`}>
+    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${isCompletedToday ? 'bg-green-50' : ''} w-full`}>
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start gap-2">
           <CardTitle className="text-lg font-bold truncate">{chore.title}</CardTitle>
-          <Badge className="ml-2" variant="outline">
+          <Badge className="flex-shrink-0" variant="outline">
             {chore.points} {chore.points === 1 ? 'point' : 'points'}
           </Badge>
         </div>
@@ -45,25 +45,28 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
         {chore.description && (
           <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{chore.description}</p>
         )}
-        <div className="flex items-center mt-2">
-          <Avatar className="h-6 w-6 mr-2">
-            <AvatarImage src={undefined} alt={chore.assigned_to_name || 'Unassigned'} />
-            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-              {chore.assigned_to_name ? getInitials(chore.assigned_to_name) : '?'}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm font-medium truncate">{chore.assigned_to_name || 'Unassigned'}</span>
-        </div>
-        
-        <div className="flex items-center mt-2 text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4 mr-1" />
-          <span>{formatWeekdays(chore.weekdays)}</span>
-          <Badge variant="outline" className="ml-auto">
+        <div className="flex items-center mt-2 flex-wrap gap-2">
+          <div className="flex items-center min-w-0 max-w-full">
+            <Avatar className="h-6 w-6 mr-2 flex-shrink-0">
+              <AvatarImage src={undefined} alt={chore.assigned_to_name || 'Unassigned'} />
+              <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                {chore.assigned_to_name ? getInitials(chore.assigned_to_name) : '?'}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium truncate">{chore.assigned_to_name || 'Unassigned'}</span>
+          </div>
+          
+          <Badge variant="outline" className="ml-auto flex-shrink-0">
             {chore.frequency}
           </Badge>
         </div>
+        
+        <div className="flex items-center mt-2 text-sm text-muted-foreground flex-wrap">
+          <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+          <span className="truncate">{formatWeekdays(chore.weekdays)}</span>
+        </div>
       </CardContent>
-      <CardFooter className="pt-0 flex justify-between">
+      <CardFooter className="pt-0 flex justify-between flex-wrap gap-2">
         <div className="flex space-x-1">
           <Button 
             variant="outline" 

@@ -27,13 +27,13 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
   const statusProperty = task.properties?.find(prop => prop.type === 'status');
 
   return (
-    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${task.completed ? 'bg-green-50' : ''}`}>
+    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${task.completed ? 'bg-green-50' : ''} w-full`}>
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start gap-2">
           <CardTitle className="text-lg font-bold truncate">{task.title}</CardTitle>
           {goalTitle && (
-            <Badge className="ml-2" variant="outline">
-              {goalTitle}
+            <Badge className="flex-shrink-0" variant="outline">
+              <span className="truncate max-w-[100px]">{goalTitle}</span>
             </Badge>
           )}
         </div>
@@ -52,13 +52,15 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
                 <Badge 
                   key={property.id} 
                   variant="secondary" 
-                  className="text-xs flex items-center gap-1"
+                  className="text-xs flex items-center gap-1 max-w-full"
                 >
-                  <span className="font-semibold">{property.name}:</span>
-                  {property.type === 'date' && property.value ? 
-                    format(new Date(property.value), 'MMM d') :
-                    String(property.value).substring(0, 15)}
-                  {String(property.value).length > 15 && '...'}
+                  <span className="font-semibold truncate">{property.name}:</span>
+                  <span className="truncate">
+                    {property.type === 'date' && property.value ? 
+                      format(new Date(property.value), 'MMM d') :
+                      String(property.value).substring(0, 15)}
+                    {String(property.value).length > 15 && '...'}
+                  </span>
                 </Badge>
               ))}
             
@@ -70,6 +72,7 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
                   ${statusProperty.value === 'Done' ? 'bg-green-200 text-green-700' : ''}
                   ${statusProperty.value === 'Backlog' ? 'bg-purple-200 text-purple-700' : ''}
                   ${statusProperty.value === 'Cancelled' ? 'bg-red-200 text-red-700' : ''}
+                  truncate max-w-full
                 `}
               >
                 {statusProperty.value}
@@ -78,24 +81,26 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
           </div>
         )}
         
-        <div className="flex items-center mt-2">
-          <Avatar className="h-6 w-6 mr-2">
-            <AvatarImage src={undefined} alt={task.assigned_to_name || 'Unassigned'} />
-            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-              {task.assigned_to_name ? getInitials(task.assigned_to_name) : '?'}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm font-medium truncate">{task.assigned_to_name || 'Unassigned'}</span>
+        <div className="flex items-center mt-2 flex-wrap gap-2">
+          <div className="flex items-center min-w-0 max-w-full">
+            <Avatar className="h-6 w-6 mr-2 flex-shrink-0">
+              <AvatarImage src={undefined} alt={task.assigned_to_name || 'Unassigned'} />
+              <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                {task.assigned_to_name ? getInitials(task.assigned_to_name) : '?'}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium truncate">{task.assigned_to_name || 'Unassigned'}</span>
+          </div>
           
           {task.target_date && (
-            <div className="ml-auto flex items-center">
+            <div className="flex items-center ml-auto flex-shrink-0">
               <Calendar className="h-4 w-4 mr-1" />
               <span className="text-sm">{format(new Date(task.target_date), 'MMM d')}</span>
             </div>
           )}
         </div>
       </CardContent>
-      <CardFooter className="pt-0 flex justify-between">
+      <CardFooter className="pt-0 flex justify-between flex-wrap gap-2">
         <div className="flex space-x-1">
           <Button 
             variant="outline" 

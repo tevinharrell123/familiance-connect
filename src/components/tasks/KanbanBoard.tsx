@@ -386,7 +386,7 @@ export function KanbanBoard({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap justify-between items-center gap-2">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 flex-wrap">
         <h2 className="text-xl font-bold">Task Board</h2>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex flex-wrap items-center gap-2 bg-muted/50 p-2 rounded-md">
@@ -459,7 +459,7 @@ export function KanbanBoard({
         <div className="overflow-x-auto">
           <ResizablePanelGroup 
             direction="horizontal" 
-            className="min-h-[600px] rounded-lg border"
+            className="min-h-[600px] rounded-lg border overflow-x-auto"
           >
             {filteredColumns.map((column, index) => (
               <React.Fragment key={column.id}>

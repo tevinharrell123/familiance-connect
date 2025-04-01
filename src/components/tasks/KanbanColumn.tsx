@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { KanbanColumn as KanbanColumnType } from './KanbanBoard';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TaskDialog } from './TaskDialog';
 import { ChoreDialog } from './ChoreDialog';
 import { Input } from '@/components/ui/input';
@@ -27,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 interface KanbanColumnProps {
@@ -122,7 +120,7 @@ export function KanbanColumn({
   };
 
   return (
-    <div className="flex flex-col h-full border-r bg-muted/10">
+    <div className="flex flex-col h-full border-r bg-muted/10 min-w-[280px] max-w-full">
       <div className="flex justify-between items-center p-4 border-b bg-muted/30">
         {isEditing ? (
           <div className="flex items-center space-x-1 w-full">
@@ -144,7 +142,7 @@ export function KanbanColumn({
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -164,8 +162,8 @@ export function KanbanColumn({
         </DropdownMenu>
       </div>
       
-      <ScrollArea className="flex-1 p-3">
-        <div className="space-y-3">
+      <ScrollArea className="flex-1 p-3 w-full">
+        <div className="space-y-3 min-w-[240px]">
           {column.items.map(item => {
             if ('goal_id' in item) {
               const task = item as GoalTask;
@@ -196,7 +194,7 @@ export function KanbanColumn({
         </div>
       </ScrollArea>
       
-      <div className="p-3 border-t mt-auto">
+      <div className="p-3 border-t mt-auto w-full">
         {column.type === 'tasks' ? (
           <Button 
             variant="ghost" 
@@ -204,8 +202,8 @@ export function KanbanColumn({
             className="w-full justify-start text-muted-foreground"
             onClick={() => handleAddItem('task')}
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Task
+            <Plus className="h-4 w-4 mr-1 flex-shrink-0" />
+            <span className="truncate">Add Task</span>
           </Button>
         ) : column.type === 'chores' ? (
           <Button 
@@ -214,28 +212,28 @@ export function KanbanColumn({
             className="w-full justify-start text-muted-foreground"
             onClick={() => handleAddItem('chore')}
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Chore
+            <Plus className="h-4 w-4 mr-1 flex-shrink-0" />
+            <span className="truncate">Add Chore</span>
           </Button>
         ) : (
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="flex-1 justify-start text-muted-foreground"
+              className="flex-1 min-w-[100px] justify-start text-muted-foreground"
               onClick={() => handleAddItem('task')}
             >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Task
+              <Plus className="h-4 w-4 mr-1 flex-shrink-0" />
+              <span className="truncate">Add Task</span>
             </Button>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="flex-1 justify-start text-muted-foreground"
+              className="flex-1 min-w-[100px] justify-start text-muted-foreground"
               onClick={() => handleAddItem('chore')}
             >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Chore
+              <Plus className="h-4 w-4 mr-1 flex-shrink-0" />
+              <span className="truncate">Add Chore</span>
             </Button>
           </div>
         )}
