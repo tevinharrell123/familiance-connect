@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { KanbanBoard, KanbanColumn as KanbanColumnType } from '@/components/tasks/KanbanBoard';
@@ -249,7 +250,7 @@ export default function Tasks() {
               </div>
             </div>
             
-            <Tabs defaultValue={tabView} value={tabView} onValueChange={setTabView} className="mb-6">
+            <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
               <TabsList className="grid w-full max-w-md grid-cols-3">
                 <TabsTrigger value="kanban">
                   <KanbanSquare className="h-4 w-4 mr-2" />
@@ -265,7 +266,7 @@ export default function Tasks() {
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="kanban" className="mt-0">
+              <TabsContent value="kanban">
                 <KanbanBoard 
                   tasks={filteredTasks}
                   chores={filteredChores}
@@ -288,7 +289,7 @@ export default function Tasks() {
                 />
               </TabsContent>
               
-              <TabsContent value="list" className="mt-0">
+              <TabsContent value="list">
                 <div className="space-y-6">
                   <Card>
                     <CardHeader className="pb-3">
@@ -310,7 +311,7 @@ export default function Tasks() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="weekly" className="mt-0">
+              <TabsContent value="weekly">
                 <div className="space-y-6">
                   <Card>
                     <CardHeader className="pb-3">
