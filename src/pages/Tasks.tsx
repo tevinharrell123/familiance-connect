@@ -23,6 +23,7 @@ import { GoalTask } from '@/types/tasks';
 import { Chore } from '@/types/chores';
 import { Calendar, KanbanSquare, List, Plus, Trophy, Users } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { toast } from '@/components/ui/use-toast';
 
 export default function Tasks() {
   useRequireAuth();
@@ -57,10 +58,23 @@ export default function Tasks() {
   
   // Handlers for task operations
   const handleCreateTask = async (data: any) => {
-    await createTask({
-      ...data,
-      completed: false
-    });
+    try {
+      await createTask({
+        ...data,
+        completed: false
+      });
+      toast({
+        title: "Task created",
+        description: "New task has been added successfully."
+      });
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleUpdateTask = async (data: any) => {
@@ -82,10 +96,23 @@ export default function Tasks() {
   
   // Handlers for chore operations
   const handleCreateChore = async (data: any) => {
-    await createChore({
-      ...data,
-      completed_dates: []
-    });
+    try {
+      await createChore({
+        ...data,
+        completed_dates: []
+      });
+      toast({
+        title: "Chore created",
+        description: "New chore has been added successfully."
+      });
+    } catch (error) {
+      console.error("Error creating chore:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create chore. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleUpdateChore = async (data: any) => {
@@ -154,6 +181,31 @@ export default function Tasks() {
             type: 'chores'
           }
         ]);
+      } else {
+        // Update existing columns with new data
+        setColumns(prevColumns => 
+          prevColumns.map(column => {
+            if (column.type === 'tasks') {
+              if (column.id === 'completed') {
+                return {
+                  ...column,
+                  items: filteredTasks.filter(task => task.completed)
+                };
+              } else if (column.id === 'to-do') {
+                return {
+                  ...column,
+                  items: filteredTasks.filter(task => !task.completed)
+                };
+              }
+            } else if (column.type === 'chores') {
+              return {
+                ...column,
+                items: filteredChores
+              };
+            }
+            return column;
+          })
+        );
       }
     }
   }, [tasks, chores, filteredTasks, filteredChores]);
@@ -239,7 +291,6 @@ export default function Tasks() {
               </div>
             </div>
             
-            {/* Use a single Tabs component with TabsContent for each view */}
             <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
               <TabsList className="grid w-full max-w-md grid-cols-3">
                 <TabsTrigger value="kanban">

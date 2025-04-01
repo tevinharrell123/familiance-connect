@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ResizablePanelGroup,
   ResizablePanel,
@@ -79,6 +78,47 @@ export function KanbanBoard({
     }
   ]);
   
+  // Update columns when tasks or chores change
+  useEffect(() => {
+    if (defaultColumns) {
+      // Create a new array with updated items
+      const updatedColumns = defaultColumns.map(column => {
+        if (column.type === 'tasks') {
+          return {
+            ...column,
+            items: column.id === 'completed' 
+              ? tasks.filter(task => task.completed) 
+              : tasks.filter(task => !task.completed)
+          };
+        } else if (column.type === 'chores') {
+          return {
+            ...column,
+            items: chores
+          };
+        } else {
+          // For mixed columns, we need to keep track of what was previously there
+          // and update accordingly
+          return {
+            ...column,
+            items: column.items.map(item => {
+              if ('goal_id' in item) {
+                // It's a task, find the updated version
+                const updatedTask = tasks.find(task => task.id === item.id);
+                return updatedTask || item;
+              } else {
+                // It's a chore, find the updated version
+                const updatedChore = chores.find(chore => chore.id === item.id);
+                return updatedChore || item;
+              }
+            })
+          };
+        }
+      });
+      
+      setColumns(updatedColumns);
+    }
+  }, [tasks, chores, defaultColumns]);
+  
   const [newColumnOpen, setNewColumnOpen] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
   
@@ -155,6 +195,9 @@ export function KanbanBoard({
   const handleAddTaskToColumn = (columnId: string, task: Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>) => {
     if (onAddTask) {
       onAddTask(task);
+      
+      // Note: We'll update the columns when the tasks list changes via useEffect
+      console.log("Task being added to column:", columnId, task);
     }
   };
 
@@ -162,6 +205,9 @@ export function KanbanBoard({
   const handleAddChoreToColumn = (columnId: string, chore: Omit<Chore, 'id' | 'created_at' | 'updated_at'>) => {
     if (onAddChore) {
       onAddChore(chore);
+      
+      // Note: We'll update the columns when the chores list changes via useEffect
+      console.log("Chore being added to column:", columnId, chore);
     }
   };
 
