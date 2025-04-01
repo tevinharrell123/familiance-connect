@@ -32,21 +32,21 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
   };
 
   return (
-    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${isCompletedToday ? 'bg-green-50' : ''} w-full`}>
-      <CardHeader className="pb-2">
+    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${isCompletedToday ? 'bg-green-50' : ''} w-full min-w-0`}>
+      <CardHeader className="pb-2 px-3 pt-3">
         <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-lg font-bold truncate">{chore.title}</CardTitle>
+          <CardTitle className="text-lg font-bold truncate max-w-[70%]">{chore.title}</CardTitle>
           <Badge className="flex-shrink-0" variant="outline">
             {chore.points} {chore.points === 1 ? 'point' : 'points'}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="py-2 flex-1">
+      <CardContent className="py-2 px-3 flex-1">
         {chore.description && (
-          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{chore.description}</p>
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">{chore.description}</p>
         )}
         <div className="flex items-center mt-2 flex-wrap gap-2">
-          <div className="flex items-center min-w-0 max-w-full">
+          <div className="flex items-center min-w-0 max-w-[50%]">
             <Avatar className="h-6 w-6 mr-2 flex-shrink-0">
               <AvatarImage src={undefined} alt={chore.assigned_to_name || 'Unassigned'} />
               <AvatarFallback className="text-xs bg-primary text-primary-foreground">
@@ -61,13 +61,13 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
           </Badge>
         </div>
         
-        <div className="flex items-center mt-2 text-sm text-muted-foreground flex-wrap">
+        <div className="flex items-center mt-2 text-sm text-muted-foreground overflow-hidden">
           <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
           <span className="truncate">{formatWeekdays(chore.weekdays)}</span>
         </div>
       </CardContent>
-      <CardFooter className="pt-0 flex justify-between flex-wrap gap-2">
-        <div className="flex space-x-1">
+      <CardFooter className="pt-0 pb-3 px-3 flex justify-between gap-2">
+        <div className="flex-shrink-0 flex space-x-1">
           <Button 
             variant="outline" 
             size="icon" 
@@ -89,7 +89,7 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
           variant={isCompletedToday ? "outline" : "default"} 
           size="sm"
           onClick={onComplete}
-          className={`${isCompletedToday ? 'bg-green-100 text-green-800 border-green-300' : ''}`}
+          className={`${isCompletedToday ? 'bg-green-100 text-green-800 border-green-300' : ''} whitespace-nowrap`}
         >
           <Check className="h-4 w-4 mr-1" />
           {isCompletedToday ? 'Completed' : 'Complete'}

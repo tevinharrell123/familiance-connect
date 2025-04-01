@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -120,8 +121,8 @@ export function KanbanColumn({
   };
 
   return (
-    <div className="flex flex-col h-full border-r bg-muted/10 min-w-[280px] max-w-full">
-      <div className="flex justify-between items-center p-4 border-b bg-muted/30">
+    <div className="flex flex-col h-full border-r bg-muted/10 min-w-[240px] max-w-full">
+      <div className="flex justify-between items-center p-3 border-b bg-muted/30">
         {isEditing ? (
           <div className="flex items-center space-x-1 w-full">
             <Input
@@ -163,7 +164,7 @@ export function KanbanColumn({
       </div>
       
       <ScrollArea className="flex-1 p-3 w-full">
-        <div className="space-y-3 min-w-[240px]">
+        <div className="space-y-3 w-full">
           {column.items.map(item => {
             if ('goal_id' in item) {
               const task = item as GoalTask;
@@ -268,12 +269,7 @@ export function KanbanColumn({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => {
-                if (onDeleteColumn) {
-                  onDeleteColumn(column.id);
-                }
-                setDeleteDialogOpen(false);
-              }}
+              onClick={handleDeleteColumn}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete

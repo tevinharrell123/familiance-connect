@@ -27,27 +27,27 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
   const statusProperty = task.properties?.find(prop => prop.type === 'status');
 
   return (
-    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${task.completed ? 'bg-green-50' : ''} w-full`}>
-      <CardHeader className="pb-2">
+    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${task.completed ? 'bg-green-50' : ''} w-full min-w-0`}>
+      <CardHeader className="pb-2 px-3 pt-3">
         <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-lg font-bold truncate">{task.title}</CardTitle>
+          <CardTitle className="text-lg font-bold truncate max-w-[70%]">{task.title}</CardTitle>
           {goalTitle && (
-            <Badge className="flex-shrink-0" variant="outline">
-              <span className="truncate max-w-[100px]">{goalTitle}</span>
+            <Badge className="flex-shrink-0 max-w-[30%]" variant="outline">
+              <span className="truncate">{goalTitle}</span>
             </Badge>
           )}
         </div>
       </CardHeader>
-      <CardContent className="py-2 flex-1">
+      <CardContent className="py-2 px-3 flex-1">
         {task.description && (
-          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{task.description}</p>
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">{task.description}</p>
         )}
         
         {/* Display Properties */}
         {task.properties && task.properties.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {task.properties
-              .filter(prop => prop.value && prop.type !== 'status') // Status is displayed differently
+              .filter(prop => prop.value && prop.type !== 'status')
               .map(property => (
                 <Badge 
                   key={property.id} 
@@ -100,8 +100,8 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
           )}
         </div>
       </CardContent>
-      <CardFooter className="pt-0 flex justify-between flex-wrap gap-2">
-        <div className="flex space-x-1">
+      <CardFooter className="pt-0 pb-3 px-3 flex justify-between gap-2">
+        <div className="flex-shrink-0 flex space-x-1">
           <Button 
             variant="outline" 
             size="icon" 
@@ -123,7 +123,7 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
           variant={task.completed ? "outline" : "default"} 
           size="sm"
           onClick={onComplete}
-          className={`${task.completed ? 'bg-green-100 text-green-800 border-green-300' : ''}`}
+          className={`${task.completed ? 'bg-green-100 text-green-800 border-green-300' : ''} whitespace-nowrap`}
         >
           <Check className="h-4 w-4 mr-1" />
           {task.completed ? 'Completed' : 'Complete'}
