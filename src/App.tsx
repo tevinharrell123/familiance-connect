@@ -10,7 +10,6 @@ import Auth from "./pages/Auth";
 import Household from "./pages/Household";
 import Mission from "./pages/Mission";
 import Goals from "./pages/Goals";
-import Tasks from "./pages/Tasks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,7 +27,7 @@ const App = () => (
             <Route path="/household" element={<Household />} />
             <Route path="/mission" element={<Mission />} />
             <Route path="/goals/*" element={<Goals />} />
-            <Route path="/tasks" element={<Tasks />} />
+            {/* Tasks page has been removed */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
