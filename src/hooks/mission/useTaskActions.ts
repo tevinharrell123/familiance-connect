@@ -37,7 +37,7 @@ export function useTaskActions(onSuccess?: () => void) {
       // Parse the properties back to an array for the returned data
       const resultTask = {
         ...data,
-        properties: data.properties ? JSON.parse(data.properties) : undefined
+        properties: data.properties ? JSON.parse(data.properties.toString()) : undefined
       };
 
       if (onSuccess) onSuccess();
@@ -78,7 +78,7 @@ export function useTaskActions(onSuccess?: () => void) {
       // Parse the properties back to an array for the returned data
       const resultTask = {
         ...data,
-        properties: data.properties ? JSON.parse(data.properties) : undefined
+        properties: data.properties ? JSON.parse(data.properties.toString()) : undefined
       };
 
       if (onSuccess) onSuccess();
@@ -107,7 +107,7 @@ export function useTaskActions(onSuccess?: () => void) {
       // Parse the properties back to an array for the returned data
       const resultTask = {
         ...data,
-        properties: data.properties ? JSON.parse(data.properties) : undefined
+        properties: data.properties ? JSON.parse(data.properties.toString()) : undefined
       };
 
       if (onSuccess) onSuccess();

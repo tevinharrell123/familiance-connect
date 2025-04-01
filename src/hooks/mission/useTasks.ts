@@ -41,7 +41,7 @@ export function useTasks(goalId?: string) {
         created_at: task.created_at,
         updated_at: task.updated_at,
         assigned_to_name: task.user_profiles?.full_name || null,
-        properties: task.properties ? JSON.parse(task.properties as string) : undefined
+        properties: task.properties ? JSON.parse(task.properties.toString()) : undefined
       }));
 
       setTasks(formattedTasks);
