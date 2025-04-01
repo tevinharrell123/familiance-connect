@@ -16,8 +16,8 @@ export interface Chore {
   completed_dates: string[]; // Array of ISO date strings when this chore was completed
   created_at: string;
   updated_at: string;
-  properties?: ChoreProperties;
-  status?: ChoreStatus;
+  properties: ChoreProperties;
+  status: ChoreStatus;
 }
 
 export type ChoreStatus = 'todo' | 'in_progress' | 'done' | string;

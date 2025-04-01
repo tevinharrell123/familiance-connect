@@ -10,8 +10,8 @@ export interface GoalTask {
   completed: boolean;
   created_at: string;
   updated_at: string;
-  properties?: TaskProperties;
-  status?: TaskStatus;
+  properties: TaskProperties;
+  status: TaskStatus;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked' | string;

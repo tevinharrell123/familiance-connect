@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GoalTask } from '@/types/tasks';
+import { GoalTask, TaskProperties, TaskStatus } from '@/types/tasks';
 
 export function useTasks(goalId?: string) {
   const [tasks, setTasks] = useState<GoalTask[]>([]);
@@ -30,22 +30,30 @@ export function useTasks(goalId?: string) {
       if (error) throw error;
 
       // Transform data into GoalTask type
-      const formattedTasks: GoalTask[] = data.map(task => ({
-        id: task.id,
-        goal_id: task.goal_id,
-        title: task.title,
-        description: task.description,
-        assigned_to: task.assigned_to,
-        target_date: task.target_date,
-        completed: task.completed || false,
-        created_at: task.created_at,
-        updated_at: task.updated_at,
-        assigned_to_name: task.user_profiles?.full_name || null,
-        // Extract properties from the database JSON field or create default ones
-        properties: task.properties || {},
-        // Default status based on completion
-        status: task.properties?.status || (task.completed ? 'done' : 'todo')
-      }));
+      const formattedTasks: GoalTask[] = data.map(task => {
+        // Ensure properties is an object or set default
+        const properties: TaskProperties = task.properties && typeof task.properties === 'object' 
+          ? task.properties as TaskProperties 
+          : {};
+        
+        // Get status from properties if it exists, otherwise use completed state
+        const status: TaskStatus = properties.status || (task.completed ? 'done' : 'todo');
+        
+        return {
+          id: task.id,
+          goal_id: task.goal_id,
+          title: task.title,
+          description: task.description,
+          assigned_to: task.assigned_to,
+          target_date: task.target_date,
+          completed: task.completed || false,
+          created_at: task.created_at,
+          updated_at: task.updated_at,
+          assigned_to_name: task.user_profiles?.full_name || null,
+          properties: properties,
+          status: status
+        };
+      });
 
       setTasks(formattedTasks);
     } catch (err: any) {
