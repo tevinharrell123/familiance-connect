@@ -32,10 +32,10 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
   };
 
   return (
-    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${isCompletedToday ? 'bg-green-50' : ''} w-full`}>
+    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${isCompletedToday ? 'bg-green-50' : ''} overflow-hidden`}>
       <CardHeader className="pb-2 px-3 pt-3">
         <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-base font-bold line-clamp-2 break-words">
+          <CardTitle className="text-base font-bold line-clamp-2 break-words max-w-[75%]">
             {chore.title}
           </CardTitle>
           <Badge className="flex-shrink-0" variant="outline">
@@ -43,7 +43,7 @@ export function ChoreCard({ chore, isCompletedToday, onComplete, onEdit, onDelet
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="py-2 px-3 flex-1">
+      <CardContent className="py-2 px-3 flex-1 overflow-hidden">
         {chore.description && (
           <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
             {chore.description}

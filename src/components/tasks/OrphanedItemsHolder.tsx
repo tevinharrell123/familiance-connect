@@ -50,7 +50,7 @@ export function OrphanedItemsHolder({
       </CardHeader>
       <CardContent className="p-3">
         <ScrollArea className="max-h-[300px]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {items.map(item => {
               if ('goal_id' in item) {
                 const task = item as GoalTask;

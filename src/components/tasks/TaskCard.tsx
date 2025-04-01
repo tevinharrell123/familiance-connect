@@ -27,20 +27,20 @@ export function TaskCard({ task, goalTitle, onComplete, onEdit, onDelete }: Task
   const statusProperty = task.properties?.find(prop => prop.type === 'status');
 
   return (
-    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${task.completed ? 'bg-green-50' : ''} w-full`}>
+    <Card className={`shadow-md transition-all duration-300 h-full flex flex-col ${task.completed ? 'bg-green-50' : ''} overflow-hidden`}>
       <CardHeader className="pb-2 px-3 pt-3">
         <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-base font-bold line-clamp-2 break-words">
+          <CardTitle className="text-base font-bold line-clamp-2 break-words max-w-[75%]">
             {task.title}
           </CardTitle>
           {goalTitle && (
-            <Badge className="flex-shrink-0" variant="outline">
-              <span className="truncate max-w-[100px]">{goalTitle}</span>
+            <Badge className="flex-shrink-0 max-w-[25%] truncate" variant="outline">
+              <span className="truncate">{goalTitle}</span>
             </Badge>
           )}
         </div>
       </CardHeader>
-      <CardContent className="py-2 px-3 flex-1">
+      <CardContent className="py-2 px-3 flex-1 overflow-hidden">
         {task.description && (
           <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
             {task.description}
