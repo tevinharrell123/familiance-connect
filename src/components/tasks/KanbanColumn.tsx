@@ -66,7 +66,7 @@ export function KanbanColumn({
   };
 
   // Handle adding a new task
-  const handleAddTask = (data: any) => {
+  const handleAddTask = async (data: any): Promise<void> => {
     if (onAddTask) {
       onAddTask({
         ...data,
@@ -74,10 +74,11 @@ export function KanbanColumn({
       });
     }
     setAddDialogOpen(false);
+    return Promise.resolve();
   };
 
   // Handle adding a new chore
-  const handleAddChore = (data: any) => {
+  const handleAddChore = async (data: any): Promise<void> => {
     if (onAddChore) {
       onAddChore({
         ...data,
@@ -85,6 +86,7 @@ export function KanbanColumn({
       });
     }
     setAddDialogOpen(false);
+    return Promise.resolve();
   };
 
   return (
