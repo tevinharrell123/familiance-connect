@@ -20,7 +20,10 @@ export function useTaskActions(onSuccess?: () => void) {
           assigned_to: taskData.assigned_to,
           target_date: taskData.target_date,
           completed: taskData.completed,
-          properties: taskData.properties
+          properties: {
+            priority: taskData.properties.priority || 'medium',
+            status: taskData.status || 'todo'
+          }
         })
         .select('*')
         .single();
@@ -29,7 +32,26 @@ export function useTaskActions(onSuccess?: () => void) {
 
       if (onSuccess) onSuccess();
       
-      return data as GoalTask;
+      // Ensure returned data matches GoalTask structure
+      const result: GoalTask = {
+        id: data.id,
+        goal_id: data.goal_id,
+        title: data.title,
+        description: data.description,
+        assigned_to: data.assigned_to,
+        assigned_to_name: null,
+        target_date: data.target_date,
+        completed: data.completed || false,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        status: data.properties?.status || 'todo',
+        properties: {
+          priority: data.properties?.priority || 'medium',
+          status: data.properties?.status || 'todo'
+        }
+      };
+      
+      return result;
     } finally {
       setIsLoading(false);
     }
@@ -47,7 +69,10 @@ export function useTaskActions(onSuccess?: () => void) {
           assigned_to: task.assigned_to,
           target_date: task.target_date,
           completed: task.completed,
-          properties: task.properties,
+          properties: {
+            priority: task.properties.priority || 'medium',
+            status: task.status || 'todo'
+          },
           updated_at: new Date().toISOString()
         })
         .eq('id', task.id)
@@ -58,7 +83,26 @@ export function useTaskActions(onSuccess?: () => void) {
 
       if (onSuccess) onSuccess();
       
-      return data as GoalTask;
+      // Ensure returned data matches GoalTask structure
+      const result: GoalTask = {
+        id: data.id,
+        goal_id: data.goal_id,
+        title: data.title,
+        description: data.description,
+        assigned_to: data.assigned_to,
+        assigned_to_name: null,
+        target_date: data.target_date,
+        completed: data.completed || false,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        status: data.properties?.status || 'todo',
+        properties: {
+          priority: data.properties?.priority || 'medium',
+          status: data.properties?.status || 'todo'
+        }
+      };
+      
+      return result;
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +126,26 @@ export function useTaskActions(onSuccess?: () => void) {
 
       if (onSuccess) onSuccess();
       
-      return data as GoalTask;
+      // Ensure returned data matches GoalTask structure
+      const result: GoalTask = {
+        id: data.id,
+        goal_id: data.goal_id,
+        title: data.title,
+        description: data.description,
+        assigned_to: data.assigned_to,
+        assigned_to_name: null,
+        target_date: data.target_date,
+        completed: data.completed || false,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        status: data.properties?.status || 'todo',
+        properties: {
+          priority: data.properties?.priority || 'medium',
+          status: data.properties?.status || 'todo'
+        }
+      };
+      
+      return result;
     } finally {
       setIsLoading(false);
     }

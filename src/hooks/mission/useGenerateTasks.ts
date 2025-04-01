@@ -57,6 +57,7 @@ export function useGenerateTasks(goalId: string, onSuccess?: () => void) {
       }
       
       for (const taskData of generatedTasks) {
+        const taskStatus: TaskStatus = 'todo';
         await createTask({
           goal_id: goalId,
           title: taskData.title,
@@ -64,7 +65,7 @@ export function useGenerateTasks(goalId: string, onSuccess?: () => void) {
           assigned_to: null,
           target_date: null,
           completed: false,
-          status: 'todo' as TaskStatus,
+          status: taskStatus,
           properties: {
             priority: 'medium',
             status: 'todo'
