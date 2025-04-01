@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FamilyGoal } from '@/types/goals';
 import { GoalTask, TaskStatus } from '@/types/tasks';
 import { toast } from '@/components/ui/use-toast';
-import { useTaskActions } from './useTaskActions';
+import { useTaskActions } from '@/hooks/mission/useTaskActions';
 
 interface GeneratedTask {
   title: string;
@@ -64,7 +64,6 @@ export function useGenerateTasks(goalId: string, onSuccess?: () => void) {
           assigned_to: null,
           target_date: null,
           completed: false,
-          // Add the missing properties
           status: 'todo' as TaskStatus,
           properties: {
             priority: 'medium',
