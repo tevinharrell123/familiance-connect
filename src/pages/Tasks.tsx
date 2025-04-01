@@ -105,17 +105,6 @@ export default function Tasks() {
     await deleteChore(choreId);
   };
   
-  // Handlers for opening dialogs from Kanban columns
-  const handleAddTaskFromColumn = () => {
-    setEditingTask(null);
-    setIsTaskDialogOpen(true);
-  };
-  
-  const handleAddChoreFromColumn = () => {
-    setEditingChore(null);
-    setIsChoreDialogOpen(true);
-  };
-  
   // Filter tasks and chores
   const filteredTasks = tasks.filter(task => {
     if (filterMember !== 'all' && task.assigned_to !== filterMember) return false;
@@ -250,7 +239,8 @@ export default function Tasks() {
               </div>
             </div>
             
-            <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
+            {/* Use a single Tabs component with TabsContent for each view */}
+            <Tabs defaultValue={tabView} value={tabView} onValueChange={setTabView} className="mb-6">
               <TabsList className="grid w-full max-w-md grid-cols-3">
                 <TabsTrigger value="kanban">
                   <KanbanSquare className="h-4 w-4 mr-2" />
@@ -266,7 +256,7 @@ export default function Tasks() {
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="kanban">
+              <TabsContent value="kanban" className="mt-0">
                 <KanbanBoard 
                   tasks={filteredTasks}
                   chores={filteredChores}
@@ -284,12 +274,10 @@ export default function Tasks() {
                     setIsChoreDialogOpen(true);
                   }}
                   onDeleteChore={handleDeleteChore}
-                  onAddTask={handleAddTaskFromColumn}
-                  onAddChore={handleAddChoreFromColumn}
                 />
               </TabsContent>
               
-              <TabsContent value="list">
+              <TabsContent value="list" className="mt-0">
                 <div className="space-y-6">
                   <Card>
                     <CardHeader className="pb-3">
@@ -311,7 +299,7 @@ export default function Tasks() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="weekly">
+              <TabsContent value="weekly" className="mt-0">
                 <div className="space-y-6">
                   <Card>
                     <CardHeader className="pb-3">
@@ -334,6 +322,7 @@ export default function Tasks() {
             </Tabs>
           </div>
           
+          {/* Scoreboard */}
           <div className="lg:col-span-1">
             <Card className="shadow-lg">
               <CardHeader className="pb-3">
@@ -427,6 +416,7 @@ export default function Tasks() {
         </div>
       </div>
       
+      {/* Task dialog */}
       <TaskDialog
         isOpen={isTaskDialogOpen}
         onClose={() => {
@@ -438,6 +428,7 @@ export default function Tasks() {
         title={editingTask ? 'Edit Task' : 'Create New Task'}
       />
       
+      {/* Chore dialog */}
       <ChoreDialog
         isOpen={isChoreDialogOpen}
         onClose={() => {
