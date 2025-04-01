@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Chore, WeekDay } from '@/types/chores';
+import { Chore, WeekDay, ChoreFrequency } from '@/types/chores';
 
 export function useChores() {
   const [chores, setChores] = useState<Chore[]>([]);
@@ -40,12 +40,15 @@ export function useChores() {
         description: chore.description,
         assigned_to: chore.assigned_to,
         weekdays: (chore.weekdays || []) as WeekDay[], // Cast to WeekDay[]
-        frequency: chore.frequency || 'weekly',
+        frequency: (chore.frequency || 'weekly') as ChoreFrequency,
         points: chore.points || 1,
         completed_dates: chore.completed_dates || [],
         created_at: chore.created_at,
         updated_at: chore.updated_at,
-        assigned_to_name: chore.user_profiles?.full_name || null
+        assigned_to_name: chore.user_profiles?.full_name || null,
+        // Add default properties and status
+        properties: chore.properties || {},
+        status: chore.properties?.status || (isChoreCompletedToday(chore) ? 'done' : 'todo')
       }));
 
       setChores(formattedChores);
@@ -55,6 +58,12 @@ export function useChores() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to check if a chore is completed today
+  const isChoreCompletedToday = (chore: any): boolean => {
+    const today = new Date().toISOString().split('T')[0];
+    return (chore.completed_dates || []).includes(today);
   };
 
   useEffect(() => {

@@ -40,7 +40,11 @@ export function useTasks(goalId?: string) {
         completed: task.completed || false,
         created_at: task.created_at,
         updated_at: task.updated_at,
-        assigned_to_name: task.user_profiles?.full_name || null
+        assigned_to_name: task.user_profiles?.full_name || null,
+        // Extract properties from the database JSON field or create default ones
+        properties: task.properties || {},
+        // Default status based on completion
+        status: task.properties?.status || (task.completed ? 'done' : 'todo')
       }));
 
       setTasks(formattedTasks);

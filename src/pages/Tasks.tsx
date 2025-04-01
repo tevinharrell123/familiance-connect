@@ -6,15 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ChoreDialog } from '@/components/tasks/ChoreDialog';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { ChoreCard } from '@/components/tasks/ChoreCard';
+import { KanbanView } from '@/components/kanban/KanbanView';
 import { useTasks } from '@/hooks/mission/useTasks';
 import { useTaskActions } from '@/hooks/mission/useTaskActions';
 import { useChores } from '@/hooks/mission/useChores';
@@ -23,7 +21,7 @@ import { useGoals } from '@/hooks/mission/useGoals';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { GoalTask } from '@/types/tasks';
 import { Chore, WeekDay } from '@/types/chores';
-import { Calendar, CalendarDays, Plus, Trophy, Users } from 'lucide-react';
+import { Calendar, CalendarDays, Plus, Trophy, Users, LayoutGrid, List } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 export default function Tasks() {
@@ -35,9 +33,8 @@ export default function Tasks() {
   const [editingTask, setEditingTask] = useState<GoalTask | null>(null);
   const [editingChore, setEditingChore] = useState<Chore | null>(null);
   
-  // State for filters
-  const [filterMember, setFilterMember] = useState<string>('all');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  // State for view
+  const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'kanban'>('calendar');
   
   // Load data
   const { tasks, refreshTasks, isLoading: tasksLoading } = useTasks();
@@ -101,24 +98,6 @@ export default function Tasks() {
     await deleteChore(choreId);
   };
   
-  // Filter tasks and chores
-  const filteredTasks = tasks.filter(task => {
-    if (filterMember !== 'all' && task.assigned_to !== filterMember) return false;
-    if (filterCategory !== 'all') {
-      const goal = goals.find(g => g.id === task.goal_id);
-      if (goal?.category !== filterCategory) return false;
-    }
-    return true;
-  });
-  
-  const filteredChores = chores.filter(chore => {
-    if (filterMember !== 'all' && chore.assigned_to !== filterMember) return false;
-    return true;
-  });
-  
-  // Get all unique categories from goals
-  const categories = Array.from(new Set(goals.map(goal => goal.category)));
-  
   // Check if a chore is completed today
   const isChoreCompletedToday = (chore: Chore) => {
     const today = new Date().toISOString().split('T')[0];
@@ -162,6 +141,35 @@ export default function Tasks() {
             </p>
           </div>
           <div className="flex gap-2">
+            <div className="flex border rounded-md p-1 mr-2">
+              <Button
+                variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => setViewMode('calendar')}
+              >
+                <CalendarDays className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Calendar</span>
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">List</span>
+              </Button>
+              <Button
+                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => setViewMode('kanban')}
+              >
+                <LayoutGrid className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Board</span>
+              </Button>
+            </div>
             <Button onClick={() => setIsTaskDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Task
@@ -175,60 +183,111 @@ export default function Tasks() {
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           <div className="lg:col-span-3">
-            <div className="bg-card rounded-lg p-4 mb-6">
-              <div className="flex flex-col md:flex-row gap-4 mb-4">
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-1 block">Filter by Member</label>
-                  <Select value={filterMember} onValueChange={setFilterMember}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All members" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All members</SelectItem>
-                      {members?.map(member => (
-                        <SelectItem key={member.user_id} value={member.user_id}>
-                          {member.user_profiles?.full_name || 'Unnamed Member'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-1 block">Filter by Category</label>
-                  <Select value={filterCategory} onValueChange={setFilterCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All categories</SelectItem>
-                      {categories.map(category => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
+            {viewMode === 'calendar' && (
+              <WeekDayBoard 
+                tasks={tasks}
+                chores={chores}
+                goals={goals}
+                onCompleteTask={handleToggleTaskCompletion}
+                onEditTask={(task) => {
+                  setEditingTask(task);
+                  setIsTaskDialogOpen(true);
+                }}
+                onDeleteTask={handleDeleteTask}
+                onCompleteChore={handleMarkChoreCompleted}
+                onEditChore={(chore) => {
+                  setEditingChore(chore);
+                  setIsChoreDialogOpen(true);
+                }}
+                onDeleteChore={handleDeleteChore}
+              />
+            )}
             
-            <WeekDayBoard 
-              tasks={filteredTasks}
-              chores={filteredChores}
-              goals={goals}
-              onCompleteTask={handleToggleTaskCompletion}
-              onEditTask={(task) => {
-                setEditingTask(task);
-                setIsTaskDialogOpen(true);
-              }}
-              onDeleteTask={handleDeleteTask}
-              onCompleteChore={handleMarkChoreCompleted}
-              onEditChore={(chore) => {
-                setEditingChore(chore);
-                setIsChoreDialogOpen(true);
-              }}
-              onDeleteChore={handleDeleteChore}
-            />
+            {viewMode === 'kanban' && (
+              <KanbanView
+                tasks={tasks}
+                chores={chores}
+                goals={goals}
+                members={members}
+                onTaskUpdate={updateTask}
+                onChoreUpdate={updateChore}
+              />
+            )}
+            
+            {viewMode === 'list' && (
+              <Tabs defaultValue="tasks" className="w-full">
+                <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
+                  <TabsTrigger value="tasks">All Tasks</TabsTrigger>
+                  <TabsTrigger value="chores">All Chores</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="tasks" className="mt-0">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Tasks ({tasks.length})</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {tasks.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">
+                          No tasks found. Create a new task to get started!
+                        </p>
+                      ) : (
+                        <ScrollArea className="h-[500px] pr-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {tasks.map(task => (
+                              <TaskCard
+                                key={task.id}
+                                task={task}
+                                goalTitle={getGoalTitle(task.goal_id)}
+                                onComplete={() => handleToggleTaskCompletion(task)}
+                                onEdit={() => {
+                                  setEditingTask(task);
+                                  setIsTaskDialogOpen(true);
+                                }}
+                                onDelete={() => handleDeleteTask(task.id)}
+                              />
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="chores" className="mt-0">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Chores ({chores.length})</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {chores.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">
+                          No chores found. Create a new chore to get started!
+                        </p>
+                      ) : (
+                        <ScrollArea className="h-[500px] pr-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {chores.map(chore => (
+                              <ChoreCard
+                                key={chore.id}
+                                chore={chore}
+                                isCompletedToday={isChoreCompletedToday(chore)}
+                                onComplete={() => handleMarkChoreCompleted(chore)}
+                                onEdit={() => {
+                                  setEditingChore(chore);
+                                  setIsChoreDialogOpen(true);
+                                }}
+                                onDelete={() => handleDeleteChore(chore.id)}
+                              />
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
           
           {/* Scoreboard */}
@@ -325,79 +384,6 @@ export default function Tasks() {
             </Card>
           </div>
         </div>
-        
-        <Tabs defaultValue="tasks" className="mt-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
-            <TabsTrigger value="tasks">All Tasks</TabsTrigger>
-            <TabsTrigger value="chores">All Chores</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="tasks" className="mt-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tasks ({filteredTasks.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {filteredTasks.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No tasks found. Create a new task to get started!
-                  </p>
-                ) : (
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredTasks.map(task => (
-                        <TaskCard
-                          key={task.id}
-                          task={task}
-                          goalTitle={getGoalTitle(task.goal_id)}
-                          onComplete={() => handleToggleTaskCompletion(task)}
-                          onEdit={() => {
-                            setEditingTask(task);
-                            setIsTaskDialogOpen(true);
-                          }}
-                          onDelete={() => handleDeleteTask(task.id)}
-                        />
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="chores" className="mt-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Chores ({filteredChores.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {filteredChores.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No chores found. Create a new chore to get started!
-                  </p>
-                ) : (
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredChores.map(chore => (
-                        <ChoreCard
-                          key={chore.id}
-                          chore={chore}
-                          isCompletedToday={isChoreCompletedToday(chore)}
-                          onComplete={() => handleMarkChoreCompleted(chore)}
-                          onEdit={() => {
-                            setEditingChore(chore);
-                            setIsChoreDialogOpen(true);
-                          }}
-                          onDelete={() => handleDeleteChore(chore.id)}
-                        />
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </div>
       
       {/* Task dialog */}
