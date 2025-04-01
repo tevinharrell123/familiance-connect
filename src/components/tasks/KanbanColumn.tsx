@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -66,25 +65,21 @@ export function KanbanColumn({
   const [editedTitle, setEditedTitle] = useState(column.title);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
-  // Check if a chore is completed today
   const isChoreCompletedToday = (chore: Chore) => {
     const today = new Date().toISOString().split('T')[0];
     return chore.completed_dates.includes(today);
   };
-  
-  // Find goal title by id
+
   const getGoalTitle = (goalId: string) => {
     const goal = goals.find(g => g.id === goalId);
     return goal?.title || '';
   };
 
-  // Handle opening the appropriate dialog
   const handleAddItem = (type: 'task' | 'chore') => {
     setAddItemType(type);
     setAddDialogOpen(true);
   };
 
-  // Handle adding a new task
   const handleAddTask = async (data: any): Promise<void> => {
     if (onAddTask) {
       onAddTask({
@@ -96,7 +91,6 @@ export function KanbanColumn({
     return Promise.resolve();
   };
 
-  // Handle adding a new chore
   const handleAddChore = async (data: any): Promise<void> => {
     if (onAddChore) {
       onAddChore({
@@ -108,7 +102,6 @@ export function KanbanColumn({
     return Promise.resolve();
   };
 
-  // Handle saving edited column title
   const handleSaveTitle = () => {
     if (onEditColumn && editedTitle.trim() !== '') {
       onEditColumn(column.id, editedTitle);
@@ -116,13 +109,11 @@ export function KanbanColumn({
     setIsEditing(false);
   };
 
-  // Handle canceling edit
   const handleCancelEdit = () => {
     setEditedTitle(column.title);
     setIsEditing(false);
   };
 
-  // Handle deleting a column
   const handleDeleteColumn = () => {
     if (onDeleteColumn) {
       onDeleteColumn(column.id);
@@ -149,7 +140,7 @@ export function KanbanColumn({
             </Button>
           </div>
         ) : (
-          <h3 className="font-semibold text-sm uppercase tracking-wider">{column.title}</h3>
+          <h3 className="font-semibold text-sm uppercase tracking-wider truncate">{column.title}</h3>
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -161,12 +152,14 @@ export function KanbanColumn({
             <DropdownMenuItem onClick={() => setIsEditing(true)}>
               Edit Column
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              Delete Column
-            </DropdownMenuItem>
+            {onDeleteColumn && (
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                Delete Column
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -174,9 +167,7 @@ export function KanbanColumn({
       <ScrollArea className="flex-1 p-3">
         <div className="space-y-3">
           {column.items.map(item => {
-            // Check if item is a task or chore
             if ('goal_id' in item) {
-              // It's a task
               const task = item as GoalTask;
               return (
                 <TaskCard
@@ -189,7 +180,6 @@ export function KanbanColumn({
                 />
               );
             } else {
-              // It's a chore
               const chore = item as Chore;
               return (
                 <ChoreCard
@@ -228,7 +218,7 @@ export function KanbanColumn({
             Add Chore
           </Button>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -251,7 +241,6 @@ export function KanbanColumn({
         )}
       </div>
 
-      {/* Dialog for adding a new task or chore */}
       {addDialogOpen && addItemType === 'task' && (
         <TaskDialog
           isOpen={addDialogOpen}
@@ -270,7 +259,6 @@ export function KanbanColumn({
         />
       )}
 
-      {/* Alert Dialog for confirming column deletion */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -282,7 +270,12 @@ export function KanbanColumn({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleDeleteColumn}
+              onClick={() => {
+                if (onDeleteColumn) {
+                  onDeleteColumn(column.id);
+                }
+                setDeleteDialogOpen(false);
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete

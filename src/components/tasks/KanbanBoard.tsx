@@ -356,6 +356,10 @@ export function KanbanBoard({
   };
 
   const handleDeleteColumn = (columnId: string) => {
+    if (['todo', 'in-progress', 'completed', 'no-status', 'chores', 'daily-chores', 'to-do'].includes(columnId)) {
+      return;
+    }
+    
     const updatedColumns = columns.filter(column => column.id !== columnId);
     setColumns(updatedColumns);
   };
@@ -382,10 +386,10 @@ export function KanbanBoard({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-2">
         <h2 className="text-xl font-bold">Task Board</h2>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-md">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 bg-muted/50 p-2 rounded-md">
             <Label htmlFor="column-filter" className="text-xs whitespace-nowrap">Filter by:</Label>
             <Select value={columnFilterType} onValueChange={(value: 'all' | 'name' | 'progress') => setColumnFilterType(value)}>
               <SelectTrigger id="column-filter" className="h-8 w-[120px]">
@@ -452,35 +456,44 @@ export function KanbanBoard({
           No columns match your current filters. Try adjusting your filter settings.
         </div>
       ) : (
-        <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
-          {filteredColumns.map((column, index) => (
-            <React.Fragment key={column.id}>
-              <ResizablePanel defaultSize={100 / filteredColumns.length} minSize={20}>
-                <KanbanColumn
-                  column={column}
-                  goals={goals}
-                  onCompleteTask={handleCompleteTask}
-                  onEditTask={onEditTask}
-                  onDeleteTask={onDeleteTask}
-                  onCompleteChore={onCompleteChore}
-                  onEditChore={onEditChore}
-                  onDeleteChore={onDeleteChore}
-                  onAddTask={(task) => {
-                    handleAddTaskToColumn(column.id, task);
-                  }}
-                  onAddChore={(chore) => {
-                    handleAddChoreToColumn(column.id, chore);
-                  }}
-                  onEditColumn={handleEditColumn}
-                  onDeleteColumn={handleDeleteColumn}
-                />
-              </ResizablePanel>
-              {index < filteredColumns.length - 1 && (
-                <ResizableHandle withHandle />
-              )}
-            </React.Fragment>
-          ))}
-        </ResizablePanelGroup>
+        <div className="overflow-x-auto">
+          <ResizablePanelGroup 
+            direction="horizontal" 
+            className="min-h-[600px] rounded-lg border"
+          >
+            {filteredColumns.map((column, index) => (
+              <React.Fragment key={column.id}>
+                <ResizablePanel defaultSize={100 / filteredColumns.length} minSize={20}>
+                  <KanbanColumn
+                    column={column}
+                    goals={goals}
+                    onCompleteTask={handleCompleteTask}
+                    onEditTask={onEditTask}
+                    onDeleteTask={onDeleteTask}
+                    onCompleteChore={onCompleteChore}
+                    onEditChore={onEditChore}
+                    onDeleteChore={onDeleteChore}
+                    onAddTask={(task) => {
+                      handleAddTaskToColumn(column.id, task);
+                    }}
+                    onAddChore={(chore) => {
+                      handleAddChoreToColumn(column.id, chore);
+                    }}
+                    onEditColumn={handleEditColumn}
+                    onDeleteColumn={
+                      ['todo', 'in-progress', 'completed', 'no-status', 'chores', 'daily-chores', 'to-do'].includes(column.id)
+                      ? undefined 
+                      : handleDeleteColumn
+                    }
+                  />
+                </ResizablePanel>
+                {index < filteredColumns.length - 1 && (
+                  <ResizableHandle withHandle />
+                )}
+              </React.Fragment>
+            ))}
+          </ResizablePanelGroup>
+        </div>
       )}
       
       <Dialog open={newColumnOpen} onOpenChange={setNewColumnOpen}>
