@@ -65,7 +65,7 @@ export function KanbanBoard({
   onAddChore
 }: KanbanBoardProps) {
   // Create default columns based on task status properties if available
-  const createDefaultColumns = () => {
+  const createDefaultColumns = (): KanbanColumn[] => {
     // Check if any tasks have status properties
     const hasStatusProperties = tasks.some(task => 
       task.properties?.some(prop => prop.type === 'status' && prop.value)

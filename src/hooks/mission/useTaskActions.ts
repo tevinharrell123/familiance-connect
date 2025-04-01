@@ -12,7 +12,7 @@ export function useTaskActions(onSuccess?: () => void) {
       setIsLoading(true);
 
       // Extract main task data and custom properties
-      const { properties, ...taskData } = task as any;
+      const { properties, ...taskData } = task;
       
       // Convert properties to a JSON string for storage
       const taskWithProperties = {
@@ -52,7 +52,7 @@ export function useTaskActions(onSuccess?: () => void) {
       setIsLoading(true);
 
       // Extract main task data and custom properties
-      const { properties, ...taskData } = task as any;
+      const { properties, ...taskData } = task;
       
       // Convert properties to a JSON string for storage
       const taskWithProperties = {
