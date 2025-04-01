@@ -22,7 +22,7 @@ import { useChoreActions } from '@/hooks/mission/useChoreActions';
 import { useGoals } from '@/hooks/mission/useGoals';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { GoalTask } from '@/types/tasks';
-import { Chore } from '@/types/chores';
+import { Chore, WeekDay } from '@/types/chores';
 import { Calendar, CalendarDays, Plus, Trophy, Users } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
@@ -303,8 +303,10 @@ export default function Tasks() {
                     <Badge variant="outline">
                       {chores.filter(c => {
                         const today = new Date();
-                        const dayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-                        return c.weekdays.includes(dayName as any);
+                        const dayIndex = today.getDay(); // 0 is Sunday, 1 is Monday, etc.
+                        const weekdays: WeekDay[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        const todayWeekday = weekdays[dayIndex];
+                        return c.weekdays.includes(todayWeekday);
                       }).length}
                     </Badge>
                   </div>
