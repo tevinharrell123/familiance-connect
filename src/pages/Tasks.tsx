@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -45,6 +44,45 @@ interface ViewOption {
   enabled: boolean;
 }
 
+const serializeViewOptions = (options: ViewOption[]) => {
+  return options.map(option => ({
+    id: option.id,
+    label: option.label,
+    enabled: option.enabled
+  }));
+};
+
+const deserializeViewOptions = (serializedOptions: any[]): ViewOption[] => {
+  return serializedOptions.map(option => {
+    let icon;
+    switch (option.id) {
+      case 'status':
+        icon = <Columns className="h-4 w-4" />;
+        break;
+      case 'date':
+        icon = <CalendarRange className="h-4 w-4" />;
+        break;
+      case 'priority':
+        icon = <Flag className="h-4 w-4" />;
+        break;
+      case 'assignee':
+        icon = <Users className="h-4 w-4" />;
+        break;
+      case 'custom':
+        icon = <Settings className="h-4 w-4" />;
+        break;
+      default:
+        icon = <Columns className="h-4 w-4" />;
+    }
+    return {
+      id: option.id as GroupingType,
+      label: option.label,
+      icon,
+      enabled: option.enabled
+    };
+  });
+};
+
 const Tasks = () => {
   const { goalId } = useParams<{ goalId: string }>();
   const navigate = useNavigate();
@@ -81,7 +119,6 @@ const Tasks = () => {
 
   const selectedGoal = goalId ? goals.find(g => g.id === goalId) : null;
 
-  // Load user preferences from localStorage on component mount
   useEffect(() => {
     const savedViewOptions = localStorage.getItem('taskViewOptions');
     const savedDefaultView = localStorage.getItem('taskDefaultView');
@@ -89,7 +126,8 @@ const Tasks = () => {
     
     if (savedViewOptions) {
       try {
-        setViewOptions(JSON.parse(savedViewOptions));
+        const parsedOptions = JSON.parse(savedViewOptions);
+        setViewOptions(deserializeViewOptions(parsedOptions));
       } catch (e) {
         console.error('Error parsing saved view options:', e);
       }
@@ -114,9 +152,8 @@ const Tasks = () => {
     }
   }, []);
 
-  // Update localStorage when preferences change
   useEffect(() => {
-    localStorage.setItem('taskViewOptions', JSON.stringify(viewOptions));
+    localStorage.setItem('taskViewOptions', JSON.stringify(serializeViewOptions(viewOptions)));
   }, [viewOptions]);
   
   useEffect(() => {
@@ -245,10 +282,8 @@ const Tasks = () => {
     ));
   };
 
-  // Get only enabled view options
   const enabledViewOptions = viewOptions.filter(option => option.enabled);
 
-  // If current groupBy is not enabled, switch to the first enabled option
   useEffect(() => {
     if (enabledViewOptions.length > 0 && !enabledViewOptions.some(option => option.id === groupBy)) {
       setGroupBy(enabledViewOptions[0].id);
