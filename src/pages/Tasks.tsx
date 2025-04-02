@@ -1,9 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { WeekDayBoard } from '@/components/tasks/WeekDayBoard';
-import { TasksList } from '@/components/tasks/TasksList';
-import { ChoresWeeklyView } from '@/components/tasks/ChoresWeeklyView';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { ChoreDialog } from '@/components/tasks/ChoreDialog';
 import { useTasks } from '@/hooks/mission/useTasks';
@@ -23,8 +18,13 @@ import { useGoals } from '@/hooks/mission/useGoals';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { GoalTask } from '@/types/tasks';
 import { Chore } from '@/types/chores';
-import { Calendar, CalendarDays, Plus, Trophy, Users } from 'lucide-react';
+import { Calendar, ChevronDown, Layout, Plus, Trophy, Users } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { TaskBoard } from '@/components/tasks/TaskBoard';
+import { ChoresWeeklyView } from '@/components/tasks/ChoresWeeklyView';
+import { Separator } from '@/components/ui/separator';
+import { DEFAULT_STATUSES } from '@/types/tasks';
+import { toast } from '@/components/ui/use-toast';
 
 export default function Tasks() {
   useRequireAuth();
@@ -34,13 +34,10 @@ export default function Tasks() {
   const [isChoreDialogOpen, setIsChoreDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<GoalTask | null>(null);
   const [editingChore, setEditingChore] = useState<Chore | null>(null);
+  const [initialStatus, setInitialStatus] = useState<string | undefined>(undefined);
   
-  // State for filters
-  const [filterMember, setFilterMember] = useState<string>('all');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
-  
-  // State for tabs
-  const [tabView, setTabView] = useState<string>('weekly-view');
+  // State for content views
+  const [contentView, setContentView] = useState<'tasks' | 'chores'>('tasks');
   
   // Load data
   const { tasks, refreshTasks, isLoading: tasksLoading } = useTasks();
@@ -56,71 +53,203 @@ export default function Tasks() {
   
   // Handlers for task operations
   const handleCreateTask = async (data: any) => {
-    await createTask({
-      ...data,
-      completed: false
-    });
+    try {
+      // Set default status if coming from a kanban column
+      if (initialStatus && !data.properties) {
+        data.properties = { 
+          status: initialStatus, 
+          priority: 'medium' 
+        };
+      }
+      
+      await createTask({
+        ...data,
+        completed: false
+      });
+      
+      toast({
+        title: "Task created",
+        description: "Your task has been successfully created"
+      });
+    } catch (error) {
+      toast({
+        title: "Error creating task",
+        description: "There was a problem creating your task",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleUpdateTask = async (data: any) => {
     if (!editingTask) return;
-    await updateTask({
-      ...editingTask,
-      ...data
-    });
-    setEditingTask(null);
+    
+    try {
+      await updateTask({
+        ...editingTask,
+        ...data
+      });
+      
+      setEditingTask(null);
+      
+      toast({
+        title: "Task updated",
+        description: "Your task has been successfully updated"
+      });
+    } catch (error) {
+      toast({
+        title: "Error updating task",
+        description: "There was a problem updating your task",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleToggleTaskCompletion = async (task: GoalTask) => {
-    await toggleTaskCompletion(task);
+    try {
+      // If completing a task, also update its status to Done
+      let updatedTask = { ...task, completed: !task.completed };
+      
+      if (!task.completed) {
+        // We're completing the task, set status to Done
+        if (!updatedTask.properties) {
+          updatedTask.properties = { status: 'Done', priority: 'medium' };
+        } else {
+          updatedTask.properties.status = 'Done';
+        }
+      }
+      
+      await updateTask(updatedTask);
+      
+      toast({
+        title: updatedTask.completed ? "Task completed" : "Task reopened",
+        description: updatedTask.completed 
+          ? "Your task has been marked as complete" 
+          : "Your task has been reopened"
+      });
+    } catch (error) {
+      toast({
+        title: "Error updating task",
+        description: "There was a problem updating your task status",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleMoveTask = async (task: GoalTask, newStatus: string) => {
+    try {
+      await updateTask(task);
+      
+      toast({
+        title: "Task updated",
+        description: `Task moved to ${newStatus}`
+      });
+    } catch (error) {
+      toast({
+        title: "Error moving task",
+        description: "There was a problem moving your task",
+        variant: "destructive"
+      });
+      
+      // Refresh tasks to revert the UI to the correct state
+      refreshTasks();
+    }
   };
   
   const handleDeleteTask = async (taskId: string) => {
-    await deleteTask(taskId);
+    try {
+      await deleteTask(taskId);
+      
+      toast({
+        title: "Task deleted",
+        description: "Your task has been successfully deleted"
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting task",
+        description: "There was a problem deleting your task",
+        variant: "destructive"
+      });
+    }
   };
   
   // Handlers for chore operations
   const handleCreateChore = async (data: any) => {
-    await createChore({
-      ...data,
-      completed_dates: []
-    });
+    try {
+      await createChore({
+        ...data,
+        completed_dates: []
+      });
+      
+      toast({
+        title: "Chore created",
+        description: "Your chore has been successfully created"
+      });
+    } catch (error) {
+      toast({
+        title: "Error creating chore",
+        description: "There was a problem creating your chore",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleUpdateChore = async (data: any) => {
     if (!editingChore) return;
-    await updateChore({
-      ...editingChore,
-      ...data
-    });
-    setEditingChore(null);
+    
+    try {
+      await updateChore({
+        ...editingChore,
+        ...data
+      });
+      
+      setEditingChore(null);
+      
+      toast({
+        title: "Chore updated",
+        description: "Your chore has been successfully updated"
+      });
+    } catch (error) {
+      toast({
+        title: "Error updating chore",
+        description: "There was a problem updating your chore",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleMarkChoreCompleted = async (chore: Chore) => {
-    await markChoreCompleted(chore);
+    try {
+      await markChoreCompleted(chore);
+      
+      toast({
+        title: "Chore completed",
+        description: "Your chore has been marked as complete for today"
+      });
+    } catch (error) {
+      toast({
+        title: "Error completing chore",
+        description: "There was a problem marking your chore as complete",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleDeleteChore = async (choreId: string) => {
-    await deleteChore(choreId);
-  };
-  
-  // Filter tasks and chores
-  const filteredTasks = tasks.filter(task => {
-    if (filterMember !== 'all' && task.assigned_to !== filterMember) return false;
-    if (filterCategory !== 'all') {
-      const goal = goals.find(g => g.id === task.goal_id);
-      if (goal?.category !== filterCategory) return false;
+    try {
+      await deleteChore(choreId);
+      
+      toast({
+        title: "Chore deleted",
+        description: "Your chore has been successfully deleted"
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting chore",
+        description: "There was a problem deleting your chore",
+        variant: "destructive"
+      });
     }
-    return true;
-  });
-  
-  const filteredChores = chores.filter(chore => {
-    if (filterMember !== 'all' && chore.assigned_to !== filterMember) return false;
-    return true;
-  });
-  
-  // Get all unique categories from goals
-  const categories = Array.from(new Set(goals.map(goal => goal.category)));
+  };
   
   // Calculate points data for the scoreboard
   const memberPoints = members?.map(member => {
@@ -142,6 +271,13 @@ export default function Tasks() {
     };
   }).sort((a, b) => b.points - a.points) || [];
   
+  // Function to handle adding a new task, potentially with a preset status
+  const handleAddTask = (status?: string) => {
+    setInitialStatus(status);
+    setEditingTask(null);
+    setIsTaskDialogOpen(true);
+  };
+  
   return (
     <MainLayout>
       <div className="container mx-auto py-6">
@@ -153,11 +289,11 @@ export default function Tasks() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setIsTaskDialogOpen(true)}>
+            <Button onClick={() => handleAddTask()}>
               <Plus className="mr-2 h-4 w-4" />
               New Task
             </Button>
-            <Button onClick={() => setIsChoreDialogOpen(true)}>
+            <Button variant="outline" onClick={() => setIsChoreDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Chore
             </Button>
@@ -166,101 +302,41 @@ export default function Tasks() {
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           <div className="lg:col-span-3">
-            <div className="bg-card rounded-lg p-4 mb-6">
-              <div className="flex flex-col md:flex-row gap-4 mb-4">
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-1 block">Filter by Member</label>
-                  <Select value={filterMember} onValueChange={setFilterMember}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All members" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All members</SelectItem>
-                      {members?.map(member => (
-                        <SelectItem key={member.user_id} value={member.user_id}>
-                          {member.user_profiles?.full_name || 'Unnamed Member'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-1 block">Filter by Category</label>
-                  <Select value={filterCategory} onValueChange={setFilterCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All categories</SelectItem>
-                      {categories.map(category => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            
-            <Tabs value={tabView} onValueChange={setTabView} className="mb-6">
-              <TabsList className="grid w-full max-w-md grid-cols-2">
-                <TabsTrigger value="weekly-view">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Week View
+            <Tabs value={contentView} onValueChange={(v) => setContentView(v as any)} className="mb-6">
+              <TabsList className="mb-4">
+                <TabsTrigger value="tasks">
+                  <Layout className="h-4 w-4 mr-2" />
+                  Tasks Board
                 </TabsTrigger>
-                <TabsTrigger value="list-view">
-                  <CalendarDays className="h-4 w-4 mr-2" />
-                  All Items
+                <TabsTrigger value="chores">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Chores
                 </TabsTrigger>
               </TabsList>
-            </Tabs>
-            
-            {tabView === 'weekly-view' ? (
-              <WeekDayBoard 
-                tasks={filteredTasks}
-                chores={filteredChores}
-                goals={goals}
-                onCompleteTask={handleToggleTaskCompletion}
-                onEditTask={(task) => {
-                  setEditingTask(task);
-                  setIsTaskDialogOpen(true);
-                }}
-                onDeleteTask={handleDeleteTask}
-                onCompleteChore={handleMarkChoreCompleted}
-                onEditChore={(chore) => {
-                  setEditingChore(chore);
-                  setIsChoreDialogOpen(true);
-                }}
-                onDeleteChore={handleDeleteChore}
-              />
-            ) : (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle>All Tasks</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <TasksList
-                      tasks={filteredTasks}
-                      goals={goals}
-                      onComplete={handleToggleTaskCompletion}
-                      onEdit={(task) => {
-                        setEditingTask(task);
-                        setIsTaskDialogOpen(true);
-                      }}
-                      onDelete={handleDeleteTask}
-                    />
-                  </CardContent>
-                </Card>
-                
+              
+              <TabsContent value="tasks" className="mt-0">
+                <TaskBoard 
+                  tasks={tasks}
+                  goals={goals}
+                  onEditTask={(task) => {
+                    setEditingTask(task);
+                    setIsTaskDialogOpen(true);
+                  }}
+                  onDeleteTask={handleDeleteTask}
+                  onCompleteTask={handleToggleTaskCompletion}
+                  onMoveTask={handleMoveTask}
+                  onAddTask={handleAddTask}
+                />
+              </TabsContent>
+              
+              <TabsContent value="chores" className="mt-0">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle>Weekly Chores</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ChoresWeeklyView
-                      chores={filteredChores}
+                      chores={chores}
                       onComplete={handleMarkChoreCompleted}
                       onEdit={(chore) => {
                         setEditingChore(chore);
@@ -270,8 +346,8 @@ export default function Tasks() {
                     />
                   </CardContent>
                 </Card>
-              </div>
-            )}
+              </TabsContent>
+            </Tabs>
           </div>
           
           {/* Scoreboard */}
@@ -329,7 +405,7 @@ export default function Tasks() {
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                        <CalendarDays className="h-4 w-4" />
+                        <Calendar className="h-4 w-4" />
                       </div>
                       <span>Pending Tasks</span>
                     </div>
@@ -374,9 +450,16 @@ export default function Tasks() {
         onClose={() => {
           setIsTaskDialogOpen(false);
           setEditingTask(null);
+          setInitialStatus(undefined);
         }}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
-        defaultValues={editingTask || undefined}
+        defaultValues={{
+          ...editingTask,
+          properties: editingTask?.properties || {
+            status: initialStatus || 'To Do',
+            priority: 'medium'
+          }
+        }}
         title={editingTask ? 'Edit Task' : 'Create New Task'}
       />
       

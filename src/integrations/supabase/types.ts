@@ -83,6 +83,7 @@ export type Database = {
           description: string | null
           goal_id: string
           id: string
+          properties: Json | null
           target_date: string | null
           title: string
           updated_at: string
@@ -94,6 +95,7 @@ export type Database = {
           description?: string | null
           goal_id: string
           id?: string
+          properties?: Json | null
           target_date?: string | null
           title: string
           updated_at?: string
@@ -105,6 +107,7 @@ export type Database = {
           description?: string | null
           goal_id?: string
           id?: string
+          properties?: Json | null
           target_date?: string | null
           title?: string
           updated_at?: string
