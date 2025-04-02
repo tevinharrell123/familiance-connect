@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { CalendarWidget } from '@/components/dashboard/Calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CalendarWidget } from '@/components/dashboard/calendar/CalendarContainer';
 
 const CalendarPage = () => {
   return (
@@ -14,8 +14,8 @@ const CalendarPage = () => {
           </CardHeader>
           <CardContent className="p-0">
             <div className="calendar-container w-full">
-              {/* Using the exact same CalendarWidget component that's used on the dashboard */}
-              <CalendarWidget />
+              {/* Using the CalendarContainer component directly */}
+              <CalendarWidget key="calendar-page-widget" />
             </div>
           </CardContent>
         </Card>

@@ -32,16 +32,19 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
   return (
     <div 
       key={event.id} 
-      className="flex items-center text-xs rounded-full px-1 py-0.5 mt-0.5 truncate cursor-pointer hover:opacity-80 single-day-event"
+      className="flex items-center text-xs rounded-full px-2 py-1 mt-1 truncate cursor-pointer hover:opacity-80 single-day-event"
       style={{ 
-        backgroundColor: `${event.color || '#7B68EE'}30`,
-        fontSize: '10px',
+        backgroundColor: `${event.color || '#7B68EE'}40`,
+        border: `1px solid ${event.color || '#7B68EE'}80`,
+        color: `${event.color || '#7B68EE'}`,
+        fontWeight: 500,
+        fontSize: '11px',
         lineHeight: '16px'
       }}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
     >
-      <Avatar className="h-3 w-3 mr-0.5">
+      <Avatar className="h-3 w-3 mr-1">
         {event.user_profile?.avatar_url ? (
           <AvatarImage 
             src={event.user_profile.avatar_url} 
@@ -50,7 +53,7 @@ export function EventIndicator({ event, onClick }: EventIndicatorProps) {
         ) : null}
         <AvatarFallback className="text-[7px]">{userInitials}</AvatarFallback>
       </Avatar>
-      <span className="truncate text-[10px] font-medium">{event.title}</span>
+      <span className="truncate text-[11px] font-medium">{event.title}</span>
     </div>
   );
 }

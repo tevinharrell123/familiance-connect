@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Home, BarChart3, Users, Briefcase, WalletCards, 
+  Home, BarChart3, Briefcase, WalletCards, 
   Target, CalendarDays, ClipboardList, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -78,9 +78,6 @@ export function Sidebar() {
         </NavGroup>
         
         <NavGroup title="Family">
-          <NavItem href="/members" icon={Users}>
-            Family Members
-          </NavItem>
           <NavItem href="/collaboration" icon={Briefcase}>
             Collaboration
           </NavItem>

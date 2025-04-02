@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/use-toast';
-import { GoalTask } from '@/types/tasks';
+import { GoalTask, TaskStatus } from '@/types/tasks';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
@@ -39,6 +39,8 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
   const [assignedTo, setAssignedTo] = useState<string | undefined>(undefined);
   const [targetDate, setTargetDate] = useState<Date | undefined>(undefined);
   const [completed, setCompleted] = useState(false);
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [status, setStatus] = useState<TaskStatus>('todo');
 
   // Initialize form when task changes
   useEffect(() => {
@@ -48,6 +50,8 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
       setAssignedTo(task.assigned_to || 'unassigned');
       setTargetDate(task.target_date ? new Date(task.target_date) : undefined);
       setCompleted(task.completed || false);
+      setPriority(task.properties?.priority || 'medium');
+      setStatus(task.status || 'todo');
     } else {
       // Reset form for new task
       setTitle('');
@@ -55,6 +59,8 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
       setAssignedTo('unassigned');
       setTargetDate(undefined);
       setCompleted(false);
+      setPriority('medium');
+      setStatus('todo');
     }
   }, [task, open]);
 
@@ -75,7 +81,12 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
       description: description || null,
       assigned_to: assignedTo === 'unassigned' ? null : assignedTo,
       target_date: targetDate ? format(targetDate, 'yyyy-MM-dd') : null,
-      completed
+      completed,
+      status,
+      properties: {
+        priority,
+        status
+      }
     };
 
     try {
@@ -139,6 +150,44 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="status" className="text-right">
+              Status
+            </Label>
+            <Select 
+              value={status} 
+              onValueChange={(value) => setStatus(value as TaskStatus)}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todo">To Do</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="done">Done</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="priority" className="text-right">
+              Priority
+            </Label>
+            <Select 
+              value={priority} 
+              onValueChange={(value) => setPriority(value as 'low' | 'medium' | 'high')}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="grid grid-cols-4 items-center gap-4">

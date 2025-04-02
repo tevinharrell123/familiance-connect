@@ -19,12 +19,12 @@ export function MonthViewStyles() {
       }
       
       .calendar-day {
-        min-height: 80px;
+        min-height: 100px; /* Increased from 80px */
         display: flex;
         flex-direction: column;
         position: relative;
         z-index: 1;
-        aspect-ratio: auto; /* Remove fixed aspect ratio */
+        aspect-ratio: auto;
       }
       
       .day-events-container {
@@ -41,21 +41,30 @@ export function MonthViewStyles() {
         pointer-events: auto;
         cursor: pointer;
         z-index: 30;
+        font-size: 11px !important;
+        padding: 3px 4px !important;
+        margin-top: 2px !important;
+        line-height: 1.2 !important;
       }
       
       @media (max-width: 768px) {
         .calendar-day {
-          min-height: 70px;
+          min-height: 80px;
         }
         
         .grid-container {
           grid-template-columns: repeat(7, minmax(40px, 1fr));
         }
+        
+        .single-day-event {
+          font-size: 10px !important;
+          padding: 2px 3px !important;
+        }
       }
       
       @media (max-width: 640px) {
         .calendar-day {
-          min-height: 60px;
+          min-height: 70px;
           padding: 2px;
         }
         
@@ -64,16 +73,26 @@ export function MonthViewStyles() {
           width: 100%;
           grid-template-columns: repeat(7, minmax(30px, 1fr));
         }
+        
+        .single-day-event {
+          font-size: 9px !important;
+          padding: 1px 2px !important;
+        }
       }
       
       @media (max-width: 480px) {
         .calendar-day {
-          min-height: 50px;
+          min-height: 60px;
           font-size: 0.75rem;
         }
         
         .grid-container {
           grid-template-columns: repeat(7, minmax(25px, 1fr));
+        }
+        
+        .single-day-event {
+          font-size: 8px !important;
+          padding: 1px !important;
         }
       }
       
