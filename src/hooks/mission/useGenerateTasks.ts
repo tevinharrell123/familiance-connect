@@ -2,9 +2,9 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FamilyGoal } from '@/types/goals';
-import { GoalTask, TaskStatus } from '@/types/tasks';
+import { GoalTask } from '@/types/tasks';
 import { toast } from '@/components/ui/use-toast';
-import { useTaskActions } from '@/hooks/mission/useTaskActions';
+import { useTaskActions } from './useTaskActions';
 
 interface GeneratedTask {
   title: string;
@@ -57,19 +57,13 @@ export function useGenerateTasks(goalId: string, onSuccess?: () => void) {
       }
       
       for (const taskData of generatedTasks) {
-        const taskStatus: TaskStatus = 'todo';
         await createTask({
           goal_id: goalId,
           title: taskData.title,
           description: taskData.description,
           assigned_to: null,
           target_date: null,
-          completed: false,
-          status: taskStatus,
-          properties: {
-            priority: 'medium',
-            status: 'todo'
-          }
+          completed: false
         });
       }
       

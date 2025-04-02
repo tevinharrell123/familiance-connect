@@ -1,6 +1,4 @@
 
-export type TaskStatus = 'todo' | 'in-progress' | 'done';
-
 export interface GoalTask {
   id: string;
   goal_id: string;
@@ -12,9 +10,4 @@ export interface GoalTask {
   completed: boolean;
   created_at: string;
   updated_at: string;
-  status: TaskStatus;
-  properties: {
-    priority: 'low' | 'medium' | 'high';
-    status: string;
-  };
 }
