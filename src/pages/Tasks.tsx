@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { TaskList } from '@/components/mission/TaskList';
 import { useTasks } from '@/hooks/mission/useTasks';
@@ -9,24 +9,27 @@ import { useTaskActions } from '@/hooks/mission/useTaskActions';
 import { GoalTask } from '@/types/tasks';
 import { TaskDialog } from '@/components/mission/TaskDialog';
 import { Button } from '@/components/ui/button';
-import { Plus, Columns, List, Calendar, CalendarDays } from 'lucide-react';
+import { Plus, Columns, List, Calendar, CalendarDays, ArrowLeft } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useGoalProgress } from '@/hooks/mission/useGoalProgress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KanbanBoard } from '@/components/mission/KanbanBoard';
 import { ListView } from '@/components/mission/ListView';
+import { useGoals } from '@/hooks/mission/useGoals';
 
 type ViewType = 'kanban' | 'list';
 type GroupingType = 'status' | 'date' | 'priority' | 'assignee';
 
 const Tasks = () => {
   const { goalId } = useParams<{ goalId: string }>();
+  const navigate = useNavigate();
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<GoalTask | undefined>(undefined);
   const [viewType, setViewType] = useState<ViewType>('kanban');
   const [groupBy, setGroupBy] = useState<GroupingType>('status');
   
   const { tasks, isLoading, refreshTasks } = useTasks(goalId);
+  const { goals, refreshGoals } = useGoals();
   const { calculateProgressFromTasks } = useGoalProgress();
   
   const { createTask, updateTask, toggleTaskCompletion, deleteTask, isLoading: taskActionLoading } = useTaskActions(() => {
@@ -35,6 +38,8 @@ const Tasks = () => {
       calculateProgressFromTasks(goalId);
     }
   });
+
+  const selectedGoal = goalId ? goals.find(g => g.id === goalId) : null;
 
   const handleAddTask = () => {
     setSelectedTask(undefined);
@@ -139,7 +144,22 @@ const Tasks = () => {
       <div className="container mx-auto py-6 px-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Tasks</CardTitle>
+            <div className="flex items-center gap-2">
+              {goalId && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/tasks')}
+                  className="mr-2"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Back to All Tasks
+                </Button>
+              )}
+              <CardTitle>
+                {goalId ? `Tasks for "${selectedGoal?.title || 'Goal'}"` : 'All Tasks'}
+              </CardTitle>
+            </div>
             <div className="flex space-x-2">
               <Tabs value={groupBy} onValueChange={(value) => setGroupBy(value as GroupingType)} className="mr-4">
                 <TabsList>
@@ -184,9 +204,9 @@ const Tasks = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {!goalId ? (
+            {!goalId && !tasks.length ? (
               <div className="text-center py-6 text-sm text-muted-foreground">
-                No goal selected. Please select a goal from the Goals page to manage tasks.
+                No tasks found. Select a goal from the Goals page or use the URL path /tasks/:goalId to manage tasks for a specific goal.
               </div>
             ) : (
               <>

@@ -9,24 +9,25 @@ export function useTasks(goalId?: string) {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchTasks = async () => {
-    if (!goalId) {
-      setTasks([]);
-      setIsLoading(false);
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      // Build the query based on whether we have a goalId
+      let query = supabase
         .from('goal_tasks')
         .select(`
           *,
           user_profiles:profiles(full_name, avatar_url)
         `)
-        .eq('goal_id', goalId)
         .order('created_at', { ascending: false });
+      
+      // If goalId is provided, filter by it
+      if (goalId) {
+        query = query.eq('goal_id', goalId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
