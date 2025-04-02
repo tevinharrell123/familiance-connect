@@ -14,6 +14,7 @@ const CalendarPage = () => {
           </CardHeader>
           <CardContent className="p-0">
             <div className="calendar-container w-full">
+              {/* Using the exact same CalendarWidget component that's used on the dashboard */}
               <CalendarWidget />
             </div>
           </CardContent>

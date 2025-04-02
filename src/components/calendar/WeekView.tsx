@@ -69,23 +69,23 @@ export function WeekView({ currentDate, events = [], onEventClick }: WeekViewPro
                 </div>
               </div>
               
-              <div className="p-1 space-y-1 min-h-[120px] max-h-[300px] overflow-y-auto">
+              <div className="p-1.5 space-y-1.5 min-h-[140px] max-h-[340px] overflow-y-auto">
                 {dayEvents.length === 0 ? (
                   <div className="text-center text-xs text-muted-foreground py-2">No events</div>
                 ) : (
                   dayEvents.map(event => (
-                    <div key={event.id} className="text-xs mb-1">
+                    <div key={event.id} className="text-xs mb-1.5">
                       <div
-                        className="py-1 px-1.5 rounded cursor-pointer truncate text-xs"
+                        className="py-1.5 px-2 rounded cursor-pointer text-xs break-words"
                         style={{ 
                           backgroundColor: `${event.color || '#7B68EE'}30`,
                           borderLeft: `3px solid ${event.color || '#7B68EE'}`
                         }}
                         onClick={() => handleEventClick(event)}
                       >
-                        <div className="font-medium truncate">{event.title}</div>
+                        <div className="font-medium">{event.title}</div>
                         {event.isMultiDay && (
-                          <div className="text-[9px] text-muted-foreground">
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
                             {event.duration} days
                           </div>
                         )}

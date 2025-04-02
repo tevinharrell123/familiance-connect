@@ -9,7 +9,7 @@ import { useTaskActions } from '@/hooks/mission/useTaskActions';
 import { GoalTask } from '@/types/tasks';
 import { TaskDialog } from '@/components/mission/TaskDialog';
 import { Button } from '@/components/ui/button';
-import { Plus, Columns, List, Calendar, CalendarDays, ArrowLeft, Settings } from 'lucide-react';
+import { Plus, Columns, List, ArrowLeft, Settings, CalendarRange, Users, Flag } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useGoalProgress } from '@/hooks/mission/useGoalProgress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,6 +27,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ViewType = 'kanban' | 'list';
 type GroupingType = 'status' | 'date' | 'priority' | 'assignee' | 'custom';
@@ -36,6 +38,13 @@ interface CustomColumn {
   label: string;
 }
 
+interface ViewOption {
+  id: GroupingType;
+  label: string;
+  icon: React.ReactNode;
+  enabled: boolean;
+}
+
 const Tasks = () => {
   const { goalId } = useParams<{ goalId: string }>();
   const navigate = useNavigate();
@@ -43,6 +52,15 @@ const Tasks = () => {
   const [selectedTask, setSelectedTask] = useState<GoalTask | undefined>(undefined);
   const [viewType, setViewType] = useState<ViewType>('kanban');
   const [groupBy, setGroupBy] = useState<GroupingType>('status');
+  const [viewOptionsOpen, setViewOptionsOpen] = useState(false);
+  const [defaultView, setDefaultView] = useState<GroupingType>('status');
+  const [viewOptions, setViewOptions] = useState<ViewOption[]>([
+    { id: 'status', label: 'Status', icon: <Columns className="h-4 w-4" />, enabled: true },
+    { id: 'date', label: 'Date', icon: <CalendarRange className="h-4 w-4" />, enabled: false },
+    { id: 'priority', label: 'Priority', icon: <Flag className="h-4 w-4" />, enabled: false },
+    { id: 'assignee', label: 'Assignee', icon: <Users className="h-4 w-4" />, enabled: false },
+    { id: 'custom', label: 'Custom', icon: <Settings className="h-4 w-4" />, enabled: false }
+  ]);
   const [customColumns, setCustomColumns] = useState<CustomColumn[]>([
     { id: 'custom-todo', label: 'To Do' },
     { id: 'custom-progress', label: 'In Progress' },
@@ -62,6 +80,52 @@ const Tasks = () => {
   });
 
   const selectedGoal = goalId ? goals.find(g => g.id === goalId) : null;
+
+  // Load user preferences from localStorage on component mount
+  useEffect(() => {
+    const savedViewOptions = localStorage.getItem('taskViewOptions');
+    const savedDefaultView = localStorage.getItem('taskDefaultView');
+    const savedCustomColumns = localStorage.getItem('taskCustomColumns');
+    
+    if (savedViewOptions) {
+      try {
+        setViewOptions(JSON.parse(savedViewOptions));
+      } catch (e) {
+        console.error('Error parsing saved view options:', e);
+      }
+    }
+    
+    if (savedDefaultView) {
+      try {
+        const parsedDefaultView = JSON.parse(savedDefaultView) as GroupingType;
+        setDefaultView(parsedDefaultView);
+        setGroupBy(parsedDefaultView);
+      } catch (e) {
+        console.error('Error parsing default view:', e);
+      }
+    }
+    
+    if (savedCustomColumns) {
+      try {
+        setCustomColumns(JSON.parse(savedCustomColumns));
+      } catch (e) {
+        console.error('Error parsing custom columns:', e);
+      }
+    }
+  }, []);
+
+  // Update localStorage when preferences change
+  useEffect(() => {
+    localStorage.setItem('taskViewOptions', JSON.stringify(viewOptions));
+  }, [viewOptions]);
+  
+  useEffect(() => {
+    localStorage.setItem('taskDefaultView', JSON.stringify(defaultView));
+  }, [defaultView]);
+  
+  useEffect(() => {
+    localStorage.setItem('taskCustomColumns', JSON.stringify(customColumns));
+  }, [customColumns]);
 
   const handleAddTask = () => {
     setSelectedTask(undefined);
@@ -173,6 +237,24 @@ const Tasks = () => {
     setCustomColumns(customColumns.filter(column => column.id !== columnId));
   };
 
+  const toggleViewOption = (optionId: GroupingType) => {
+    setViewOptions(viewOptions.map(option => 
+      option.id === optionId 
+        ? { ...option, enabled: !option.enabled } 
+        : option
+    ));
+  };
+
+  // Get only enabled view options
+  const enabledViewOptions = viewOptions.filter(option => option.enabled);
+
+  // If current groupBy is not enabled, switch to the first enabled option
+  useEffect(() => {
+    if (enabledViewOptions.length > 0 && !enabledViewOptions.some(option => option.id === groupBy)) {
+      setGroupBy(enabledViewOptions[0].id);
+    }
+  }, [enabledViewOptions, groupBy]);
+
   return (
     <MainLayout>
       <div className="container mx-auto py-6 px-4">
@@ -195,27 +277,23 @@ const Tasks = () => {
               </CardTitle>
             </div>
             <div className="flex space-x-2">
-              <Tabs value={groupBy} onValueChange={(value) => setGroupBy(value as GroupingType)} className="mr-4">
-                <TabsList>
-                  <TabsTrigger value="status" className="flex items-center gap-1">
-                    <Columns className="h-4 w-4" />
-                    <span className="hidden sm:inline">Status</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="date" className="flex items-center gap-1">
-                    <CalendarDays className="h-4 w-4" />
-                    <span className="hidden sm:inline">Date</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="priority" className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Priority</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="assignee" className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Assignee</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="custom" className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Custom</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+              {enabledViewOptions.length > 0 && (
+                <Select value={groupBy} onValueChange={(value) => setGroupBy(value as GroupingType)}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="View by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {enabledViewOptions.map(option => (
+                      <SelectItem key={option.id} value={option.id}>
+                        <div className="flex items-center gap-2">
+                          {option.icon}
+                          <span>{option.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               
               <Tabs value={viewType} onValueChange={(value) => setViewType(value as ViewType)}>
                 <TabsList>
@@ -230,59 +308,103 @@ const Tasks = () => {
                 </TabsList>
               </Tabs>
               
-              {groupBy === 'custom' && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Settings className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Customize Columns</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Customize Columns</DialogTitle>
-                      <DialogDescription>
-                        Create custom columns to organize your tasks.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
+              <Dialog open={viewOptionsOpen} onOpenChange={setViewOptionsOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Settings className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">View Settings</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>View Settings</DialogTitle>
+                    <DialogDescription>
+                      Customize which views are available and set a default view.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Available Views</Label>
                       <div className="space-y-2">
-                        <Label htmlFor="column-name">New Column Name</Label>
-                        <div className="flex items-center gap-2">
-                          <Input 
-                            id="column-name" 
-                            value={newColumnName} 
-                            onChange={(e) => setNewColumnName(e.target.value)}
-                            placeholder="Enter column name"
-                          />
-                          <Button type="button" onClick={handleAddCustomColumn}>Add</Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Current Columns</Label>
-                        <div className="space-y-2">
-                          {customColumns.map(column => (
-                            <div key={column.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                              <span>{column.label}</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleDeleteCustomColumn(column.id)}
-                                className="h-8 px-2 text-destructive"
-                              >
-                                Remove
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
+                        {viewOptions.map(option => (
+                          <div key={option.id} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`view-${option.id}`}
+                              checked={option.enabled}
+                              onCheckedChange={() => toggleViewOption(option.id)}
+                            />
+                            <Label 
+                              htmlFor={`view-${option.id}`} 
+                              className="flex items-center cursor-pointer"
+                            >
+                              <span className="mr-2">{option.icon}</span>
+                              {option.label}
+                            </Label>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => {}}>Done</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="default-view">Default View</Label>
+                      <Select 
+                        value={defaultView} 
+                        onValueChange={(value) => setDefaultView(value as GroupingType)}
+                      >
+                        <SelectTrigger id="default-view">
+                          <SelectValue placeholder="Select default view" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {viewOptions.filter(option => option.enabled).map(option => (
+                            <SelectItem key={option.id} value={option.id}>
+                              <div className="flex items-center gap-2">
+                                {option.icon}
+                                <span>{option.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {viewOptions.find(o => o.id === 'custom')?.enabled && (
+                      <div className="space-y-2">
+                        <Label>Custom Columns</Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Input 
+                              id="column-name" 
+                              value={newColumnName} 
+                              onChange={(e) => setNewColumnName(e.target.value)}
+                              placeholder="Enter column name"
+                            />
+                            <Button type="button" onClick={handleAddCustomColumn}>Add</Button>
+                          </div>
+                          
+                          <div className="space-y-2 mt-2">
+                            {customColumns.map(column => (
+                              <div key={column.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                                <span>{column.label}</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteCustomColumn(column.id)}
+                                  className="h-8 px-2 text-destructive"
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={() => setViewOptionsOpen(false)}>Save Settings</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               
               <Button 
                 size="sm" 

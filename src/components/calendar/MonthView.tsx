@@ -45,15 +45,14 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
   };
 
   // Dynamically set max visible events based on screen size and cell height
-  let maxVisibleEvents = 5;
+  // Increased number of visible events to show more at once
+  let maxVisibleEvents = 6;
   if (windowWidth <= 480) {
-    maxVisibleEvents = 1;
-  } else if (windowWidth <= 640) {
-    maxVisibleEvents = 2;
-  } else if (windowWidth <= 768) {
     maxVisibleEvents = 3;
-  } else if (windowWidth <= 1024) {
+  } else if (windowWidth <= 640) {
     maxVisibleEvents = 4;
+  } else if (windowWidth <= 768) {
+    maxVisibleEvents = 5;
   }
 
   // Determine day label format based on screen size
@@ -83,6 +82,12 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
           // Get events for this day
           const dayEvents = getEventsForDay(day, events);
           
+          // Determine if we should show more events indicator
+          const hasMoreEvents = dayEvents.length > maxVisibleEvents;
+          const visibleEvents = hasMoreEvents 
+            ? dayEvents.slice(0, maxVisibleEvents - 1) 
+            : dayEvents;
+          
           return (
             <div 
               key={i} 
@@ -93,18 +98,30 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
               }`}
               onClick={() => isCurrentMonth && handleDayClick(day)}
             >
-              <div className={`text-xs sm:text-sm ${isToday ? 'font-bold text-primary' : ''}`}>
+              <div className={`text-xs sm:text-sm font-medium ${isToday ? 'font-bold text-primary' : ''}`}>
                 {format(day, 'd')}
               </div>
               
               <div className="overflow-y-auto max-h-full day-events-container">
-                {dayEvents.length > 0 && dayEvents.slice(0, maxVisibleEvents).map(event => (
+                {visibleEvents.map(event => (
                   <EventIndicator 
                     key={event.id} 
                     event={event} 
                     onClick={handleEventClick} 
                   />
                 ))}
+                
+                {hasMoreEvents && (
+                  <div 
+                    className="text-[10px] font-medium text-muted-foreground px-1 mt-0.5 cursor-pointer hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDayClick(day);
+                    }}
+                  >
+                    + {dayEvents.length - (maxVisibleEvents - 1)} more
+                  </div>
+                )}
               </div>
             </div>
           );
