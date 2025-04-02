@@ -1,8 +1,5 @@
 
-export interface TaskProperties {
-  priority: 'low' | 'medium' | 'high';
-  status: string;
-}
+export type TaskStatus = 'todo' | 'in-progress' | 'done';
 
 export interface GoalTask {
   id: string;
@@ -15,17 +12,9 @@ export interface GoalTask {
   completed: boolean;
   created_at: string;
   updated_at: string;
-  properties?: TaskProperties;
+  status: TaskStatus;
+  properties: {
+    priority: 'low' | 'medium' | 'high';
+    status: string;
+  };
 }
-
-export type KanbanColumn = {
-  id: string;
-  title: string;
-  tasks: GoalTask[];
-};
-
-export type ViewType = 'kanban' | 'list' | 'calendar' | 'weekly';
-export type GroupBy = 'status' | 'date' | 'priority' | 'assignee';
-
-export const DEFAULT_STATUSES = ['To Do', 'In Progress', 'Done'];
-export const DEFAULT_PRIORITIES = ['low', 'medium', 'high'];

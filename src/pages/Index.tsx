@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { CalendarWidget } from '@/components/dashboard/Calendar';
 import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards';
-import { QuickActions, TasksAndChores, WeeklyRoutines } from '@/components/dashboard/QuickActions';
+import { QuickActions } from '@/components/dashboard/QuickActions';
 import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,7 +31,7 @@ const Dashboard = () => {
   if (!household) {
     return (
       <MainLayout>
-        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
           <h1 className="text-3xl font-bold mb-4">Welcome to FamPilot, {profile?.full_name || 'New User'}!</h1>
           <p className="text-xl text-muted-foreground mb-8 text-center">
             To get started, create or join a household to organize your family activities.
@@ -67,14 +67,10 @@ const Dashboard = () => {
             <div className="col-span-2">
               <QuickActions />
             </div>
-            <div className="col-span-2">
-              <TasksAndChores />
-            </div>
           </div>
           
           <div className="grid grid-cols-1 gap-6">
             <FamilyMembersWidget />
-            <WeeklyRoutines />
           </div>
         </div>
       </div>
