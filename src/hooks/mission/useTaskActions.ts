@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { GoalTask } from '@/types/tasks';
+import { GoalTask, TaskStatus } from '@/types/tasks';
 import { toast } from '@/components/ui/use-toast';
 
 export function useTaskActions(onSuccess?: () => void) {
@@ -21,7 +21,7 @@ export function useTaskActions(onSuccess?: () => void) {
           target_date: taskData.target_date,
           completed: taskData.completed,
           properties: {
-            priority: taskData.properties.priority || 'medium',
+            priority: taskData.properties?.priority || 'medium',
             status: taskData.status || 'todo'
           }
         })
@@ -31,6 +31,22 @@ export function useTaskActions(onSuccess?: () => void) {
       if (error) throw error;
 
       if (onSuccess) onSuccess();
+      
+      // Safely handle properties with proper type checking
+      const taskProperties = data.properties || {};
+      const properties = {
+        priority: typeof taskProperties === 'object' && 'priority' in taskProperties 
+          ? (taskProperties.priority as 'low' | 'medium' | 'high')
+          : 'medium',
+        status: typeof taskProperties === 'object' && 'status' in taskProperties
+          ? String(taskProperties.status)
+          : 'todo'
+      };
+      
+      // Determine the status safely
+      const status = typeof taskProperties === 'object' && 'status' in taskProperties
+        ? String(taskProperties.status) as TaskStatus
+        : 'todo';
       
       // Ensure returned data matches GoalTask structure
       const result: GoalTask = {
@@ -44,11 +60,8 @@ export function useTaskActions(onSuccess?: () => void) {
         completed: data.completed || false,
         created_at: data.created_at,
         updated_at: data.updated_at,
-        status: data.properties?.status || 'todo',
-        properties: {
-          priority: data.properties?.priority || 'medium',
-          status: data.properties?.status || 'todo'
-        }
+        status: status,
+        properties: properties
       };
       
       return result;
@@ -70,7 +83,7 @@ export function useTaskActions(onSuccess?: () => void) {
           target_date: task.target_date,
           completed: task.completed,
           properties: {
-            priority: task.properties.priority || 'medium',
+            priority: task.properties?.priority || 'medium',
             status: task.status || 'todo'
           },
           updated_at: new Date().toISOString()
@@ -82,6 +95,22 @@ export function useTaskActions(onSuccess?: () => void) {
       if (error) throw error;
 
       if (onSuccess) onSuccess();
+      
+      // Safely handle properties with proper type checking
+      const taskProperties = data.properties || {};
+      const properties = {
+        priority: typeof taskProperties === 'object' && 'priority' in taskProperties 
+          ? (taskProperties.priority as 'low' | 'medium' | 'high')
+          : 'medium',
+        status: typeof taskProperties === 'object' && 'status' in taskProperties
+          ? String(taskProperties.status)
+          : 'todo'
+      };
+      
+      // Determine the status safely
+      const status = typeof taskProperties === 'object' && 'status' in taskProperties
+        ? String(taskProperties.status) as TaskStatus
+        : 'todo';
       
       // Ensure returned data matches GoalTask structure
       const result: GoalTask = {
@@ -95,11 +124,8 @@ export function useTaskActions(onSuccess?: () => void) {
         completed: data.completed || false,
         created_at: data.created_at,
         updated_at: data.updated_at,
-        status: data.properties?.status || 'todo',
-        properties: {
-          priority: data.properties?.priority || 'medium',
-          status: data.properties?.status || 'todo'
-        }
+        status: status,
+        properties: properties
       };
       
       return result;
@@ -126,6 +152,22 @@ export function useTaskActions(onSuccess?: () => void) {
 
       if (onSuccess) onSuccess();
       
+      // Safely handle properties with proper type checking
+      const taskProperties = data.properties || {};
+      const properties = {
+        priority: typeof taskProperties === 'object' && 'priority' in taskProperties 
+          ? (taskProperties.priority as 'low' | 'medium' | 'high')
+          : 'medium',
+        status: typeof taskProperties === 'object' && 'status' in taskProperties
+          ? String(taskProperties.status)
+          : 'todo'
+      };
+      
+      // Determine the status safely
+      const status = typeof taskProperties === 'object' && 'status' in taskProperties
+        ? String(taskProperties.status) as TaskStatus
+        : 'todo';
+      
       // Ensure returned data matches GoalTask structure
       const result: GoalTask = {
         id: data.id,
@@ -138,11 +180,8 @@ export function useTaskActions(onSuccess?: () => void) {
         completed: data.completed || false,
         created_at: data.created_at,
         updated_at: data.updated_at,
-        status: data.properties?.status || 'todo',
-        properties: {
-          priority: data.properties?.priority || 'medium',
-          status: data.properties?.status || 'todo'
-        }
+        status: status,
+        properties: properties
       };
       
       return result;
