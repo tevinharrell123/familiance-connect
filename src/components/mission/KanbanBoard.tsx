@@ -9,12 +9,18 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 
-type GroupingType = 'status' | 'date' | 'priority' | 'assignee';
+type GroupingType = 'status' | 'date' | 'priority' | 'assignee' | 'custom';
+
+interface CustomColumn {
+  id: string;
+  label: string;
+}
 
 interface KanbanBoardProps {
   tasks: GoalTask[];
   isLoading: boolean;
   groupBy: GroupingType;
+  customColumns?: CustomColumn[];
   onEditTask: (task: GoalTask) => void;
   onToggleTask: (task: GoalTask) => void;
   onDeleteTask: (taskId: string) => void;
@@ -25,6 +31,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   tasks,
   isLoading,
   groupBy,
+  customColumns = [],
   onEditTask,
   onToggleTask,
   onDeleteTask,
@@ -59,6 +66,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           { id: 'assigned', label: 'Assigned' },
           { id: 'unassigned', label: 'Unassigned' }
         ];
+      case 'custom':
+        return customColumns;
       default:
         return [
           { id: 'todo', label: 'To Do' },
@@ -96,6 +105,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         } else {
           return tasks.filter(task => task.assigned_to === null);
         }
+      case 'custom':
+        // For custom columns, we'll use the task status to determine which column it belongs to
+        // In a real app, you might want to store custom column assignments separately
+        const customColumnIndex = customColumns.findIndex(col => col.id === columnId);
+        if (customColumnIndex === 0) { // First column (To Do)
+          return tasks.filter(task => task.status === 'todo');
+        } else if (customColumnIndex === customColumns.length - 1) { // Last column (Done)
+          return tasks.filter(task => task.status === 'done');
+        } else if (customColumnIndex === 1) { // Second column (In Progress)
+          return tasks.filter(task => task.status === 'in-progress');
+        } else {
+          // For additional columns, we don't have a direct mapping, so we'll return an empty array
+          return [];
+        }
       default:
         return [];
     }
@@ -126,8 +149,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
     const taskId = e.dataTransfer.getData('taskId');
     
-    if (groupBy === 'status') {
-      onUpdateTaskStatus(taskId, columnId);
+    if (groupBy === 'status' || groupBy === 'custom') {
+      // Map custom columns to status values
+      let statusValue = columnId;
+      if (groupBy === 'custom') {
+        const customColumnIndex = customColumns.findIndex(col => col.id === columnId);
+        if (customColumnIndex === 0) {
+          statusValue = 'todo';
+        } else if (customColumnIndex === customColumns.length - 1) {
+          statusValue = 'done';
+        } else if (customColumnIndex === 1) {
+          statusValue = 'in-progress';
+        }
+      }
+      onUpdateTaskStatus(taskId, statusValue);
     }
     // For other groupings, handle appropriately (would need more complex logic for date/priority/assignee)
   };

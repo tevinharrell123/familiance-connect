@@ -44,14 +44,16 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
     }
   };
 
-  // Dynamically set max visible events based on screen size
-  let maxVisibleEvents = 3;
+  // Dynamically set max visible events based on screen size and cell height
+  let maxVisibleEvents = 5;
   if (windowWidth <= 480) {
     maxVisibleEvents = 1;
   } else if (windowWidth <= 640) {
-    maxVisibleEvents = 1;
-  } else if (windowWidth <= 768) {
     maxVisibleEvents = 2;
+  } else if (windowWidth <= 768) {
+    maxVisibleEvents = 3;
+  } else if (windowWidth <= 1024) {
+    maxVisibleEvents = 4;
   }
 
   // Determine day label format based on screen size
@@ -95,7 +97,7 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
                 {format(day, 'd')}
               </div>
               
-              <div className="overflow-visible day-events-container">
+              <div className="overflow-y-auto max-h-full day-events-container">
                 {dayEvents.length > 0 && dayEvents.slice(0, maxVisibleEvents).map(event => (
                   <EventIndicator 
                     key={event.id} 
@@ -103,12 +105,6 @@ export function MonthView({ days, events, currentMonth, onEventClick, onDayClick
                     onClick={handleEventClick} 
                   />
                 ))}
-                
-                {dayEvents.length > maxVisibleEvents && (
-                  <div className="text-[10px] text-center text-muted-foreground">
-                    +{dayEvents.length - maxVisibleEvents} more
-                  </div>
-                )}
               </div>
             </div>
           );

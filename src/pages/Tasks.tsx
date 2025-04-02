@@ -9,16 +9,32 @@ import { useTaskActions } from '@/hooks/mission/useTaskActions';
 import { GoalTask } from '@/types/tasks';
 import { TaskDialog } from '@/components/mission/TaskDialog';
 import { Button } from '@/components/ui/button';
-import { Plus, Columns, List, Calendar, CalendarDays, ArrowLeft } from 'lucide-react';
+import { Plus, Columns, List, Calendar, CalendarDays, ArrowLeft, Settings } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useGoalProgress } from '@/hooks/mission/useGoalProgress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KanbanBoard } from '@/components/mission/KanbanBoard';
 import { ListView } from '@/components/mission/ListView';
 import { useGoals } from '@/hooks/mission/useGoals';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type ViewType = 'kanban' | 'list';
-type GroupingType = 'status' | 'date' | 'priority' | 'assignee';
+type GroupingType = 'status' | 'date' | 'priority' | 'assignee' | 'custom';
+
+interface CustomColumn {
+  id: string;
+  label: string;
+}
 
 const Tasks = () => {
   const { goalId } = useParams<{ goalId: string }>();
@@ -27,6 +43,12 @@ const Tasks = () => {
   const [selectedTask, setSelectedTask] = useState<GoalTask | undefined>(undefined);
   const [viewType, setViewType] = useState<ViewType>('kanban');
   const [groupBy, setGroupBy] = useState<GroupingType>('status');
+  const [customColumns, setCustomColumns] = useState<CustomColumn[]>([
+    { id: 'custom-todo', label: 'To Do' },
+    { id: 'custom-progress', label: 'In Progress' },
+    { id: 'custom-done', label: 'Done' }
+  ]);
+  const [newColumnName, setNewColumnName] = useState('');
   
   const { tasks, isLoading, refreshTasks } = useTasks(goalId);
   const { goals, refreshGoals } = useGoals();
@@ -139,6 +161,18 @@ const Tasks = () => {
     }
   };
 
+  const handleAddCustomColumn = () => {
+    if (newColumnName.trim()) {
+      const newColumnId = `custom-${newColumnName.toLowerCase().replace(/\s+/g, '-')}`;
+      setCustomColumns([...customColumns, { id: newColumnId, label: newColumnName.trim() }]);
+      setNewColumnName('');
+    }
+  };
+
+  const handleDeleteCustomColumn = (columnId: string) => {
+    setCustomColumns(customColumns.filter(column => column.id !== columnId));
+  };
+
   return (
     <MainLayout>
       <div className="container mx-auto py-6 px-4">
@@ -177,6 +211,9 @@ const Tasks = () => {
                   <TabsTrigger value="assignee" className="flex items-center gap-1">
                     <span className="hidden sm:inline">Assignee</span>
                   </TabsTrigger>
+                  <TabsTrigger value="custom" className="flex items-center gap-1">
+                    <span className="hidden sm:inline">Custom</span>
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
               
@@ -192,6 +229,60 @@ const Tasks = () => {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              
+              {groupBy === 'custom' && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Customize Columns</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Customize Columns</DialogTitle>
+                      <DialogDescription>
+                        Create custom columns to organize your tasks.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="column-name">New Column Name</Label>
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            id="column-name" 
+                            value={newColumnName} 
+                            onChange={(e) => setNewColumnName(e.target.value)}
+                            placeholder="Enter column name"
+                          />
+                          <Button type="button" onClick={handleAddCustomColumn}>Add</Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Current Columns</Label>
+                        <div className="space-y-2">
+                          {customColumns.map(column => (
+                            <div key={column.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                              <span>{column.label}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeleteCustomColumn(column.id)}
+                                className="h-8 px-2 text-destructive"
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => {}}>Done</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
               
               <Button 
                 size="sm" 
@@ -215,6 +306,7 @@ const Tasks = () => {
                     tasks={tasks}
                     isLoading={isLoading}
                     groupBy={groupBy}
+                    customColumns={customColumns}
                     onEditTask={handleEditTask}
                     onToggleTask={handleToggleTask}
                     onDeleteTask={handleDeleteTask}
@@ -227,6 +319,7 @@ const Tasks = () => {
                     tasks={tasks}
                     isLoading={isLoading}
                     groupBy={groupBy}
+                    customColumns={customColumns}
                     onEditTask={handleEditTask}
                     onToggleTask={handleToggleTask}
                     onDeleteTask={handleDeleteTask}
