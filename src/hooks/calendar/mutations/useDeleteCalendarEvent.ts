@@ -13,21 +13,27 @@ export function useDeleteCalendarEvent() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const deleteEvent = async (event: CalendarEvent): Promise<void> => {
+  const deleteEvent = async (id: string): Promise<void> => {
     if (!user) throw new Error('User not authenticated');
     
-    const { id, is_household_event } = event;
-    
-    if (is_household_event) {
+    // First, determine if this is a household or personal event
+    const { data: personalEvent } = await supabase
+      .from('user_events')
+      .select('id')
+      .eq('id', id)
+      .single();
+      
+    if (personalEvent) {
       const { error } = await supabase
-        .from('household_events')
+        .from('user_events')
         .delete()
         .eq('id', id);
         
       if (error) throw error;
     } else {
+      // Assume it's a household event if not found in personal events
       const { error } = await supabase
-        .from('user_events')
+        .from('household_events')
         .delete()
         .eq('id', id);
         

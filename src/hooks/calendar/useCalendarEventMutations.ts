@@ -4,6 +4,7 @@ import { useCreateCalendarEvent } from './mutations/useCreateCalendarEvent';
 import { useUpdateCalendarEvent } from './mutations/useUpdateCalendarEvent';
 import { useDeleteCalendarEvent } from './mutations/useDeleteCalendarEvent';
 import { calendarEventQueries } from './mutations/calendarEventQueries';
+import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 
 /**
  * Combined hook for all calendar event mutations
@@ -14,9 +15,9 @@ export function useCalendarEventMutations() {
   const deleteEventMutation = useDeleteCalendarEvent();
   
   return {
-    createEvent: createEventMutation.mutate,
-    updateEvent: updateEventMutation.mutate,
-    deleteEvent: deleteEventMutation.mutate,
+    createEvent: (data: CalendarFormValues) => createEventMutation.mutate(data),
+    updateEvent: (data: CalendarEvent) => updateEventMutation.mutate(data),
+    deleteEvent: (id: string) => deleteEventMutation.mutate(id),
     isLoading: createEventMutation.isPending || updateEventMutation.isPending || deleteEventMutation.isPending,
     createIsLoading: createEventMutation.isPending,
     updateIsLoading: updateEventMutation.isPending,

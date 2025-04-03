@@ -10,7 +10,7 @@ import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
 import { useCalendarEventsData } from '@/hooks/calendar/useCalendarEventsData';
 import { useCalendarEventMutations } from '@/hooks/calendar/useCalendarEventMutations';
 import { toast } from '@/components/ui/use-toast';
-import { CalendarEvent } from '@/types/calendar';
+import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { addDays, format, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -75,28 +75,33 @@ export function CalendarWidget({ initialDate, initialView = 'month' }: { initial
     setIsEventDialogOpen(true);
   };
 
-  const handleSaveEvent = async (eventData: Partial<CalendarEvent>) => {
+  const handleSaveEvent = async (eventData: CalendarFormValues) => {
     try {
-      let result: CalendarEvent;
-
       if (isEditMode && selectedEvent) {
-        result = await updateEvent({
+        // Update existing event
+        await updateEvent({
           ...selectedEvent,
-          ...eventData
+          title: eventData.title,
+          description: eventData.description,
+          color: eventData.color,
+          start_date: format(eventData.start_date, "yyyy-MM-dd'T'HH:mm:ss"),
+          end_date: format(eventData.end_date, "yyyy-MM-dd'T'HH:mm:ss"),
+          is_household_event: eventData.is_household_event,
+          is_public: eventData.is_public
         });
+        
         toast({
           title: "Event updated",
           description: "Your event has been updated successfully."
         });
       } else {
         // Create new event
-        const newEvent = {
+        await createEvent({
           ...eventData,
-          start_date: eventData.start_date || format(startOfDay(selectedDate), "yyyy-MM-dd'T'HH:mm:ss"),
-          end_date: eventData.end_date || format(endOfDay(selectedDate), "yyyy-MM-dd'T'HH:mm:ss")
-        };
+          start_date: eventData.start_date || startOfDay(selectedDate),
+          end_date: eventData.end_date || endOfDay(selectedDate)
+        });
         
-        result = await createEvent(newEvent as CalendarEvent);
         toast({
           title: "Event created",
           description: "Your new event has been added to the calendar."
@@ -206,7 +211,8 @@ export function CalendarWidget({ initialDate, initialView = 'month' }: { initial
           start_date: parseISO(selectedEvent.start_date),
           end_date: parseISO(selectedEvent.end_date),
           color: selectedEvent.color || '',
-          is_household_event: selectedEvent.is_household_event
+          is_household_event: selectedEvent.is_household_event,
+          is_public: selectedEvent.is_public
         } : undefined}
         isSubmitting={isMutating}
       />

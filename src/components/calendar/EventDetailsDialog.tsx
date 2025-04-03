@@ -22,6 +22,7 @@ interface EventDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   event: CalendarEvent | null;
   onEditClick?: (event: CalendarEvent) => void;
+  onDeleteClick?: () => void;
 }
 
 export function EventDetailsDialog({
@@ -29,6 +30,7 @@ export function EventDetailsDialog({
   onOpenChange,
   event,
   onEditClick,
+  onDeleteClick,
 }: EventDetailsDialogProps) {
   const { user } = useAuth();
   
@@ -134,9 +136,16 @@ export function EventDetailsDialog({
             Close
           </Button>
           {isCurrentUserEvent && (
-            <Button onClick={handleEditClick}>
-              Edit Event
-            </Button>
+            <div className="flex gap-2">
+              {onDeleteClick && (
+                <Button variant="destructive" onClick={onDeleteClick}>
+                  Delete
+                </Button>
+              )}
+              <Button onClick={handleEditClick}>
+                Edit Event
+              </Button>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
