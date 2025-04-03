@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,7 +33,8 @@ function App() {
                 <Route path="/goals" element={<Goals />} />
                 <Route path="/goals/:goalId" element={<Goals />} />
                 <Route path="/tasks" element={<Tasks />} />
-                <Route path="/tasks/:goalId" element={<Tasks />} />
+                {/* Removed the tasks/:goalId route - redirect to main tasks page */}
+                <Route path="/tasks/:goalId" element={<Navigate to="/tasks" replace />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

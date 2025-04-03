@@ -5,7 +5,6 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { CalendarWidget } from '@/components/dashboard/Calendar';
 import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards';
 import { QuickActions } from '@/components/dashboard/QuickActions';
-import { FamilyMembersWidget } from '@/components/dashboard/FamilyMembers';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -50,27 +49,23 @@ const Dashboard = () => {
   // Dashboard view for users with a household
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome to {household.name}</h1>
-          <p className="text-lg text-muted-foreground">Here's your family dashboard for today</p>
+      <div className="max-w-6xl mx-auto px-4 py-6 dashboard-header">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Welcome to {household.name}</h1>
+          <p className="text-base sm:text-lg text-muted-foreground">Here's your family dashboard for today</p>
         </div>
         
-        <div className="grid grid-cols-1 gap-6 mb-6">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-4 sm:mb-6">
           <CalendarWidget />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <BudgetSummary />
             <GoalsSummary />
-            <div className="col-span-2">
+            <div className="col-span-1 sm:col-span-2">
               <QuickActions />
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-6">
-            <FamilyMembersWidget />
           </div>
         </div>
       </div>

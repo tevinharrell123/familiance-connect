@@ -117,18 +117,31 @@
 
 .calendar-day-event {
   position: absolute;
-  top: 50%;
+  top: 60%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
   padding: 0.25rem 0.5rem;
   border-radius: 0.5rem;
-  background-color: rgba(123, 104, 238, 0.15);
+  background-color: rgba(123, 104, 238, 0.3);
   white-space: nowrap;
-  max-width: 150%;
+  font-weight: 500;
+  width: 90%;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 0.75rem;
+  text-align: center;
+  min-height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .calendar-day-event {
+    min-height: 2rem;
+    font-size: 0.875rem;
+  }
 }
 
 .avatar-overlap {
@@ -138,4 +151,75 @@
 
 .avatar-overlap:first-child {
   margin-left: 0;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  /* Make cards full width on mobile */
+  .container .card, .container .card-content {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Reduce padding on mobile */
+  .container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  /* Ensure content fits within the screen */
+  .container > div {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  /* Fix scroll issues for tasks view */
+  .tasks-container {
+    max-height: calc(100vh - 12rem);
+    overflow-y: auto;
+  }
+  
+  /* Better fit tables and boards on mobile */
+  .kanban-board {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  
+  /* Make the dashboard header more readable */
+  .dashboard-header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Better scrolling for task views */
+.task-list-view {
+  max-height: calc(100vh - 12rem);
+  overflow-y: auto;
+}
+
+/* Mission page responsive styles */
+.mission-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .mission-container {
+    flex-direction: row;
+  }
+}
+
+.vision-board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .vision-board-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+  }
 }

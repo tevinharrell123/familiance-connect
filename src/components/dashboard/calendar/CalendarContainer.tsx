@@ -1,263 +1,222 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Card } from "@/components/ui/card";
-import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
+import React, { useEffect, useState } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MonthView } from '@/components/calendar/MonthView';
+import { WeekView } from '@/components/calendar/WeekView';
+import { DayView } from '@/components/calendar/DayView';
+import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
-import { CalendarEvent, CalendarFormValues, CalendarViewType } from '@/types/calendar';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
-import { CalendarHeader } from '@/components/calendar/CalendarHeader';
-import { CalendarTabContent } from './CalendarTabContent';
+import { useCalendarEventsData } from '@/hooks/calendar/useCalendarEventsData';
+import { useCalendarEventMutations } from '@/hooks/calendar/useCalendarEventMutations';
 import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { CalendarEvent } from '@/types/calendar';
+import { addDays, format, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-export function CalendarWidget() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedView, setSelectedView] = useState<CalendarViewType>('month');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+export function CalendarWidget({ initialDate, initialView = 'month' }: { initialDate?: Date, initialView?: 'day' | 'week' | 'month' }) {
+  const today = new Date();
+  const [selectedDate, setSelectedDate] = useState<Date>(initialDate || today);
+  const [view, setView] = useState<'day' | 'week' | 'month'>(initialView);
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const { household } = useAuth();
-  
-  // Add a ref to prevent too frequent refreshes
-  const lastRefreshTimeRef = useRef<number>(0);
-  const isRefreshingRef = useRef<boolean>(false);
-  const initialLoadRef = useRef<boolean>(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const isMobile = useIsMobile();
+
+  const { 
+    calendarEvents, 
+    isLoading, 
+    isError, 
+    refetch 
+  } = useCalendarEventsData();
   
   const { 
-    events, 
-    isLoading, 
-    error,
     createEvent, 
     updateEvent, 
-    deleteEvent,
-    isCreating,
-    isUpdating,
-    isDeleting,
-    refetch
-  } = useCalendarEvents();
+    deleteEvent, 
+    isLoading: isMutating 
+  } = useCalendarEventMutations();
 
-  // Refresh function to update calendar events
-  const refreshData = useCallback(async () => {
-    // Don't refresh if we're already refreshing
-    if (isRefreshingRef.current) {
-      console.log('Skipping refresh - already in progress');
-      return;
-    }
+  // Load calendar data immediately and set up a refresh interval
+  useEffect(() => {
+    // Initial load
+    refetch();
     
-    // Throttle refreshes to prevent loops
-    const now = Date.now();
-    if (now - lastRefreshTimeRef.current < 10000) { // 10 seconds minimum between refreshes
-      console.log('Skipping refresh - too soon after last refresh');
-      return;
-    }
+    // Set up a refresh interval (every 30 seconds)
+    const intervalId = setInterval(() => {
+      refetch();
+    }, 30000);
     
-    console.log('Refreshing calendar events');
-    lastRefreshTimeRef.current = now;
-    isRefreshingRef.current = true;
-    
-    try {
-      return await refetch();
-    } catch (err) {
-      console.error('Error refreshing calendar events:', err);
-    } finally {
-      isRefreshingRef.current = false;
-    }
+    return () => clearInterval(intervalId);
   }, [refetch]);
 
-  // Initial data fetch on mount - do this only once
-  useEffect(() => {
-    if (!initialLoadRef.current) {
-      console.log('Fetching calendar events on mount');
-      refreshData();
-      initialLoadRef.current = true;
-    }
-  }, [refreshData]);
-
-  // Refetch events when household changes - but only once per household change
-  const householdIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (household && household.id !== householdIdRef.current) {
-      console.log('Household changed, refetching calendar events');
-      householdIdRef.current = household.id;
-      // Wait a tick to avoid potential race conditions
-      setTimeout(() => {
-        refreshData();
-      }, 100);
-    }
-  }, [household?.id, refreshData]);
-
-  // Calculate dates for different views
-  const calculateDays = () => {
-    const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(currentDate);
-    
-    const firstDay = startOfWeek(monthStart, { weekStartsOn: 0 });
-    const lastDay = endOfWeek(monthEnd, { weekStartsOn: 0 });
-    return eachDayOfInterval({ start: firstDay, end: lastDay });
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date);
   };
-  
-  const days = calculateDays();
 
-  const handleCreateEvent = (values: CalendarFormValues) => {
-    console.log('Creating event:', values);
-    createEvent(values, {
-      onSuccess: () => {
-        console.log('Event created successfully, refreshing data');
-        // Wait a tick to avoid potential race conditions
-        setTimeout(() => {
-          refreshData();
-        }, 100);
-        setDialogOpen(false);
-        toast({
-          title: "Event created",
-          description: "Your event has been successfully created"
+  const handleAddEvent = (date?: Date) => {
+    setSelectedEvent(null);
+    setIsEditMode(false);
+    if (date) {
+      setSelectedDate(date);
+    }
+    setIsEventDialogOpen(true);
+  };
+
+  const handleSelectEvent = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setIsDetailsDialogOpen(true);
+  };
+
+  const handleEditEvent = () => {
+    setIsDetailsDialogOpen(false);
+    setIsEditMode(true);
+    setIsEventDialogOpen(true);
+  };
+
+  const handleSaveEvent = async (eventData: Partial<CalendarEvent>) => {
+    try {
+      let result: CalendarEvent;
+
+      if (isEditMode && selectedEvent) {
+        result = await updateEvent({
+          ...selectedEvent,
+          ...eventData
         });
-      }
-    });
-  };
-
-  const handleUpdateEvent = (values: CalendarFormValues) => {
-    if (!editingEvent) return;
-    
-    console.log('Updating event:', values);
-    updateEvent({
-      ...editingEvent,
-      title: values.title,
-      description: values.description || null,
-      start_date: values.start_date.toISOString(),
-      end_date: values.end_date.toISOString(),
-      color: values.color || null,
-      is_household_event: values.is_household_event
-    }, {
-      onSuccess: () => {
-        console.log('Event updated successfully, refreshing data');
-        // Wait a tick to avoid potential race conditions
-        setTimeout(() => {
-          refreshData();
-        }, 100);
-        setEditingEvent(null);
-        setDialogOpen(false);
         toast({
           title: "Event updated",
-          description: "Your event has been successfully updated"
+          description: "Your event has been updated successfully."
         });
-      }
-    });
-  };
-
-  const handleDeleteEvent = () => {
-    if (!editingEvent) return;
-    
-    console.log('Deleting event:', editingEvent);
-    deleteEvent(editingEvent, {
-      onSuccess: () => {
-        console.log('Event deleted successfully, refreshing data');
-        // Wait a tick to avoid potential race conditions
-        setTimeout(() => {
-          refreshData();
-        }, 100);
-        setEditingEvent(null);
-        setDialogOpen(false);
+      } else {
+        // Create new event
+        const newEvent = {
+          ...eventData,
+          start_time: eventData.start_time || format(startOfDay(selectedDate), "yyyy-MM-dd'T'HH:mm:ss"),
+          end_time: eventData.end_time || format(endOfDay(selectedDate), "yyyy-MM-dd'T'HH:mm:ss")
+        };
+        
+        result = await createEvent(newEvent as CalendarEvent);
         toast({
-          title: "Event deleted",
-          description: "Your event has been successfully deleted"
+          title: "Event created",
+          description: "Your new event has been added to the calendar."
         });
       }
-    });
+
+      setIsEventDialogOpen(false);
+      refetch();
+    } catch (error) {
+      console.error("Error saving event:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem saving your event. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleEventClick = (event: CalendarEvent) => {
-    console.log('Event clicked:', event);
-    setSelectedEvent(event);
-    setDetailsDialogOpen(true);
-  };
-  
-  const handleEditClick = (event: CalendarEvent) => {
-    setEditingEvent(event);
-    setDialogOpen(true);
-  };
-  
-  const handleDayClick = (day: Date) => {
-    console.log('Day clicked:', format(day, 'yyyy-MM-dd'));
-    setSelectedDay(day);
-    setEditingEvent(null);
-    setDialogOpen(true);
-  };
-
-  const getEventDialogDefaultValues = (): Partial<CalendarFormValues> => {
-    if (editingEvent) {
-      return {
-        title: editingEvent.title,
-        description: editingEvent.description || '',
-        start_date: new Date(editingEvent.start_date),
-        end_date: new Date(editingEvent.end_date),
-        color: editingEvent.color || '#7B68EE',
-        is_household_event: editingEvent.is_household_event
-      };
-    }
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
     
-    if (selectedDay) {
-      // Initialize with the selected day
-      const startDate = new Date(selectedDay);
-      const endDate = new Date(selectedDay);
-      return {
-        title: '',
-        description: '',
-        start_date: startDate,
-        end_date: endDate,
-        color: '#7B68EE',
-        is_household_event: false
-      };
+    try {
+      await deleteEvent(selectedEvent.id);
+      setIsDetailsDialogOpen(false);
+      refetch();
+      toast({
+        title: "Event deleted",
+        description: "The event has been removed from your calendar."
+      });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem deleting the event. Please try again.",
+        variant: "destructive"
+      });
     }
-    
-    return {};
   };
 
   return (
-    <Card className="shadow-sm">
-      <CalendarHeader 
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-        onAddEvent={() => {
-          setEditingEvent(null);
-          setSelectedDay(null);
-          setDialogOpen(true);
-        }}
-      />
-      
-      <CalendarTabContent 
-        currentDate={currentDate}
-        days={days}
-        events={events}
-        isLoading={isLoading}
-        error={error}
-        selectedView={selectedView}
-        onViewChange={(view) => setSelectedView(view as CalendarViewType)}
-        onEventClick={handleEventClick}
-        onDateChange={setCurrentDate}
-        onDayClick={handleDayClick}
-      />
-      
+    <div className="calendar-widget w-full h-full">
+      <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week' | 'month')}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border-b">
+          <CalendarHeader
+            date={selectedDate}
+            onDateChange={handleDateChange}
+            onToday={() => setSelectedDate(new Date())}
+            view={view}
+          />
+          <div className="mt-2 sm:mt-0 flex space-x-1">
+            <button
+              className="p-2 rounded-md text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+              onClick={() => handleAddEvent()}
+            >
+              + Event
+            </button>
+            <TabsList>
+              <TabsTrigger value="day" className={isMobile ? "px-3" : ""}>
+                {isMobile ? "D" : "Day"}
+              </TabsTrigger>
+              <TabsTrigger value="week" className={isMobile ? "px-3" : ""}>
+                {isMobile ? "W" : "Week"}
+              </TabsTrigger>
+              <TabsTrigger value="month" className={isMobile ? "px-3" : ""}>
+                {isMobile ? "M" : "Month"}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
+
+        <TabsContent value="day" className="h-full">
+          <DayView
+            date={selectedDate}
+            events={calendarEvents}
+            isLoading={isLoading}
+            onSelectEvent={handleSelectEvent}
+            onAddEvent={handleAddEvent}
+          />
+        </TabsContent>
+        
+        <TabsContent value="week" className="h-full">
+          <WeekView
+            startDate={selectedDate}
+            events={calendarEvents}
+            isLoading={isLoading}
+            onSelectEvent={handleSelectEvent}
+            onAddEvent={handleAddEvent}
+          />
+        </TabsContent>
+        
+        <TabsContent value="month" className="h-full flex-1">
+          <MonthView
+            date={selectedDate}
+            events={calendarEvents}
+            isLoading={isLoading}
+            onSelectDate={handleDateChange}
+            onSelectEvent={handleSelectEvent}
+            onAddEvent={handleAddEvent}
+          />
+        </TabsContent>
+      </Tabs>
+
       <CalendarEventDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent}
-        onDelete={editingEvent ? handleDeleteEvent : undefined}
-        isEditing={!!editingEvent}
-        defaultValues={getEventDialogDefaultValues()}
-        isSubmitting={isCreating || isUpdating}
-        isDeleting={isDeleting}
+        open={isEventDialogOpen}
+        onOpenChange={setIsEventDialogOpen}
+        selectedDate={selectedDate}
+        initialData={isEditMode ? selectedEvent : null}
+        onSave={handleSaveEvent}
+        isLoading={isMutating}
       />
       
-      <EventDetailsDialog
-        open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
-        event={selectedEvent}
-        onEditClick={handleEditClick}
-      />
-    </Card>
+      {selectedEvent && (
+        <EventDetailsDialog
+          open={isDetailsDialogOpen}
+          onOpenChange={setIsDetailsDialogOpen}
+          event={selectedEvent}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
+        />
+      )}
+    </div>
   );
 }

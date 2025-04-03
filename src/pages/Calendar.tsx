@@ -7,14 +7,13 @@ import { CalendarWidget } from '@/components/dashboard/calendar/CalendarContaine
 const CalendarPage = () => {
   return (
     <MainLayout>
-      <div className="container mx-auto py-6 px-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Calendar</CardTitle>
+      <div className="container mx-auto py-4 px-2 sm:py-6 sm:px-4">
+        <Card className="shadow-sm">
+          <CardHeader className="py-4 px-4 sm:py-6">
+            <CardTitle className="text-xl md:text-2xl">Calendar</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="calendar-container w-full">
-              {/* Using the CalendarContainer component directly */}
+            <div className="calendar-container w-full h-[calc(100vh-12rem)]">
               <CalendarWidget key="calendar-page-widget" />
             </div>
           </CardContent>
