@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -269,7 +270,7 @@ export function GoalDetails() {
   
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6 px-4">
+      <div className="container mx-auto py-6 px-6">
         <div className="flex items-center mb-6">
           <Button variant="ghost" size="sm" className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -315,7 +316,7 @@ export function GoalDetails() {
   
   if (!goal) {
     return (
-      <div className="container mx-auto py-6 px-4">
+      <div className="container mx-auto py-6 px-6">
         <div className="flex items-center mb-6">
           <Button 
             variant="outline" 
@@ -345,8 +346,8 @@ export function GoalDetails() {
   }
   
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto py-6 px-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center">
           <Button 
             variant="outline" 
@@ -354,19 +355,19 @@ export function GoalDetails() {
             className="mr-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Goals
+            Back
           </Button>
-          <h1 className="text-2xl font-bold">{goal.title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold truncate max-w-[200px] sm:max-w-none">{goal.title}</h1>
         </div>
         
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 mt-2 sm:mt-0">
           <Button 
             variant="outline" 
             onClick={handleEditGoal}
             size="sm"
           >
             <Edit className="h-4 w-4 mr-2" />
-            Edit Goal
+            Edit
           </Button>
           <Button 
             variant="destructive" 
@@ -383,7 +384,7 @@ export function GoalDetails() {
         <div className="md:col-span-2">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                 <div>
                   <CardTitle className="flex items-center">
                     <Badge className="mr-2" variant="outline">
@@ -399,7 +400,7 @@ export function GoalDetails() {
                   </CardDescription>
                 </div>
                 {goal.target_date && (
-                  <Badge variant="secondary" className="flex items-center">
+                  <Badge variant="secondary" className="flex items-center self-start">
                     <Calendar className="h-3 w-3 mr-1" />
                     Due: {format(new Date(goal.target_date), 'MMM d, yyyy')}
                   </Badge>
@@ -446,14 +447,15 @@ export function GoalDetails() {
           
           <Card className="mt-6">
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <CardTitle>Tasks</CardTitle>
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={handleGenerateTasks}
                     disabled={generatingTasks}
+                    className="w-full sm:w-auto"
                   >
                     {generatingTasks ? (
                       <>Generating...</>
@@ -464,6 +466,7 @@ export function GoalDetails() {
                   <Button 
                     size="sm" 
                     onClick={handleAddTask}
+                    className="w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Task

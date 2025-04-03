@@ -138,16 +138,16 @@ const Goals = () => {
       <Routes>
         <Route path="/:goalId" element={<GoalDetails />} />
         <Route path="/" element={
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-start mb-8">
-              <div>
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4">
+              <div className="pl-2">
                 <h1 className="text-3xl font-bold">Goals Tracker</h1>
                 <p className="text-muted-foreground mt-2">
                   Track and manage all your family goals in one place
                 </p>
               </div>
-              <div className="mt-4 md:mt-0">
-                <Button onClick={() => setAddGoalOpen(true)}>
+              <div className="mt-4 md:mt-0 w-full md:w-auto">
+                <Button onClick={() => setAddGoalOpen(true)} className="w-full md:w-auto">
                   <Plus className="mr-2 h-4 w-4" /> Add New Goal
                 </Button>
               </div>
@@ -247,135 +247,137 @@ const Goals = () => {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead
-                          className="cursor-pointer"
-                          onClick={() => handleSort('title')}
-                        >
-                          <div className="flex items-center space-x-1">
-                            <span>Goal</span>
-                            {getSortIcon('title')}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer"
-                          onClick={() => handleSort('category')}
-                        >
-                          <div className="flex items-center space-x-1">
-                            <span>Category</span>
-                            {getSortIcon('category')}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer"
-                          onClick={() => handleSort('target_date')}
-                        >
-                          <div className="flex items-center space-x-1">
-                            <span>Target Date</span>
-                            {getSortIcon('target_date')}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="cursor-pointer"
-                          onClick={() => handleSort('progress')}
-                        >
-                          <div className="flex items-center space-x-1">
-                            <span>Progress</span>
-                            {getSortIcon('progress')}
-                          </div>
-                        </TableHead>
-                        <TableHead>Assigned To</TableHead>
-                        <TableHead>Vision Board</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredGoals.map((goal) => (
-                        <TableRow 
-                          key={goal.id}
-                          className="cursor-pointer"
-                          onClick={() => navigate(`/goals/${goal.id}`)}
-                        >
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              {goal.completed && (
-                                <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                              )}
-                              <span className="font-medium">{goal.title}</span>
+              <div className="overflow-x-auto pb-6">
+                <Card className="min-w-full">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead
+                            className="cursor-pointer"
+                            onClick={() => handleSort('title')}
+                          >
+                            <div className="flex items-center space-x-1">
+                              <span>Goal</span>
+                              {getSortIcon('title')}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{goal.category}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {goal.target_date ? (
-                              <div className="flex items-center text-sm">
-                                <Calendar className="h-3 w-3 mr-1 text-muted-foreground" />
-                                {format(new Date(goal.target_date), 'MMM d, yyyy')}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">No date</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <Progress value={goal.progress || 0} className="h-2 w-24" />
-                              <span className="text-sm">{goal.progress || 0}%</span>
+                          </TableHead>
+                          <TableHead
+                            className="cursor-pointer hidden sm:table-cell"
+                            onClick={() => handleSort('category')}
+                          >
+                            <div className="flex items-center space-x-1">
+                              <span>Category</span>
+                              {getSortIcon('category')}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {goal.assigned_to ? (
-                              <div className="flex items-center space-x-2">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback className="text-xs">
-                                    {goal.assigned_to_name ? goal.assigned_to_name.substring(0, 2).toUpperCase() : '?'}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm">{goal.assigned_to_name}</span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">Unassigned</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div 
-                              className="inline-flex"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const { updateVisionBoardStatus } = useGoalActions();
-                                updateVisionBoardStatus(goal);
-                                refreshGoals();
-                              }}
-                            >
-                              {goal.show_on_vision_board ? (
-                                <Star className="h-5 w-5 text-amber-500" />
-                              ) : (
-                                <StarOff className="h-5 w-5 text-muted-foreground" />
-                              )}
+                          </TableHead>
+                          <TableHead
+                            className="cursor-pointer hidden md:table-cell"
+                            onClick={() => handleSort('target_date')}
+                          >
+                            <div className="flex items-center space-x-1">
+                              <span>Target Date</span>
+                              {getSortIcon('target_date')}
                             </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/goals/${goal.id}`);
-                              }}
-                            >
-                              View Details
-                            </Button>
-                          </TableCell>
+                          </TableHead>
+                          <TableHead
+                            className="cursor-pointer"
+                            onClick={() => handleSort('progress')}
+                          >
+                            <div className="flex items-center space-x-1">
+                              <span>Progress</span>
+                              {getSortIcon('progress')}
+                            </div>
+                          </TableHead>
+                          <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
+                          <TableHead className="hidden md:table-cell">Vision Board</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredGoals.map((goal) => (
+                          <TableRow 
+                            key={goal.id}
+                            className="cursor-pointer"
+                            onClick={() => navigate(`/goals/${goal.id}`)}
+                          >
+                            <TableCell className="max-w-[150px] sm:max-w-none">
+                              <div className="flex items-center space-x-2">
+                                {goal.completed && (
+                                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                )}
+                                <span className="font-medium truncate">{goal.title}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <Badge variant="outline">{goal.category}</Badge>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {goal.target_date ? (
+                                <div className="flex items-center text-sm">
+                                  <Calendar className="h-3 w-3 mr-1 text-muted-foreground" />
+                                  {format(new Date(goal.target_date), 'MMM d, yyyy')}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">No date</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Progress value={goal.progress || 0} className="h-2 w-16 sm:w-24" />
+                                <span className="text-sm">{goal.progress || 0}%</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {goal.assigned_to ? (
+                                <div className="flex items-center space-x-2">
+                                  <Avatar className="h-6 w-6">
+                                    <AvatarFallback className="text-xs">
+                                      {goal.assigned_to_name ? goal.assigned_to_name.substring(0, 2).toUpperCase() : '?'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-sm">{goal.assigned_to_name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">Unassigned</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div 
+                                className="inline-flex"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const { updateVisionBoardStatus } = useGoalActions();
+                                  updateVisionBoardStatus(goal);
+                                  refreshGoals();
+                                }}
+                              >
+                                {goal.show_on_vision_board ? (
+                                  <Star className="h-5 w-5 text-amber-500" />
+                                ) : (
+                                  <StarOff className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/goals/${goal.id}`);
+                                }}
+                              >
+                                View
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              </div>
             )}
             
             <AddGoalDialog 

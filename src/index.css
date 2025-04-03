@@ -95,8 +95,36 @@
   body {
     @apply bg-fampilot-background text-foreground font-sans;
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply pl-2;
+  }
+  
+  .card-title {
+    @apply pl-1;
+  }
 }
 
+/* Improve responsiveness */
+@layer utilities {
+  .responsive-container {
+    @apply px-4 sm:px-6 md:px-8;
+  }
+  
+  .loading-spinner {
+    @apply animate-spin h-5 w-5;
+  }
+
+  .mobile-friendly-card {
+    @apply w-full overflow-hidden;
+  }
+
+  .mobile-friendly-button {
+    @apply w-full sm:w-auto;
+  }
+}
+
+/* Calendar styles */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -163,8 +191,8 @@
   
   /* Reduce padding on mobile */
   .container {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
   }
   
   /* Ensure content fits within the screen */
@@ -187,8 +215,25 @@
   
   /* Make the dashboard header more readable */
   .dashboard-header {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  /* Improve table display on mobile */
+  table {
+    display: table;
+    width: 100%;
+  }
+  
+  /* Performance optimization */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Fix for unresponsive UI */
+  .mobile-render-fix {
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 }
 
@@ -196,6 +241,7 @@
 .task-list-view {
   max-height: calc(100vh - 12rem);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Mission page responsive styles */
