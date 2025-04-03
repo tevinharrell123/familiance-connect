@@ -46,17 +46,20 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
         </div>
         <div className="relative flex-1">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="fixed top-20 left-0 z-40 rounded-l-none border-l-0 h-10 shadow-md transition-all duration-300 ease-in-out"
-            onClick={toggleSidebar}
-            style={{
-              left: sidebarCollapsed ? 0 : '15.5rem',
-            }}
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
+          {/* Only show toggle button on desktop */}
+          {!isMobile && (
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="fixed top-20 left-0 z-40 rounded-l-none border-l-0 h-10 shadow-md transition-all duration-300 ease-in-out"
+              onClick={toggleSidebar}
+              style={{
+                left: sidebarCollapsed ? 0 : '15.5rem',
+              }}
+            >
+              {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+          )}
           <div className="p-0">
             {children}
           </div>
