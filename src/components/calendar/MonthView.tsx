@@ -1,24 +1,36 @@
 
 import React, { useEffect, useState } from 'react';
 import { CalendarEvent } from '@/types/calendar';
-import { format, isSameDay, parseISO, isSameMonth } from 'date-fns';
+import { format, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, isSameMonth } from 'date-fns';
 import { getEventsForDay } from './utils/calendarEventUtils';
 import { EventIndicator } from './EventIndicator';
 import { MonthViewStyles } from './MonthViewStyles';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MonthViewProps {
-  days: Date[];
-  events: CalendarEvent[];
   currentMonth: Date;
+  days?: Date[];
+  events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   onDayClick?: (date: Date) => void;
 }
 
-export function MonthView({ days, events, currentMonth, onEventClick, onDayClick }: MonthViewProps) {
+export function MonthView({ currentMonth, events, onEventClick, onDayClick }: MonthViewProps) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const isMobile = useIsMobile();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  
+  // Generate days for the month view
+  const getMonthDays = () => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const calendarStart = startOfWeek(monthStart);
+    const calendarEnd = endOfWeek(monthEnd);
+    
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  };
+  
+  const days = getMonthDays();
   
   // Update window width state when resized
   useEffect(() => {

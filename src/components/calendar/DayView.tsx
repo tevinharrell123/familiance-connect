@@ -7,10 +7,11 @@ import { CalendarEventCard } from './CalendarEventCard';
 interface DayViewProps {
   currentDate: Date;
   events?: CalendarEvent[];
+  isLoading?: boolean;
   onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function DayView({ currentDate, events = [], onEventClick }: DayViewProps) {
+export function DayView({ currentDate, events = [], isLoading, onEventClick }: DayViewProps) {
   // Filter events for the current day
   const dayEvents = events.filter(event => {
     if (!event) return false;
@@ -41,16 +42,20 @@ export function DayView({ currentDate, events = [], onEventClick }: DayViewProps
 
   const eventsWithDuration = sortedEvents.map(getEventWithDuration);
 
-  if (eventsWithDuration.length > 0) {
-    console.log('Day view events:', eventsWithDuration.length);
-  }
-
   const handleEventClick = (event: CalendarEvent) => {
     if (onEventClick) {
       console.log('Event clicked in DayView:', event.id);
       onEventClick(event);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-center">Loading events...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4">
@@ -67,7 +72,7 @@ export function DayView({ currentDate, events = [], onEventClick }: DayViewProps
               <CalendarEventCard 
                 event={event} 
                 showMultiDayBadge={true} 
-                onClick={handleEventClick}
+                onClick={() => handleEventClick(event)}
               />
             </div>
           ))}

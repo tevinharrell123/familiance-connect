@@ -25,9 +25,9 @@ export function CalendarWidget({ initialDate, initialView = 'month' }: { initial
   const isMobile = useIsMobile();
 
   const { 
-    calendarEvents, 
+    events, 
     isLoading, 
-    isError, 
+    error, 
     refetch 
   } = useCalendarEventsData();
   
@@ -92,8 +92,8 @@ export function CalendarWidget({ initialDate, initialView = 'month' }: { initial
         // Create new event
         const newEvent = {
           ...eventData,
-          start_time: eventData.start_time || format(startOfDay(selectedDate), "yyyy-MM-dd'T'HH:mm:ss"),
-          end_time: eventData.end_time || format(endOfDay(selectedDate), "yyyy-MM-dd'T'HH:mm:ss")
+          start_date: eventData.start_date || format(startOfDay(selectedDate), "yyyy-MM-dd'T'HH:mm:ss"),
+          end_date: eventData.end_date || format(endOfDay(selectedDate), "yyyy-MM-dd'T'HH:mm:ss")
         };
         
         result = await createEvent(newEvent as CalendarEvent);
@@ -141,10 +141,9 @@ export function CalendarWidget({ initialDate, initialView = 'month' }: { initial
       <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week' | 'month')}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border-b">
           <CalendarHeader
-            date={selectedDate}
+            currentDate={selectedDate}
+            onAddEvent={handleAddEvent}
             onDateChange={handleDateChange}
-            onToday={() => setSelectedDate(new Date())}
-            view={view}
           />
           <div className="mt-2 sm:mt-0 flex space-x-1">
             <button
@@ -169,32 +168,29 @@ export function CalendarWidget({ initialDate, initialView = 'month' }: { initial
 
         <TabsContent value="day" className="h-full">
           <DayView
-            date={selectedDate}
-            events={calendarEvents}
+            currentDate={selectedDate}
+            events={events}
             isLoading={isLoading}
-            onSelectEvent={handleSelectEvent}
-            onAddEvent={handleAddEvent}
+            onEventClick={handleSelectEvent}
           />
         </TabsContent>
         
         <TabsContent value="week" className="h-full">
           <WeekView
-            startDate={selectedDate}
-            events={calendarEvents}
+            currentDate={selectedDate}
+            events={events}
             isLoading={isLoading}
-            onSelectEvent={handleSelectEvent}
-            onAddEvent={handleAddEvent}
+            onEventClick={handleSelectEvent}
           />
         </TabsContent>
         
         <TabsContent value="month" className="h-full flex-1">
           <MonthView
-            date={selectedDate}
-            events={calendarEvents}
-            isLoading={isLoading}
-            onSelectDate={handleDateChange}
-            onSelectEvent={handleSelectEvent}
-            onAddEvent={handleAddEvent}
+            currentMonth={selectedDate}
+            days={[]} // These will be calculated inside the component
+            events={events}
+            onEventClick={handleSelectEvent}
+            onDayClick={handleDateChange}
           />
         </TabsContent>
       </Tabs>
@@ -202,10 +198,17 @@ export function CalendarWidget({ initialDate, initialView = 'month' }: { initial
       <CalendarEventDialog
         open={isEventDialogOpen}
         onOpenChange={setIsEventDialogOpen}
-        selectedDate={selectedDate}
-        initialData={isEditMode ? selectedEvent : null}
-        onSave={handleSaveEvent}
-        isLoading={isMutating}
+        onSubmit={handleSaveEvent}
+        isEditing={isEditMode}
+        defaultValues={isEditMode && selectedEvent ? {
+          title: selectedEvent.title,
+          description: selectedEvent.description || '',
+          start_date: parseISO(selectedEvent.start_date),
+          end_date: parseISO(selectedEvent.end_date),
+          color: selectedEvent.color || '',
+          is_household_event: selectedEvent.is_household_event
+        } : undefined}
+        isSubmitting={isMutating}
       />
       
       {selectedEvent && (
@@ -213,8 +216,8 @@ export function CalendarWidget({ initialDate, initialView = 'month' }: { initial
           open={isDetailsDialogOpen}
           onOpenChange={setIsDetailsDialogOpen}
           event={selectedEvent}
-          onEdit={handleEditEvent}
-          onDelete={handleDeleteEvent}
+          onEditClick={handleEditEvent}
+          onDeleteClick={handleDeleteEvent}
         />
       )}
     </div>

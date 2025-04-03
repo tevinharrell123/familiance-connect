@@ -7,10 +7,11 @@ import { CalendarEventCard } from './CalendarEventCard';
 interface WeekViewProps {
   currentDate: Date;
   events?: CalendarEvent[];
+  isLoading?: boolean;
   onEventClick?: (event: CalendarEvent) => void;
 }
 
-export function WeekView({ currentDate, events = [], onEventClick }: WeekViewProps) {
+export function WeekView({ currentDate, events = [], isLoading, onEventClick }: WeekViewProps) {
   // Get start and end of the week
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // 0 = Sunday
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
@@ -49,6 +50,14 @@ export function WeekView({ currentDate, events = [], onEventClick }: WeekViewPro
       onEventClick(event);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-center">Loading events...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
