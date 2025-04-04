@@ -60,35 +60,35 @@ export function Sidebar() {
           <NavItem href="/" icon={Home} isActive={currentPath === '/'}>
             Dashboard
           </NavItem>
-          <NavItem href="/mission" icon={Target}>
+          <NavItem href="/mission" icon={Target} isActive={currentPath === '/mission'}>
             Mission & Values
           </NavItem>
         </NavGroup>
         
         <NavGroup title="Planning">
-          <NavItem href="/calendar" icon={CalendarDays}>
+          <NavItem href="/calendar" icon={CalendarDays} isActive={currentPath === '/calendar'}>
             Calendar
           </NavItem>
-          <NavItem href="/tasks" icon={ClipboardList}>
+          <NavItem href="/tasks" icon={ClipboardList} isActive={currentPath === '/tasks'}>
             Tasks & Chores
           </NavItem>
-          <NavItem href="/goals" icon={BarChart3}>
+          <NavItem href="/goals" icon={BarChart3} isActive={currentPath === '/goals'}>
             Goals & Tracking
           </NavItem>
         </NavGroup>
         
         <NavGroup title="Family">
-          <NavItem href="/collaboration" icon={Briefcase}>
+          <NavItem href="/collaboration" icon={Briefcase} isActive={currentPath === '/collaboration'}>
             Collaboration
           </NavItem>
-          <NavItem href="/finances" icon={WalletCards}>
+          <NavItem href="/finances" icon={WalletCards} isActive={currentPath === '/finances'}>
             Budget & Finance
           </NavItem>
         </NavGroup>
       </nav>
       
       <div className="mt-auto pt-4 border-t">
-        <NavItem href="/profile" icon={User}>
+        <NavItem href="/profile" icon={User} isActive={currentPath === '/profile'}>
           Profile
         </NavItem>
       </div>

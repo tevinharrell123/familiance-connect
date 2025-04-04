@@ -13,6 +13,7 @@ import Goals from "./pages/Goals";
 import Tasks from "./pages/Tasks";
 import NotFound from "./pages/NotFound";
 import Calendar from "./pages/Calendar";
+import Finances from "./pages/Finances";
 
 const queryClient = new QueryClient();
 
@@ -33,9 +34,9 @@ function App() {
                 <Route path="/goals" element={<Goals />} />
                 <Route path="/goals/:goalId" element={<Goals />} />
                 <Route path="/tasks" element={<Tasks />} />
-                {/* Removed the tasks/:goalId route - redirect to main tasks page */}
                 <Route path="/tasks/:goalId" element={<Navigate to="/tasks" replace />} />
                 <Route path="/calendar" element={<Calendar />} />
+                <Route path="/finances" element={<Finances />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>
