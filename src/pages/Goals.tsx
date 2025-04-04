@@ -298,7 +298,10 @@ const Goals = () => {
                           <TableRow 
                             key={goal.id}
                             className="cursor-pointer"
-                            onClick={() => navigate(`/goals/${goal.id}`)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/goals/${goal.id}`);
+                            }}
                           >
                             <TableCell className="max-w-[150px] sm:max-w-none">
                               <div className="flex items-center space-x-2">
