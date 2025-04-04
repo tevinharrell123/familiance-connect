@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -343,19 +342,25 @@ const Goals = () => {
                               )}
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
-                              <div 
-                                className="inline-flex"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const { updateVisionBoardStatus } = useGoalActions();
-                                  updateVisionBoardStatus(goal);
-                                  refreshGoals();
-                                }}
-                              >
+                              <div className="inline-flex">
                                 {goal.show_on_vision_board ? (
-                                  <Star className="h-5 w-5 text-amber-500" />
+                                  <Star 
+                                    className="h-5 w-5 text-amber-500 cursor-pointer" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const { updateVisionBoardStatus } = useGoalActions();
+                                      updateVisionBoardStatus(goal).then(() => refreshGoals());
+                                    }}
+                                  />
                                 ) : (
-                                  <StarOff className="h-5 w-5 text-muted-foreground" />
+                                  <StarOff 
+                                    className="h-5 w-5 text-muted-foreground cursor-pointer" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const { updateVisionBoardStatus } = useGoalActions();
+                                      updateVisionBoardStatus(goal).then(() => refreshGoals());
+                                    }}
+                                  />
                                 )}
                               </div>
                             </TableCell>
