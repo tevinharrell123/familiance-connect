@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { PieChart, pieArcLabelClasses } from 'recharts';
+import { PieChart, Pie, Cell } from 'recharts';
 import { PieChart as PieChartIcon } from 'lucide-react';
 
 const monthlyData = {
@@ -30,6 +30,26 @@ export function BudgetOverview() {
     "Utilities": { theme: { light: "#E5DEFF", dark: "#E5DEFF" } },
     "Entertainment": { theme: { light: "#D6BCFA", dark: "#D6BCFA" } },
     "Other": { theme: { light: "#F2FCE2", dark: "#F2FCE2" } },
+  };
+
+  const RADIAN = Math.PI / 180;
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+        className="text-xs font-medium"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
   };
 
   return (
@@ -83,25 +103,27 @@ export function BudgetOverview() {
             >
               <PieChart 
                 margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                width={500}
+                height={240}
                 cx="50%"
                 cy="50%"
               >
-                {monthlyData.categories.map((entry, index) => (
-                  <pieArcLabelClasses.Pie
-                    key={`pie-${index}`}
-                    data={monthlyData.categories}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    label
-                  />
-                ))}
-                <ChartTooltip>
-                  <ChartTooltipContent nameKey="name" />
-                </ChartTooltip>
+                <Pie
+                  data={monthlyData.categories}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={renderCustomizedLabel}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                >
+                  {monthlyData.categories.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
               </PieChart>
             </ChartContainer>
           </div>
