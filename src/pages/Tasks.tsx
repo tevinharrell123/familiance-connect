@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { TaskList } from '@/components/mission/TaskList';
 import { useTasks } from '@/hooks/mission/useTasks';
@@ -109,19 +109,26 @@ const Tasks = () => {
   ]);
   const [newColumnName, setNewColumnName] = useState('');
   
-  // If goalId is in the URL, redirect to the main tasks page (we're removing goalId route)
-  useEffect(() => {
-    if (goalId) {
-      navigate('/tasks', { replace: true });
-    }
-  }, [goalId, navigate]);
-  
-  const { tasks, isLoading, refreshTasks } = useTasks(null); // Use null to get all tasks
+  // Use goalId from the URL params if available
+  const { tasks, isLoading, refreshTasks } = useTasks(goalId || null);
   const { goals, refreshGoals } = useGoals();
   const { calculateProgressFromTasks } = useGoalProgress();
   
+  // Get the specific goal if we have a goalId
+  const [currentGoal, setCurrentGoal] = useState<any>(null);
+  
+  useEffect(() => {
+    if (goalId && goals) {
+      const goal = goals.find(g => g.id === goalId);
+      setCurrentGoal(goal);
+    }
+  }, [goalId, goals]);
+  
   const { createTask, updateTask, toggleTaskCompletion, deleteTask, isLoading: taskActionLoading } = useTaskActions(() => {
     refreshTasks();
+    if (goalId) {
+      calculateProgressFromTasks(goalId);
+    }
   });
 
   // Set list view as default on mobile
@@ -188,6 +195,18 @@ const Tasks = () => {
   
   const handleSaveTask = async (taskData: Partial<GoalTask>) => {
     try {
+      // If we have a goalId in the URL, use it for new tasks
+      const effectiveGoalId = goalId || taskData.goal_id;
+      
+      if (!effectiveGoalId) {
+        toast({
+          title: "Missing goal",
+          description: "Please select a goal for this task",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       if (taskData.id) {
         await updateTask(taskData as GoalTask);
         toast({
@@ -195,7 +214,11 @@ const Tasks = () => {
           description: "Task has been updated successfully."
         });
       } else {
-        await createTask(taskData as Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>);
+        // Ensure the task has the current goalId when created
+        await createTask({
+          ...taskData,
+          goal_id: effectiveGoalId
+        } as Omit<GoalTask, 'id' | 'created_at' | 'updated_at'>);
         toast({
           title: "Task added",
           description: "New task has been added."
@@ -308,7 +331,20 @@ const Tasks = () => {
         <Card className="shadow-sm">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 p-4">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-xl sm:text-2xl">All Tasks</CardTitle>
+              {goalId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mr-2"
+                  onClick={() => navigate(`/goals/${goalId}`)}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Goal
+                </Button>
+              )}
+              <CardTitle className="text-xl sm:text-2xl">
+                {goalId && currentGoal ? `Tasks for: ${currentGoal.title}` : 'All Tasks'}
+              </CardTitle>
             </div>
             <div className="flex flex-wrap gap-2">
               {enabledViewOptions.length > 0 && !isMobile && (
@@ -497,7 +533,7 @@ const Tasks = () => {
         onOpenChange={setTaskDialogOpen}
         onSave={handleSaveTask}
         task={selectedTask}
-        goalId={null} // No specific goal ID
+        goalId={goalId || ""} 
         isLoading={taskActionLoading}
       />
     </MainLayout>

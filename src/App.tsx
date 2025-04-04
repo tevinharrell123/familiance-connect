@@ -34,7 +34,7 @@ function App() {
                 <Route path="/goals" element={<Goals />} />
                 <Route path="/goals/:goalId" element={<Goals />} />
                 <Route path="/tasks" element={<Tasks />} />
-                <Route path="/tasks/:goalId" element={<Navigate to="/tasks" replace />} />
+                <Route path="/tasks/:goalId" element={<Tasks />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/finances" element={<Finances />} />
                 <Route path="*" element={<NotFound />} />

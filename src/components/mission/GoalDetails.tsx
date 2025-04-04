@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -268,6 +267,12 @@ export function GoalDetails() {
     }
   };
   
+  const handleViewTasks = () => {
+    if (goalId) {
+      navigate(`/tasks/${goalId}`);
+    }
+  };
+  
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 px-6">
@@ -470,6 +475,14 @@ export function GoalDetails() {
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Task
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleViewTasks}
+                    className="w-full sm:w-auto"
+                  >
+                    View All Tasks
                   </Button>
                 </div>
               </div>
