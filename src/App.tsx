@@ -31,8 +31,7 @@ function App() {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/household" element={<Household />} />
                 <Route path="/mission" element={<Mission />} />
-                <Route path="/goals" element={<Goals />} />
-                <Route path="/goals/:goalId" element={<Goals />} />
+                <Route path="/goals/*" element={<Goals />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/tasks/:goalId" element={<Tasks />} />
                 <Route path="/calendar" element={<Calendar />} />

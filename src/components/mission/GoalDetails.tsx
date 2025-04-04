@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -77,7 +78,8 @@ export function GoalDetails() {
           updated_at: data.updated_at,
           assigned_to_name: data.user_profiles?.full_name || null,
           completed: data.completed || false,
-          progress: data.progress || 0
+          progress: data.progress || 0,
+          show_on_vision_board: data.show_on_vision_board || false
         });
       } catch (err: any) {
         console.error('Error fetching goal:', err);
@@ -360,7 +362,7 @@ export function GoalDetails() {
             className="mr-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Back to Goals
           </Button>
           <h1 className="text-xl sm:text-2xl font-bold truncate max-w-[200px] sm:max-w-none">{goal.title}</h1>
         </div>
@@ -372,7 +374,7 @@ export function GoalDetails() {
             size="sm"
           >
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            Edit Goal
           </Button>
           <Button 
             variant="destructive" 
