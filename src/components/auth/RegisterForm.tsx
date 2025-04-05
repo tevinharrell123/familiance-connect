@@ -28,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSearchParams } from 'react-router-dom';
 
 const registerSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters long" }),
@@ -51,6 +52,8 @@ export const RegisterForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [householdOption, setHouseholdOption] = useState<HouseholdOption>('none');
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [searchParams] = useSearchParams();
+  const inviteCode = searchParams.get('invite');
   
   // Generate year options for the last 100 years
   const currentYear = new Date().getFullYear();
@@ -64,9 +67,17 @@ export const RegisterForm = () => {
       confirmPassword: '',
       fullName: '',
       householdName: '',
-      householdCode: '',
+      householdCode: inviteCode || '',
     },
   });
+
+  // Set invite code from URL param and switch to join tab if provided
+  useEffect(() => {
+    if (inviteCode) {
+      setHouseholdOption('join');
+      form.setValue('householdCode', inviteCode);
+    }
+  }, [inviteCode, form]);
 
   // Effect to handle form field requirements based on household option
   useEffect(() => {
@@ -78,10 +89,14 @@ export const RegisterForm = () => {
       form.setValue('householdCode', '');
     } else if (householdOption === 'join') {
       form.setValue('householdName', '');
+      // Don't reset the household code if it came from URL params
+      if (!inviteCode) {
+        form.setValue('householdCode', '');
+      }
     }
 
     console.log("Household option changed to:", householdOption);
-  }, [householdOption, form]);
+  }, [householdOption, form, inviteCode]);
 
   const onSubmit = async (values: RegisterFormValues) => {
     console.log("Form submitted with values:", values);

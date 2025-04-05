@@ -41,7 +41,12 @@ export function useSignUp(
   const signUp = async (
     email: string, 
     password: string, 
-    userData: { full_name?: string, dob?: string, household_name?: string }, 
+    userData: { 
+      full_name?: string, 
+      birthday?: string, 
+      household_name?: string, 
+      household_code?: string 
+    }, 
     profileImage?: File | null
   ) => {
     try {
@@ -119,12 +124,50 @@ export function useSignUp(
           console.error('Error in household creation process:', err);
         }
       }
+      
+      // Join household if household_code is provided
+      if (userData.household_code && data.user) {
+        console.log('Looking for household with invite code:', userData.household_code);
+        try {
+          const { data: householdData, error: householdError } = await supabase
+            .from('households')
+            .select('id')
+            .eq('invite_code', userData.household_code)
+            .single();
+            
+          if (householdError) {
+            console.error('Error finding household:', householdError);
+          } else if (householdData) {
+            console.log('Adding user to household as guest:', householdData.id);
+            const { error: memberError } = await supabase
+              .from('household_members')
+              .insert({
+                household_id: householdData.id,
+                user_id: data.user.id,
+                role: 'guest'
+              });
+              
+            if (memberError) {
+              console.error('Error adding user to household:', memberError);
+            }
+          }
+        } catch (err) {
+          console.error('Error in household joining process:', err);
+        }
+      }
 
+      let successMessage;
+      if (userData.household_name) {
+        successMessage = "Your account and household have been created. Please check your email to confirm your account.";
+      } else if (userData.household_code) {
+        successMessage = "Your account has been created. You'll join the household after confirming your email.";
+      } else {
+        successMessage = "Your account has been created. Please check your email to confirm your account.";
+      }
+      
       toast({
         title: "Account created!",
-        description: userData.household_name 
-          ? "Your account and household have been created. Please check your email to confirm your account."
-          : "Your account has been created. Please check your email to confirm your account.",
+        description: successMessage,
       });
       navigate('/auth');
     } catch (error: any) {
