@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +33,7 @@ export const HouseholdDetails = ({
   isLeaving
 }: HouseholdDetailsProps) => {
   const isMobile = useIsMobile();
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   
   return (
     <Card className="w-full">
@@ -55,7 +56,19 @@ export const HouseholdDetails = ({
               <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} /> 
               Refresh
             </Button>
-            <InviteMembersDialog inviteCode={household.invite_code} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInviteDialogOpen(true)}
+              className="h-9 sm:h-10 px-3 text-xs sm:text-sm"
+            >
+              Invite Members
+            </Button>
+            <InviteMembersDialog 
+              open={inviteDialogOpen} 
+              onOpenChange={setInviteDialogOpen}
+              household={household}
+            />
           </div>
         </div>
       </CardHeader>
