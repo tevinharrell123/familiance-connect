@@ -51,13 +51,21 @@ export function useSignUp(
   ) => {
     try {
       setIsLoading(true);
-      console.log('Starting sign up process');
+      console.log('Starting sign up process with data:', { ...userData, email });
+      
+      // Make sure we're storing household details in user metadata
+      const userMetadata = {
+        full_name: userData.full_name,
+        birthday: userData.birthday,
+        household_name: userData.household_name || null,
+        household_code: userData.household_code || null
+      };
       
       const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData
+          data: userMetadata
         }
       });
 
@@ -84,75 +92,6 @@ export function useSignUp(
           if (profileError) {
             console.error('Error updating profile with avatar:', profileError);
           }
-        }
-      }
-
-      // Create household if household_name is provided
-      let createdHouseholdId = null;
-      if (userData.household_name && data.user) {
-        console.log('Creating household:', userData.household_name);
-        const inviteCode = generateInviteCode();
-        
-        try {
-          const { data: householdData, error: householdError } = await supabase
-            .from('households')
-            .insert({ 
-              name: userData.household_name, 
-              invite_code: inviteCode 
-            })
-            .select()
-            .single();
-            
-          if (householdError) {
-            console.error('Error creating household:', householdError);
-          } else if (householdData) {
-            createdHouseholdId = householdData.id;
-            console.log('Adding user to household as admin:', householdData.id);
-            const { error: memberError } = await supabase
-              .from('household_members')
-              .insert({
-                household_id: householdData.id,
-                user_id: data.user.id,
-                role: 'admin'
-              });
-              
-            if (memberError) {
-              console.error('Error adding user to household:', memberError);
-            }
-          }
-        } catch (err) {
-          console.error('Error in household creation process:', err);
-        }
-      }
-      
-      // Join household if household_code is provided
-      if (userData.household_code && data.user) {
-        console.log('Looking for household with invite code:', userData.household_code);
-        try {
-          const { data: householdData, error: householdError } = await supabase
-            .from('households')
-            .select('id')
-            .eq('invite_code', userData.household_code)
-            .single();
-            
-          if (householdError) {
-            console.error('Error finding household:', householdError);
-          } else if (householdData) {
-            console.log('Adding user to household as guest:', householdData.id);
-            const { error: memberError } = await supabase
-              .from('household_members')
-              .insert({
-                household_id: householdData.id,
-                user_id: data.user.id,
-                role: 'guest'
-              });
-              
-            if (memberError) {
-              console.error('Error adding user to household:', memberError);
-            }
-          }
-        } catch (err) {
-          console.error('Error in household joining process:', err);
         }
       }
 

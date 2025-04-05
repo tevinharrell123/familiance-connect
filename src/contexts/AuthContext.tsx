@@ -1,3 +1,4 @@
+
 import React, { createContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [household, setHousehold] = useState<Household | null>(null);
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
@@ -418,6 +420,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Updated to store household information properly
   const signUp = async (email: string, password: string, userData: { full_name: string, birthday?: string, household_name?: string, household_code?: string }) => {
     try {
       setIsLoading(true);
@@ -444,10 +447,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Account created!",
         description: "Your account has been created. Please check your email to confirm your account.",
       });
-
-      if ((userData.household_name || userData.household_code) && data.user) {
-        console.log('User created, will process household in onAuthStateChange after email confirmation');
-      }
     } catch (error: any) {
       console.error('Sign up error:', error);
       throw error;
@@ -483,42 +482,79 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return null;
   };
 
+  // Process household creation/joining after authentication
+  const processHouseholdActions = async (newSession: Session) => {
+    if (!newSession?.user) return;
+    
+    try {
+      const householdName = newSession.user.user_metadata.household_name;
+      const householdCode = newSession.user.user_metadata.household_code;
+      
+      // Check if user is already in a household
+      const { data: existingMember } = await supabase
+        .from('household_members')
+        .select('*')
+        .eq('user_id', newSession.user.id)
+        .maybeSingle();
+      
+      if (existingMember) {
+        console.log('User already belongs to a household, skipping household creation/joining');
+        return;
+      }
+      
+      if (householdName) {
+        console.log('Creating household from signup data:', householdName);
+        try {
+          await createHousehold(householdName);
+          // Clear the metadata to prevent duplicate creation attempts
+          await supabase.auth.updateUser({
+            data: { household_name: null }
+          });
+        } catch (err) {
+          console.error('Error creating household after authentication:', err);
+        }
+      } else if (householdCode) {
+        console.log('Joining household from signup data with code:', householdCode);
+        try {
+          await joinHousehold(householdCode);
+          // Clear the metadata to prevent duplicate join attempts
+          await supabase.auth.updateUser({
+            data: { household_code: null }
+          });
+        } catch (err) {
+          console.error('Error joining household after authentication:', err);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing household actions:', error);
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
         console.log('Auth event:', event);
+        
+        // Update session and user state
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        if (newSession?.user) {
-          setTimeout(() => {
-            fetchProfile(newSession.user.id);
-            fetchMembership(newSession.user.id);
-            
-            const householdName = newSession.user.user_metadata.household_name;
-            const householdCode = newSession.user.user_metadata.household_code;
-            
-            if (event === 'SIGNED_IN') {
-              if (householdName) {
-                createHousehold(householdName)
-                  .then(() => {
-                    supabase.auth.updateUser({
-                      data: { household_name: null }
-                    });
-                  })
-                  .catch(err => console.error('Error creating household after signup:', err));
-              } else if (householdCode) {
-                joinHousehold(householdCode)
-                  .then(() => {
-                    supabase.auth.updateUser({
-                      data: { household_code: null }
-                    });
-                  })
-                  .catch(err => console.error('Error joining household after signup:', err));
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (newSession?.user) {
+            // Load profile data
+            setTimeout(async () => {
+              await fetchProfile(newSession.user.id);
+              
+              // After profile is fetched, check if user needs to create/join a household
+              if (authInitialized) {
+                await processHouseholdActions(newSession);
               }
-            }
-          }, 0);
-        } else {
+              
+              // Then fetch membership data
+              await fetchMembership(newSession.user.id);
+            }, 0);
+          }
+        } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setMembership(null);
           setHousehold(null);
@@ -527,21 +563,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+    // Initial session check
+    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
       
       if (initialSession?.user) {
-        fetchProfile(initialSession.user.id);
-        fetchMembership(initialSession.user.id);
+        await fetchProfile(initialSession.user.id);
+        await fetchMembership(initialSession.user.id);
+        
+        // Set a flag that auth is initialized to prevent household creation
+        // on the first auth state change event
+        setAuthInitialized(true);
+        
+        // Process household actions for the initial session
+        await processHouseholdActions(initialSession);
       }
+      
       setIsLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [authInitialized]);
 
   return (
     <AuthContext.Provider value={{
@@ -575,3 +620,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
