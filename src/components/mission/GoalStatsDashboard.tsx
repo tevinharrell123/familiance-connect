@@ -1,55 +1,36 @@
 
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { FamilyGoal } from '@/types/goals';
-import { CircleIcon } from 'lucide-react';
-
-type GoalStatusData = {
-  label: string;
-  count: number;
-  bgColor: string;
-  textColor: string;
-};
 
 interface GoalStatsDashboardProps {
   goals: FamilyGoal[];
 }
 
 export function GoalStatsDashboard({ goals }: GoalStatsDashboardProps) {
-  // Calculate completion rate
-  const totalGoals = goals.length;
-  const completedGoals = goals.filter(goal => goal.completed).length;
-  const completionPercentage = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
-  
-  // Calculate category counts
-  const categoryMap = goals.reduce((acc, goal) => {
+  // Calculate category counts and completion
+  const categoryStats = goals.reduce((stats, goal) => {
     const category = goal.category;
-    if (!acc[category]) {
-      acc[category] = 0;
+    
+    if (!stats[category]) {
+      stats[category] = {
+        total: 0,
+        completed: 0
+      };
     }
-    acc[category]++;
-    return acc;
-  }, {} as Record<string, number>);
+    
+    stats[category].total += 1;
+    if (goal.completed) {
+      stats[category].completed += 1;
+    }
+    
+    return stats;
+  }, {} as Record<string, { total: number; completed: number }>);
   
-  // Sort categories by count (descending)
-  const sortedCategories = Object.entries(categoryMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5); // Show top 5 categories
-  
-  // Calculate status counts
-  const inProgressCount = goals.filter(goal => !goal.completed && (goal.progress || 0) > 0).length;
-  const onTrackCount = goals.filter(goal => !goal.completed && (goal.progress || 0) >= 50).length;
-  const atRiskCount = goals.filter(goal => !goal.completed && (goal.progress || 0) < 20 && (goal.progress || 0) > 0).length;
-  const onHoldCount = goals.filter(goal => !goal.completed && (goal.progress || 0) === 0).length;
-  
-  // Status data for display
-  const statusData: GoalStatusData[] = [
-    { label: 'In Progress', count: inProgressCount, bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
-    { label: 'On Track', count: onTrackCount, bgColor: 'bg-green-50', textColor: 'text-green-700' },
-    { label: 'At Risk', count: atRiskCount, bgColor: 'bg-amber-50', textColor: 'text-amber-700' },
-    { label: 'On Hold', count: onHoldCount, bgColor: 'bg-red-50', textColor: 'text-red-700' },
-  ];
+  // Sort categories by total count (descending)
+  const sortedCategories = Object.entries(categoryStats)
+    .sort((a, b) => b[1].total - a[1].total);
   
   // Color map for categories
   const categoryColors: Record<string, string> = {
@@ -71,86 +52,43 @@ export function GoalStatsDashboard({ goals }: GoalStatsDashboardProps) {
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      {/* Completion Rate */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Completion Rate</h3>
-          <div className="flex flex-col items-center justify-center">
-            <div className="relative w-32 h-32 my-2">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-4xl font-bold">{completionPercentage}%</div>
-              </div>
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#f1f1f1"
-                  strokeWidth="10"
-                />
-                {completionPercentage > 0 && (
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="10"
-                    strokeDasharray={`${completionPercentage * 2.83} 283`}
-                    strokeLinecap="round"
-                    className="text-primary transform -rotate-90 origin-center"
-                  />
-                )}
-              </svg>
-            </div>
-            <div className="text-center text-muted-foreground mt-2">
-              {completedGoals} of {totalGoals} goals completed
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Goal Categories */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Goal Categories</h3>
-          <div className="space-y-4">
+      <Card className="md:col-span-3">
+        <CardHeader>
+          <CardTitle>Goal Status by Category</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
             {sortedCategories.length > 0 ? (
-              sortedCategories.map(([category, count]) => (
-                <div key={category} className="space-y-1">
-                  <div className="flex items-center">
-                    <div className={`w-3 h-3 rounded-full mr-2 ${getColorForCategory(category)}`}></div>
-                    <span>{category}</span>
-                    <span className="ml-auto">{count}</span>
+              sortedCategories.map(([category, stats]) => {
+                const completionPercentage = stats.total > 0 
+                  ? Math.round((stats.completed / stats.total) * 100) 
+                  : 0;
+                
+                return (
+                  <div key={category} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div 
+                          className={`w-3 h-3 rounded-full mr-2 ${getColorForCategory(category)}`}
+                        ></div>
+                        <span className="font-medium">{category}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {stats.completed} of {stats.total} completed ({completionPercentage}%)
+                      </div>
+                    </div>
+                    <Progress 
+                      value={completionPercentage} 
+                      className="h-2"
+                    />
                   </div>
-                  <Progress 
-                    value={totalGoals > 0 ? (count / totalGoals) * 100 : 0} 
-                    className="h-1.5"
-                  />
-                </div>
-              ))
+                );
+              })
             ) : (
-              <div className="text-center text-muted-foreground">No goals yet</div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Goal Status */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Goal Status</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {statusData.map((status) => (
-              <div 
-                key={status.label} 
-                className={`${status.bgColor} ${status.textColor} rounded-lg p-4 text-center`}
-              >
-                <div className="text-2xl font-bold">{status.count}</div>
-                <div className="text-sm">{status.label}</div>
+              <div className="text-center text-muted-foreground py-8">
+                No goals yet. Create your first goal to start tracking progress.
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
