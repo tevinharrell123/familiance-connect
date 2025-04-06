@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 
-export function AuthCard() {
+interface AuthCardProps {
+  defaultTab?: 'login' | 'register';
+  inviteCode?: string | null;
+}
+
+export function AuthCard({ defaultTab = 'login', inviteCode = null }: AuthCardProps) {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultTab);
+
+  // When the component mounts or inviteCode changes, update the active tab
+  useEffect(() => {
+    if (inviteCode) {
+      setActiveTab('register');
+    }
+  }, [inviteCode]);
 
   if (isLoading) {
     return (
@@ -36,7 +48,7 @@ export function AuthCard() {
       </CardHeader>
       <CardContent>
         <Tabs 
-          defaultValue="login" 
+          defaultValue={defaultTab} 
           value={activeTab} 
           onValueChange={(value) => setActiveTab(value as 'login' | 'register')}
         >
@@ -50,7 +62,7 @@ export function AuthCard() {
           </TabsContent>
           
           <TabsContent value="register">
-            <RegisterForm />
+            <RegisterForm initialInviteCode={inviteCode} />
           </TabsContent>
         </Tabs>
       </CardContent>

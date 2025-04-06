@@ -1,15 +1,20 @@
 
 import React, { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthCard } from '@/components/auth/AuthCard';
 
 const Auth = () => {
   const { user, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const inviteCode = searchParams.get('invite');
 
   useEffect(() => {
     console.log("Auth page - User:", user, "isLoading:", isLoading);
-  }, [user, isLoading]);
+    if (inviteCode) {
+      console.log("Invite code detected:", inviteCode);
+    }
+  }, [user, isLoading, inviteCode]);
 
   if (isLoading) {
     return (
@@ -27,7 +32,7 @@ const Auth = () => {
   console.log("Auth page rendering login/register form");
   return (
     <div className="min-h-screen flex items-center justify-center bg-fampilot-background p-4">
-      <AuthCard />
+      <AuthCard defaultTab={inviteCode ? 'register' : 'login'} inviteCode={inviteCode} />
     </div>
   );
 };

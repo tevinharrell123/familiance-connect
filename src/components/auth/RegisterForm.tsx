@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,15 +46,18 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 type HouseholdOption = 'none' | 'create' | 'join';
 
-export const RegisterForm = () => {
+interface RegisterFormProps {
+  initialInviteCode?: string | null;
+}
+
+export const RegisterForm = ({ initialInviteCode = null }: RegisterFormProps) => {
   const { signUp } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [householdOption, setHouseholdOption] = useState<HouseholdOption>('none');
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
   const [searchParams] = useSearchParams();
-  const inviteCode = searchParams.get('invite');
+  const inviteCode = initialInviteCode || searchParams.get('invite');
   
-  // Generate year options for the last 100 years
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
@@ -71,17 +73,15 @@ export const RegisterForm = () => {
     },
   });
 
-  // Set invite code from URL param and switch to join tab if provided
   useEffect(() => {
     if (inviteCode) {
       setHouseholdOption('join');
       form.setValue('householdCode', inviteCode);
+      console.log("Invite code detected, setting join tab:", inviteCode);
     }
   }, [inviteCode, form]);
 
-  // Effect to handle form field requirements based on household option
   useEffect(() => {
-    // Reset the values when switching tabs
     if (householdOption === 'none') {
       form.setValue('householdName', '');
       form.setValue('householdCode', '');
@@ -89,7 +89,6 @@ export const RegisterForm = () => {
       form.setValue('householdCode', '');
     } else if (householdOption === 'join') {
       form.setValue('householdName', '');
-      // Don't reset the household code if it came from URL params
       if (!inviteCode) {
         form.setValue('householdCode', '');
       }
@@ -108,7 +107,6 @@ export const RegisterForm = () => {
         birthday: values.dob ? format(values.dob, 'yyyy-MM-dd') : undefined,
       };
       
-      // Add household data based on selected option
       if (householdOption === 'create' && values.householdName) {
         userData.household_name = values.householdName;
       } else if (householdOption === 'join' && values.householdCode) {
@@ -141,7 +139,6 @@ export const RegisterForm = () => {
     }
   };
 
-  // Custom console logger for debugging purposes
   console.log("Register form rendering, isSubmitting:", isSubmitting);
 
   return (
