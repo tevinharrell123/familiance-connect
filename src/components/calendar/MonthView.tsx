@@ -57,14 +57,13 @@ export function MonthView({ currentMonth, events, onEventClick, onDayClick }: Mo
   };
 
   // Dynamically set max visible events based on screen size and cell height
-  // Increased number of visible events to show more at once
   let maxVisibleEvents = 6;
   if (windowWidth <= 480) {
-    maxVisibleEvents = 3;
+    maxVisibleEvents = 2;
   } else if (windowWidth <= 640) {
-    maxVisibleEvents = 4;
+    maxVisibleEvents = 3;
   } else if (windowWidth <= 768) {
-    maxVisibleEvents = 5;
+    maxVisibleEvents = 4;
   }
 
   // Determine day label format based on screen size
@@ -75,6 +74,29 @@ export function MonthView({ currentMonth, events, onEventClick, onDayClick }: Mo
       return day.charAt(0);
     }
     return day;
+  };
+
+  // Process events to identify multi-day events for special handling
+  const getProcessedEventsForDay = (day: Date) => {
+    const dayEvents = getEventsForDay(day, events);
+    
+    // Sort events so multi-day events appear first
+    return dayEvents.sort((a, b) => {
+      const aStart = parseISO(a.start_date);
+      const aEnd = parseISO(a.end_date);
+      const bStart = parseISO(b.start_date);
+      const bEnd = parseISO(b.end_date);
+      
+      const aIsMultiDay = !isSameDay(aStart, aEnd);
+      const bIsMultiDay = !isSameDay(bStart, bEnd);
+      
+      // Multi-day events come first
+      if (aIsMultiDay && !bIsMultiDay) return -1;
+      if (!aIsMultiDay && bIsMultiDay) return 1;
+      
+      // Then sort by start date
+      return aStart.getTime() - bStart.getTime();
+    });
   };
 
   return (
@@ -92,7 +114,7 @@ export function MonthView({ currentMonth, events, onEventClick, onDayClick }: Mo
           const isToday = isSameDay(day, new Date());
           
           // Get events for this day
-          const dayEvents = getEventsForDay(day, events);
+          const dayEvents = getProcessedEventsForDay(day);
           
           // Determine if we should show more events indicator
           const hasMoreEvents = dayEvents.length > maxVisibleEvents;
@@ -103,25 +125,36 @@ export function MonthView({ currentMonth, events, onEventClick, onDayClick }: Mo
           return (
             <div 
               key={i} 
-              className={`calendar-day border p-0.5 sm:p-1 ${
+              className={`calendar-day border p-0.5 ${
                 isCurrentMonth ? 'bg-white' : 'text-gray-300 bg-gray-50'
               } ${isToday ? 'border-primary' : ''} ${
                 isCurrentMonth ? 'cursor-pointer hover:bg-gray-50' : ''
               }`}
               onClick={() => isCurrentMonth && handleDayClick(day)}
             >
-              <div className={`text-xs sm:text-sm font-medium ${isToday ? 'font-bold text-primary' : ''}`}>
+              <div className={`text-xs sm:text-sm font-medium ${isToday ? 'font-bold text-primary' : ''} mb-0.5`}>
                 {format(day, 'd')}
               </div>
               
               <div className="overflow-y-auto max-h-full day-events-container">
-                {visibleEvents.map(event => (
-                  <EventIndicator 
-                    key={event.id} 
-                    event={event} 
-                    onClick={handleEventClick} 
-                  />
-                ))}
+                {visibleEvents.map(event => {
+                  const eventStart = parseISO(event.start_date);
+                  const eventEnd = parseISO(event.end_date);
+                  const isMultiDay = !isSameDay(eventStart, eventEnd);
+                  const isFirstDay = isSameDay(day, eventStart);
+                  const isLastDay = isSameDay(day, eventEnd);
+                  
+                  return (
+                    <EventIndicator 
+                      key={event.id} 
+                      event={event}
+                      isMultiDay={isMultiDay}
+                      isFirstDay={isFirstDay}
+                      isLastDay={isLastDay}
+                      onClick={handleEventClick} 
+                    />
+                  );
+                })}
                 
                 {hasMoreEvents && (
                   <div 
