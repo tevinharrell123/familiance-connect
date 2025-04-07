@@ -19,7 +19,7 @@ export interface CalendarEvent {
   is_public?: boolean;
 }
 
-export type CalendarViewType = 'day' | 'week' | 'month';
+export type CalendarViewType = 'day' | 'week';
 
 export interface CalendarFormValues {
   title: string;

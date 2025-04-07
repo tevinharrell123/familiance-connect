@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
@@ -14,10 +13,10 @@ import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { addDays, format, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' | 'month' }) {
+export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' }) {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<Date>(initialDate || today);
-  const [view, setView] = useState<'day' | 'week' | 'month'>(initialView);
+  const [view, setView] = useState<'day' | 'week'>(initialView as 'day' | 'week');
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -143,7 +142,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
 
   return (
     <div className="calendar-widget w-full h-full">
-      <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week' | 'month')}>
+      <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week')}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border-b">
           <CalendarHeader
             currentDate={selectedDate}
@@ -163,9 +162,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
               </TabsTrigger>
               <TabsTrigger value="week" className={isMobile ? "px-3" : ""}>
                 {isMobile ? "W" : "Week"}
-              </TabsTrigger>
-              <TabsTrigger value="month" className={isMobile ? "px-3" : ""}>
-                {isMobile ? "M" : "Month"}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -187,17 +183,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
             isLoading={isLoading}
             onEventClick={handleSelectEvent}
           />
-        </TabsContent>
-        
-        <TabsContent value="month" className="h-full flex-1">
-          <div className="month-container p-1 sm:p-2 md:p-3 lg:p-4">
-            <MonthView
-              currentMonth={selectedDate}
-              events={events}
-              onEventClick={handleSelectEvent}
-              onDayClick={handleDateChange}
-            />
-          </div>
         </TabsContent>
       </Tabs>
 
