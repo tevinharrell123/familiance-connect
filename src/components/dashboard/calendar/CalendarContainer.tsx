@@ -14,7 +14,7 @@ import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { addDays, format, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export function CalendarWidget({ initialDate, initialView = 'month' }: { initialDate?: Date, initialView?: 'day' | 'week' | 'month' }) {
+export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' | 'month' }) {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<Date>(initialDate || today);
   const [view, setView] = useState<'day' | 'week' | 'month'>(initialView);
