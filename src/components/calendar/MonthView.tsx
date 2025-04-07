@@ -102,7 +102,7 @@ export function MonthView({ currentMonth, events, onEventClick, onDayClick }: Mo
   };
 
   return (
-    <div className="month-view relative">
+    <div className="month-view relative w-full h-full">
       <table className="calendar-table w-full border-collapse table-fixed">
         <thead>
           <tr className="bg-background">
@@ -141,7 +141,7 @@ export function MonthView({ currentMonth, events, onEventClick, onDayClick }: Mo
                       }`}
                       onClick={() => isCurrentMonth && handleDayClick(day)}
                     >
-                      <div className="flex flex-col h-full min-h-[100px] md:min-h-[130px]">
+                      <div className="day-content h-full flex flex-col">
                         <div className={`text-xs sm:text-sm md:text-base ${isToday ? 'font-bold text-primary' : isCurrentMonth ? 'font-medium' : 'text-gray-400'} mb-1`}>
                           {format(day, 'd')}
                         </div>

@@ -14,7 +14,7 @@ const CalendarPage = () => {
           </CardHeader>
           <CardContent className="p-0">
             <div className="calendar-container w-full h-[calc(100vh-12rem)]">
-              <CalendarWidget key="calendar-page-widget" initialView="week" />
+              <CalendarWidget key="calendar-page-widget" initialView="month" />
             </div>
           </CardContent>
         </Card>

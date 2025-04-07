@@ -14,15 +14,24 @@ export function MonthViewStyles() {
       .calendar-table {
         table-layout: fixed;
         width: 100%;
-        border-collapse: separate;
+        border-collapse: collapse;
         border-spacing: 0;
+        height: 100%;
       }
       
       .calendar-day {
-        height: 100%;
-        aspect-ratio: 1;
+        height: 120px;
         vertical-align: top;
         border: 1px solid #e5e7eb;
+        position: relative;
+        padding: 4px;
+      }
+      
+      .day-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
       }
       
       .day-events-container {
@@ -56,6 +65,10 @@ export function MonthViewStyles() {
           padding: 4px;
         }
         
+        .calendar-table {
+          height: auto; 
+        }
+        
         .single-day-event {
           font-size: 12px !important;
           padding: 3px 6px !important;
@@ -79,6 +92,7 @@ export function MonthViewStyles() {
       @media (max-width: 768px) {
         .calendar-day {
           min-height: 65px;
+          padding: 2px;
         }
         
         .single-day-event {
@@ -134,6 +148,18 @@ export function MonthViewStyles() {
       .single-day-event.rounded-r-md:not(.rounded-l-md) {
         margin-left: 0;
         border-left-width: 0;
+      }
+      
+      /* Make calendar cells take up more vertical space */
+      .calendar-week {
+        height: 16.66%; /* 100% divided by 6 rows */
+      }
+      
+      /* Fix for calendar in container */
+      .month-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
       }
       `}
     </style>
