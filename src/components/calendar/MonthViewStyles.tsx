@@ -9,22 +9,29 @@ export function MonthViewStyles() {
         position: relative;
         width: 100%;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
       
-      .grid-container {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        position: relative;
+      .calendar-table {
+        table-layout: fixed;
+        border-collapse: collapse;
         width: 100%;
+        height: 100%;
       }
       
       .calendar-day {
-        min-height: 100px; /* Increased from 80px */
-        display: flex;
-        flex-direction: column;
+        height: 120px; 
+        min-height: 80px;
+        vertical-align: top;
         position: relative;
         z-index: 1;
-        aspect-ratio: auto;
+      }
+      
+      .day-header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
       }
       
       .day-events-container {
@@ -33,8 +40,13 @@ export function MonthViewStyles() {
         z-index: 5;
         display: flex;
         flex-direction: column;
-        overflow: visible;
-        flex-grow: 1;
+        min-height: 50px;
+        max-height: calc(100% - 20px);
+        overflow-y: hidden;
+      }
+      
+      .day-events-container:hover {
+        overflow-y: auto;
       }
       
       .single-day-event {
@@ -50,13 +62,30 @@ export function MonthViewStyles() {
         text-overflow: ellipsis;
       }
       
-      @media (max-width: 768px) {
+      @media (min-width: 1024px) {
         .calendar-day {
-          min-height: 65px;
+          height: 140px; 
+          min-height: 120px;
         }
         
-        .grid-container {
-          grid-template-columns: repeat(7, minmax(40px, 1fr));
+        .single-day-event {
+          font-size: 12px !important;
+          padding: 3px 5px !important;
+          line-height: 1.3 !important;
+        }
+      }
+      
+      @media (min-width: 1280px) {
+        .calendar-day {
+          height: 160px; 
+          min-height: 130px;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        .calendar-day {
+          height: 80px;
+          min-height: 65px;
         }
         
         .single-day-event {
@@ -68,14 +97,9 @@ export function MonthViewStyles() {
       
       @media (max-width: 640px) {
         .calendar-day {
+          height: 60px;
           min-height: 55px;
           padding: 1px;
-        }
-        
-        /* Improve mobile wrapping for calendar grid */
-        .grid-container {
-          width: 100%;
-          grid-template-columns: repeat(7, minmax(30px, 1fr));
         }
         
         .single-day-event {
@@ -88,13 +112,10 @@ export function MonthViewStyles() {
       
       @media (max-width: 480px) {
         .calendar-day {
+          height: 50px;
           min-height: 45px;
           font-size: 0.7rem;
           padding: 1px;
-        }
-        
-        .grid-container {
-          grid-template-columns: repeat(7, minmax(25px, 1fr));
         }
         
         .single-day-event {
@@ -106,8 +127,8 @@ export function MonthViewStyles() {
       }
       
       /* Fix for ensuring the days wrap properly without horizontal scrolling */
-      .month-view, .calendar-grid {
-        max-width: 100vw;
+      .month-view, .calendar-table {
+        max-width: 100%;
         width: 100%;
       }
       
@@ -128,6 +149,19 @@ export function MonthViewStyles() {
       .single-day-event.rounded-r-md:not(.rounded-l-md) {
         margin-left: 0;
         border-left-width: 0;
+      }
+      
+      /* Calendar header styling */
+      .calendar-header th {
+        font-weight: 600;
+        color: var(--foreground);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 4px;
+      }
+      
+      /* Adjust day cell padding */
+      .calendar-week .calendar-day {
+        padding: 4px;
       }
       `}
     </style>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MonthView } from '@/components/calendar/MonthView';
@@ -38,12 +37,8 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     isLoading: isMutating 
   } = useCalendarEventMutations();
 
-  // Load calendar data immediately and set up a refresh interval
   useEffect(() => {
-    // Initial load
     refetch();
-    
-    // Set up a refresh interval (every 30 seconds)
     const intervalId = setInterval(() => {
       refetch();
     }, 30000);
@@ -78,7 +73,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   const handleSaveEvent = async (eventData: CalendarFormValues) => {
     try {
       if (isEditMode && selectedEvent) {
-        // Update existing event
         await updateEvent({
           ...selectedEvent,
           title: eventData.title,
@@ -95,7 +89,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
           description: "Your event has been updated successfully."
         });
       } else {
-        // Create new event
         await createEvent({
           ...eventData,
           start_date: eventData.start_date || startOfDay(selectedDate),
