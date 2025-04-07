@@ -3,10 +3,9 @@ import React from 'react';
 import { CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CalendarEvent, CalendarViewType } from '@/types/calendar';
-import { format, addMonths, subMonths, addDays, subDays, addWeeks, subWeeks } from 'date-fns';
+import { format, addDays, subDays, addWeeks, subWeeks } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
 import { Button } from '@/components/ui/button';
@@ -38,9 +37,7 @@ export function CalendarTabContent({
 }: CalendarTabContentProps) {
   // Handle navigation based on current view
   const handlePrevious = () => {
-    if (selectedView === 'month') {
-      onDateChange(subMonths(currentDate, 1));
-    } else if (selectedView === 'week') {
+    if (selectedView === 'week') {
       onDateChange(subWeeks(currentDate, 1));
     } else if (selectedView === 'day') {
       onDateChange(subDays(currentDate, 1));
@@ -48,9 +45,7 @@ export function CalendarTabContent({
   };
 
   const handleNext = () => {
-    if (selectedView === 'month') {
-      onDateChange(addMonths(currentDate, 1));
-    } else if (selectedView === 'week') {
+    if (selectedView === 'week') {
       onDateChange(addWeeks(currentDate, 1));
     } else if (selectedView === 'day') {
       onDateChange(addDays(currentDate, 1));
@@ -74,9 +69,8 @@ export function CalendarTabContent({
           <h3 className="text-lg font-semibold">
             {selectedView === 'day' 
               ? format(currentDate, 'MMMM d, yyyy')
-              : selectedView === 'week'
-                ? `Week of ${format(currentDate, 'MMM d, yyyy')}`
-                : format(currentDate, 'MMMM yyyy')}
+              : `Week of ${format(currentDate, 'MMM d, yyyy')}`
+            }
           </h3>
           
           <Button
@@ -90,14 +84,13 @@ export function CalendarTabContent({
           </Button>
         </div>
         
-        <Tabs defaultValue="month" value={selectedView} onValueChange={onViewChange}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="month">Month</TabsTrigger>
+        <Tabs defaultValue="week" value={selectedView} onValueChange={onViewChange}>
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="day">Day</TabsTrigger>
             <TabsTrigger value="week">Week</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="month" className="mt-2 overflow-x-hidden">
+          <TabsContent value="day" className="mt-2 overflow-x-hidden">
             {isLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-[300px] w-full" />
@@ -108,22 +101,12 @@ export function CalendarTabContent({
                 <p>Error loading calendar events</p>
               </div>
             ) : (
-              <MonthView 
-                days={days} 
+              <DayView 
+                currentDate={currentDate} 
                 events={events} 
-                currentMonth={currentDate} 
-                onEventClick={onEventClick} 
-                onDayClick={onDayClick}
+                onEventClick={onEventClick}
               />
             )}
-          </TabsContent>
-          
-          <TabsContent value="day">
-            <DayView 
-              currentDate={currentDate} 
-              events={events} 
-              onEventClick={onEventClick}
-            />
           </TabsContent>
           
           <TabsContent value="week">
