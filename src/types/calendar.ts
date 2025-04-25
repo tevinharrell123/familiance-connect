@@ -1,4 +1,3 @@
-
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -19,7 +18,7 @@ export interface CalendarEvent {
   is_public?: boolean;
 }
 
-export type CalendarViewType = 'day' | 'week';
+export type CalendarViewType = 'day' | 'week' | 'month';
 
 export interface CalendarFormValues {
   title: string;
