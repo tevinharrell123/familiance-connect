@@ -15,7 +15,14 @@ export function useCalendarEventMutations() {
   const deleteEventMutation = useDeleteCalendarEvent();
   
   return {
-    createEvent: (data: CalendarFormValues) => createEventMutation.mutate(data),
+    createEvent: (data: CalendarFormValues): Promise<CalendarEvent | null> => {
+      return new Promise((resolve, reject) => {
+        createEventMutation.mutate(data, {
+          onSuccess: (data) => resolve(data),
+          onError: (error) => reject(error)
+        });
+      });
+    },
     updateEvent: (data: CalendarEvent) => updateEventMutation.mutate(data),
     deleteEvent: (id: string) => deleteEventMutation.mutate(id),
     isLoading: createEventMutation.isPending || updateEventMutation.isPending || deleteEventMutation.isPending,

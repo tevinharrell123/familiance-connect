@@ -1,5 +1,5 @@
 
-import { LocalNotifications, PendingLocalNotificationsSchema } from '@capacitor/local-notifications';
+import { LocalNotifications, PendingLocalNotificationSchema } from '@capacitor/local-notifications';
 import { CalendarEvent } from '@/types/calendar';
 import { format, parseISO, subHours } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
@@ -68,7 +68,7 @@ export const cancelEventNotification = async (eventId: string): Promise<boolean>
     const notificationId = parseInt(eventId.replace(/\D/g, '').substring(0, 9), 10);
     
     // Get pending notifications
-    const pending: PendingLocalNotificationsSchema = await LocalNotifications.getPending();
+    const pending: PendingLocalNotificationSchema = await LocalNotifications.getPending();
     
     // Check if notification with this ID exists
     const exists = pending.notifications.some(n => n.id === notificationId);

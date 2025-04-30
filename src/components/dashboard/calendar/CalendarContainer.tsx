@@ -113,11 +113,11 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
           end_date: eventData.end_date || endOfDay(selectedDate)
         };
         
-        const result = await createEvent(newEventData);
+        const createdEvent = await createEvent(newEventData);
         
-        if (result?.id) {
+        if (createdEvent && 'id' in createdEvent) {
           // Schedule notification for the new event
-          await scheduleEventNotification(result);
+          await scheduleEventNotification(createdEvent);
         }
         
         toast({
