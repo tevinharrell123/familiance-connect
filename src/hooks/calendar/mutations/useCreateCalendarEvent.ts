@@ -1,7 +1,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { CalendarFormValues } from '@/types/calendar';
+import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { useAuth } from '@/contexts/AuthContext';
 import { calendarEventQueries } from './calendarEventQueries';
 import { QueryClient, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +11,7 @@ export function useCreateCalendarEvent() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (values: CalendarFormValues) => {
+    mutationFn: async (values: CalendarFormValues): Promise<CalendarEvent | null> => {
       if (!user) throw new Error('User is not authenticated');
       
       const { title, description, start_date, end_date, color, is_household_event, is_public = true } = values;
@@ -38,7 +38,11 @@ export function useCreateCalendarEvent() {
           throw error;
         }
         
-        return data;
+        return {
+          ...data,
+          is_household_event: true,
+          user_profile: null
+        };
       } else {
         const { data, error } = await supabase
           .from('user_events')
@@ -59,7 +63,11 @@ export function useCreateCalendarEvent() {
           throw error;
         }
         
-        return data;
+        return {
+          ...data,
+          is_household_event: false,
+          user_profile: null
+        };
       }
     },
     onSuccess: () => {

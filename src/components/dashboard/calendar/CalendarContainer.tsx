@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/use-toast';
 import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { addDays, format, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { scheduleEventNotification, cancelEventNotification, initNotificationListeners } from '@/utils/notificationUtils';
 
 export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' }) {
   const today = new Date();
@@ -36,6 +37,11 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     deleteEvent, 
     isLoading: isMutating 
   } = useCalendarEventMutations();
+
+  // Initialize notification listeners
+  useEffect(() => {
+    initNotificationListeners();
+  }, []);
 
   // Load calendar data immediately and set up a refresh interval
   useEffect(() => {
@@ -78,7 +84,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     try {
       if (isEditMode && selectedEvent) {
         // Update existing event
-        await updateEvent({
+        const updatedEvent = {
           ...selectedEvent,
           title: eventData.title,
           description: eventData.description,
@@ -87,7 +93,13 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
           end_date: format(eventData.end_date, "yyyy-MM-dd'T'HH:mm:ss"),
           is_household_event: eventData.is_household_event,
           is_public: eventData.is_public
-        });
+        };
+        
+        await updateEvent(updatedEvent);
+        
+        // Update the notification for the event
+        await cancelEventNotification(selectedEvent.id);
+        await scheduleEventNotification(updatedEvent);
         
         toast({
           title: "Event updated",
@@ -95,11 +107,18 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
         });
       } else {
         // Create new event
-        await createEvent({
+        const newEventData = {
           ...eventData,
           start_date: eventData.start_date || startOfDay(selectedDate),
           end_date: eventData.end_date || endOfDay(selectedDate)
-        });
+        };
+        
+        const result = await createEvent(newEventData);
+        
+        if (result?.id) {
+          // Schedule notification for the new event
+          await scheduleEventNotification(result);
+        }
         
         toast({
           title: "Event created",
@@ -123,6 +142,9 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     if (!selectedEvent) return;
     
     try {
+      // Cancel any scheduled notifications
+      await cancelEventNotification(selectedEvent.id);
+      
       await deleteEvent(selectedEvent.id);
       setIsDetailsDialogOpen(false);
       refetch();

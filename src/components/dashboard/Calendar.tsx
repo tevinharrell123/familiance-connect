@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { format, addDays, subDays } from 'date-fns';
@@ -9,6 +9,8 @@ import { DashboardMonthView } from '@/components/calendar/DashboardMonthView';
 import { CalendarEvent } from '@/types/calendar';
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
+import { checkNotificationPermission } from '@/utils/notificationUtils';
+import { toast } from '@/components/ui/use-toast';
 
 export function CalendarWidget() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -17,6 +19,22 @@ export function CalendarWidget() {
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   
   const { events, isLoading, refetch } = useCalendarEvents();
+
+  // Check notification permissions on component mount
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const hasPermission = await checkNotificationPermission();
+      if (!hasPermission) {
+        toast({
+          title: "Notifications",
+          description: "Enable notifications to get reminders for your events.",
+          variant: "default",
+        });
+      }
+    };
+    
+    checkPermissions();
+  }, []);
 
   const handlePrevious = () => {
     setCurrentDate(prev => subDays(prev, 30));
