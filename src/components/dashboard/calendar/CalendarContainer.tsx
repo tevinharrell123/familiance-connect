@@ -115,7 +115,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
         
         const createdEvent = await createEvent(newEventData);
         
-        if (createdEvent && 'id' in createdEvent) {
+        if (createdEvent && typeof createdEvent === 'object' && 'id' in createdEvent) {
           // Schedule notification for the new event
           await scheduleEventNotification(createdEvent);
         }
