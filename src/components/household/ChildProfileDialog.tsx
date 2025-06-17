@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Dialog,
@@ -37,18 +37,41 @@ export function ChildProfileDialog({
 }: ChildProfileDialogProps) {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateChildProfileData>({
     defaultValues: {
-      name: childProfile?.name || '',
-      age: childProfile?.age || undefined,
-      avatar_url: childProfile?.avatar_url || ''
+      name: '',
+      age: undefined,
+      avatar_url: ''
     }
   });
 
   const [isUploading, setIsUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string>(childProfile?.avatar_url || '');
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadFile, getPublicUrl } = useStorage();
 
   const watchedAvatarUrl = watch('avatar_url');
+
+  // Reset form data when dialog opens or childProfile changes
+  useEffect(() => {
+    if (open) {
+      if (isEditing && childProfile) {
+        // Reset form with existing child data
+        reset({
+          name: childProfile.name || '',
+          age: childProfile.age || undefined,
+          avatar_url: childProfile.avatar_url || ''
+        });
+        setPreviewUrl(childProfile.avatar_url || '');
+      } else {
+        // Reset form to empty for new child
+        reset({
+          name: '',
+          age: undefined,
+          avatar_url: ''
+        });
+        setPreviewUrl('');
+      }
+    }
+  }, [open, isEditing, childProfile, reset]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
