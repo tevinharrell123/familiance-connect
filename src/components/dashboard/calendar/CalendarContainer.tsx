@@ -1,10 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { EnhancedWeekView } from '@/components/calendar/EnhancedWeekView';
 import { EnhancedDayView } from '@/components/calendar/EnhancedDayView';
 import { MonthView } from '@/components/calendar/MonthView';
+import { MobileMonthView } from '@/components/calendar/MobileMonthView';
+import { MobileCalendarContainer } from '@/components/calendar/MobileCalendarContainer';
+import { MobileEventSheet } from '@/components/calendar/MobileEventSheet';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
@@ -29,6 +31,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [isQuickEventDialogOpen, setIsQuickEventDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isMobileEventSheetOpen, setIsMobileEventSheetOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
@@ -136,7 +139,13 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   const handleSelectEvent = (event: CalendarEvent) => {
     console.log('Event selected:', event.title);
     setSelectedEvent(event);
-    setIsDetailsDialogOpen(true);
+    
+    // Use mobile sheet on mobile devices, dialog on desktop
+    if (isMobile) {
+      setIsMobileEventSheetOpen(true);
+    } else {
+      setIsDetailsDialogOpen(true);
+    }
   };
 
   const handleEditEvent = (event?: CalendarEvent) => {
@@ -145,6 +154,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     if (eventToEdit) {
       setSelectedEvent(eventToEdit);
       setIsDetailsDialogOpen(false);
+      setIsMobileEventSheetOpen(false);
       setIsEditMode(true);
       setIsEventDialogOpen(true);
     }
@@ -159,6 +169,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
       await cancelEventNotification(eventToDelete.id);
       await deleteEvent(eventToDelete.id);
       setIsDetailsDialogOpen(false);
+      setIsMobileEventSheetOpen(false);
       toast({
         title: "Event deleted",
         description: "The event has been removed from your calendar."
@@ -269,6 +280,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
         setIsEventDialogOpen(false);
         setIsQuickEventDialogOpen(false);
         setIsDetailsDialogOpen(false);
+        setIsMobileEventSheetOpen(false);
         setShowKeyboardShortcuts(false);
         break;
     }
@@ -335,149 +347,182 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   };
 
   return (
-    <div className="calendar-widget w-full h-full flex flex-col">
-      <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week' | 'month')}>
-        <div className="flex flex-col space-y-2 px-4 py-2 border-b bg-background">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <CalendarHeader
-              currentDate={selectedDate}
-              onAddEvent={() => handleQuickEventCreate(selectedDate)}
-              onDateChange={handleDateChange}
-            />
-            <div className="mt-2 sm:mt-0 flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleManualRefresh}
-                disabled={isRefreshing}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                {isMobile ? '' : 'Refresh'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowKeyboardShortcuts(!showKeyboardShortcuts)}
-                className="flex items-center gap-2"
-              >
-                <Keyboard className="h-4 w-4" />
-                {isMobile ? '' : 'Shortcuts'}
-              </Button>
-              <button
-                className="p-2 rounded-md text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                onClick={() => handleQuickEventCreate(selectedDate)}
-              >
-                + Event
-              </button>
-              <TabsList>
-                <TabsTrigger value="month" className={isMobile ? "px-3" : ""}>
-                  {isMobile ? "M" : "Month"}
-                </TabsTrigger>
-                <TabsTrigger value="week" className={isMobile ? "px-3" : ""}>
-                  {isMobile ? "W" : "Week"}
-                </TabsTrigger>
-                <TabsTrigger value="day" className={isMobile ? "px-3" : ""}>
-                  {isMobile ? "D" : "Day"}
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          </div>
-          
-          <CalendarFilters
-            householdMembers={householdMembers || []}
-            childProfiles={childProfiles || []}
-            selectedPersonIds={selectedPersonIds}
-            onPersonToggle={handlePersonToggle}
-            onClearFilters={handleClearFilters}
-          />
-
-          {showKeyboardShortcuts && (
-            <div className="flex justify-center">
-              <KeyboardShortcuts
-                onQuickAction={handleKeyboardShortcut}
-                isEnabled={keyboardShortcutsEnabled}
+    <MobileCalendarContainer
+      currentDate={selectedDate}
+      view={view}
+      onDateChange={handleDateChange}
+      onRefresh={handleManualRefresh}
+      isRefreshing={isRefreshing}
+    >
+      <div className="calendar-widget w-full h-full flex flex-col">
+        <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week' | 'month')}>
+          <div className="flex flex-col space-y-2 px-4 py-2 border-b bg-background">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <CalendarHeader
+                currentDate={selectedDate}
+                onAddEvent={() => handleQuickEventCreate(selectedDate)}
+                onDateChange={handleDateChange}
               />
+              <div className="mt-2 sm:mt-0 flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  {isMobile ? '' : 'Refresh'}
+                </Button>
+                {!isMobile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowKeyboardShortcuts(!showKeyboardShortcuts)}
+                    className="flex items-center gap-2"
+                  >
+                    <Keyboard className="h-4 w-4" />
+                    Shortcuts
+                  </Button>
+                )}
+                <button
+                  className="p-2 rounded-md text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => handleQuickEventCreate(selectedDate)}
+                >
+                  + Event
+                </button>
+                <TabsList>
+                  <TabsTrigger value="month" className={isMobile ? "px-3" : ""}>
+                    {isMobile ? "M" : "Month"}
+                  </TabsTrigger>
+                  <TabsTrigger value="week" className={isMobile ? "px-3" : ""}>
+                    {isMobile ? "W" : "Week"}
+                  </TabsTrigger>
+                  <TabsTrigger value="day" className={isMobile ? "px-3" : ""}>
+                    {isMobile ? "D" : "Day"}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
             </div>
-          )}
-        </div>
-
-        <div className="flex-1 overflow-hidden">
-          <TabsContent value="month" className="h-full m-0 p-4">
-            <MonthView
-              currentDate={selectedDate}
-              events={filteredEvents}
-              onEventClick={handleSelectEvent}
-              onDayClick={handleDayClick}
-              onQuickEventCreate={handleQuickEventCreate}
-              onEventEdit={handleEditEvent}
-              onEventDelete={handleDeleteEvent}
-              onEventDuplicate={handleDuplicateEvent}
+            
+            <CalendarFilters
+              householdMembers={householdMembers || []}
+              childProfiles={childProfiles || []}
+              selectedPersonIds={selectedPersonIds}
+              onPersonToggle={handlePersonToggle}
+              onClearFilters={handleClearFilters}
             />
-          </TabsContent>
-          
-          <TabsContent value="week" className="h-full m-0">
-            <EnhancedWeekView
-              currentDate={selectedDate}
-              events={filteredEvents}
-              isLoading={isLoading}
-              onEventClick={handleSelectEvent}
-              onTimeSlotClick={handleTimeSlotClick}
-            />
-          </TabsContent>
-          
-          <TabsContent value="day" className="h-full m-0">
-            <EnhancedDayView
-              currentDate={selectedDate}
-              events={filteredEvents}
-              isLoading={isLoading}
-              onEventClick={handleSelectEvent}
-              onTimeSlotClick={handleTimeSlotClick}
-            />
-          </TabsContent>
-        </div>
-      </Tabs>
 
-      {/* Keyboard shortcuts handler */}
-      <KeyboardShortcuts
-        onQuickAction={handleKeyboardShortcut}
-        isEnabled={keyboardShortcutsEnabled && !isEventDialogOpen && !isQuickEventDialogOpen && !isDetailsDialogOpen}
-      />
+            {showKeyboardShortcuts && !isMobile && (
+              <div className="flex justify-center">
+                <KeyboardShortcuts
+                  onQuickAction={handleKeyboardShortcut}
+                  isEnabled={keyboardShortcutsEnabled}
+                />
+              </div>
+            )}
+          </div>
 
-      <CalendarEventDialog
-        open={isEventDialogOpen}
-        onOpenChange={setIsEventDialogOpen}
-        onSubmit={handleSaveEvent}
-        isEditing={isEditMode}
-        defaultValues={isEditMode && selectedEvent ? {
-          title: selectedEvent.title,
-          description: selectedEvent.description || '',
-          start_date: parseISO(selectedEvent.start_date),
-          end_date: parseISO(selectedEvent.end_date),
-          color: selectedEvent.color || '',
-          is_household_event: selectedEvent.is_household_event,
-          is_public: selectedEvent.is_public
-        } : eventDefaults}
-        isSubmitting={isMutating}
-      />
+          <div className="flex-1 overflow-hidden">
+            <TabsContent value="month" className="h-full m-0 p-4">
+              {isMobile ? (
+                <MobileMonthView
+                  currentDate={selectedDate}
+                  events={filteredEvents}
+                  onEventClick={handleSelectEvent}
+                  onDayClick={handleDayClick}
+                />
+              ) : (
+                <MonthView
+                  currentDate={selectedDate}
+                  events={filteredEvents}
+                  onEventClick={handleSelectEvent}
+                  onDayClick={handleDayClick}
+                  onQuickEventCreate={handleQuickEventCreate}
+                  onEventEdit={handleEditEvent}
+                  onEventDelete={handleDeleteEvent}
+                  onEventDuplicate={handleDuplicateEvent}
+                />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="week" className="h-full m-0">
+              <EnhancedWeekView
+                currentDate={selectedDate}
+                events={filteredEvents}
+                isLoading={isLoading}
+                onEventClick={handleSelectEvent}
+                onTimeSlotClick={handleTimeSlotClick}
+              />
+            </TabsContent>
+            
+            <TabsContent value="day" className="h-full m-0">
+              <EnhancedDayView
+                currentDate={selectedDate}
+                events={filteredEvents}
+                isLoading={isLoading}
+                onEventClick={handleSelectEvent}
+                onTimeSlotClick={handleTimeSlotClick}
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
 
-      <QuickEventDialog
-        open={isQuickEventDialogOpen}
-        onOpenChange={setIsQuickEventDialogOpen}
-        onSubmit={handleSaveEvent}
-        selectedDate={quickEventDate}
-        selectedTemplate={quickEventTemplate}
-      />
-      
-      {selectedEvent && (
-        <EventDetailsDialog
-          open={isDetailsDialogOpen}
-          onOpenChange={setIsDetailsDialogOpen}
-          event={selectedEvent}
-          onEditClick={() => handleEditEvent()}
-          onDeleteClick={() => handleDeleteEvent()}
+        {/* Keyboard shortcuts handler - disabled on mobile */}
+        {!isMobile && (
+          <KeyboardShortcuts
+            onQuickAction={handleKeyboardShortcut}
+            isEnabled={keyboardShortcutsEnabled && !isEventDialogOpen && !isQuickEventDialogOpen && !isDetailsDialogOpen}
+          />
+        )}
+
+        <CalendarEventDialog
+          open={isEventDialogOpen}
+          onOpenChange={setIsEventDialogOpen}
+          onSubmit={handleSaveEvent}
+          isEditing={isEditMode}
+          defaultValues={isEditMode && selectedEvent ? {
+            title: selectedEvent.title,
+            description: selectedEvent.description || '',
+            start_date: parseISO(selectedEvent.start_date),
+            end_date: parseISO(selectedEvent.end_date),
+            color: selectedEvent.color || '',
+            is_household_event: selectedEvent.is_household_event,
+            is_public: selectedEvent.is_public
+          } : eventDefaults}
+          isSubmitting={isMutating}
         />
-      )}
-    </div>
+
+        <QuickEventDialog
+          open={isQuickEventDialogOpen}
+          onOpenChange={setIsQuickEventDialogOpen}
+          onSubmit={handleSaveEvent}
+          selectedDate={quickEventDate}
+          selectedTemplate={quickEventTemplate}
+        />
+        
+        {/* Desktop event details dialog */}
+        {selectedEvent && !isMobile && (
+          <EventDetailsDialog
+            open={isDetailsDialogOpen}
+            onOpenChange={setIsDetailsDialogOpen}
+            event={selectedEvent}
+            onEditClick={() => handleEditEvent()}
+            onDeleteClick={() => handleDeleteEvent()}
+          />
+        )}
+
+        {/* Mobile event details sheet */}
+        {selectedEvent && isMobile && (
+          <MobileEventSheet
+            open={isMobileEventSheetOpen}
+            onOpenChange={setIsMobileEventSheetOpen}
+            event={selectedEvent}
+            onEditClick={() => handleEditEvent()}
+            onDeleteClick={() => handleDeleteEvent()}
+          />
+        )}
+      </div>
+    </MobileCalendarContainer>
   );
 }
