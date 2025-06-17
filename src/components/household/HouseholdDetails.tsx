@@ -1,13 +1,16 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Users, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Household, HouseholdMember, HouseholdRole } from '@/types/household';
 import { HouseholdMembersList } from './HouseholdMembersList';
 import { InviteMembersDialog } from './InviteMembersDialog';
 import { LeaveHouseholdDialog } from './LeaveHouseholdDialog';
+import { ChildProfileDialog } from './ChildProfileDialog';
+import { useChildProfiles } from '@/hooks/household/useChildProfiles';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CreateChildProfileData } from '@/types/child-profiles';
 
 interface HouseholdDetailsProps {
   household: Household;
@@ -34,6 +37,21 @@ export const HouseholdDetails = ({
 }: HouseholdDetailsProps) => {
   const isMobile = useIsMobile();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [childDialogOpen, setChildDialogOpen] = useState(false);
+  
+  const { 
+    childProfiles, 
+    createChildProfile, 
+    updateChildProfile, 
+    deleteChildProfile,
+    refreshChildProfiles 
+  } = useChildProfiles();
+
+  const canManageChildren = userRole === 'admin' || userRole === 'adult';
+
+  const handleCreateChild = async (data: CreateChildProfileData) => {
+    await createChildProfile(data);
+  };
   
   return (
     <Card className="w-full">
@@ -62,12 +80,30 @@ export const HouseholdDetails = ({
               onClick={() => setInviteDialogOpen(true)}
               className="h-9 sm:h-10 px-3 text-xs sm:text-sm"
             >
-              Invite Members
+              <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              {isMobile ? 'Invite' : 'Invite Members'}
             </Button>
+            {canManageChildren && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setChildDialogOpen(true)}
+                className="h-9 sm:h-10 px-3 text-xs sm:text-sm"
+              >
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                {isMobile ? 'Add Child' : 'Add Child'}
+              </Button>
+            )}
             <InviteMembersDialog 
               open={inviteDialogOpen} 
               onOpenChange={setInviteDialogOpen}
               household={household}
+            />
+            <ChildProfileDialog
+              open={childDialogOpen}
+              onOpenChange={setChildDialogOpen}
+              onSubmit={handleCreateChild}
+              isEditing={false}
             />
           </div>
         </div>
@@ -75,10 +111,15 @@ export const HouseholdDetails = ({
       <CardContent className="p-4 pt-3">
         <HouseholdMembersList 
           members={householdMembers}
+          childProfiles={childProfiles}
           isAdmin={userRole === 'admin'}
           currentUserId={userId}
           onRoleChange={onRoleChange}
           onRefresh={onRefreshHousehold}
+          onRefreshChildren={refreshChildProfiles}
+          onUpdateChild={updateChildProfile}
+          onDeleteChild={deleteChildProfile}
+          canManageChildren={canManageChildren}
           isRefreshing={isRefreshing}
         />
       </CardContent>
