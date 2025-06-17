@@ -5,15 +5,44 @@ import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterv
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { EnhancedCalendarEventCard } from './EnhancedCalendarEventCard';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from '@/components/ui/context-menu';
+import { Calendar, Clock, Edit, Trash2, Copy } from 'lucide-react';
 
 interface MonthViewProps {
   currentDate: Date;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   onDayClick?: (date: Date) => void;
+  onQuickEventCreate?: (date: Date, template?: string) => void;
+  onEventEdit?: (event: CalendarEvent) => void;
+  onEventDelete?: (event: CalendarEvent) => void;
+  onEventDuplicate?: (event: CalendarEvent) => void;
 }
 
-export function MonthView({ currentDate, events, onEventClick, onDayClick }: MonthViewProps) {
+const EVENT_TEMPLATES = [
+  { id: 'school-pickup', label: 'School Pickup', icon: '🚗', duration: 1 },
+  { id: 'doctor-appointment', label: 'Doctor Appointment', icon: '🏥', duration: 2 },
+  { id: 'meeting', label: 'Meeting', icon: '💼', duration: 1 },
+  { id: 'dentist', label: 'Dentist', icon: '🦷', duration: 1.5 },
+  { id: 'grocery-shopping', label: 'Grocery Shopping', icon: '🛒', duration: 1 },
+];
+
+export function MonthView({ 
+  currentDate, 
+  events, 
+  onEventClick, 
+  onDayClick,
+  onQuickEventCreate,
+  onEventEdit,
+  onEventDelete,
+  onEventDuplicate
+}: MonthViewProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -55,6 +84,25 @@ export function MonthView({ currentDate, events, onEventClick, onDayClick }: Mon
     onEventClick(event);
   };
 
+  const handleQuickCreate = (date: Date, template?: string) => {
+    console.log('Quick create for:', date, template);
+    onQuickEventCreate?.(date, template);
+  };
+
+  const handleEventAction = (action: string, event: CalendarEvent) => {
+    switch (action) {
+      case 'edit':
+        onEventEdit?.(event);
+        break;
+      case 'delete':
+        onEventDelete?.(event);
+        break;
+      case 'duplicate':
+        onEventDuplicate?.(event);
+        break;
+    }
+  };
+
   return (
     <div className="month-view">
       {/* Header with day names */}
@@ -74,47 +122,87 @@ export function MonthView({ currentDate, events, onEventClick, onDayClick }: Mon
           const isCurrentDay = isToday(day);
           
           return (
-            <div
-              key={day.toString()}
-              className={cn(
-                "min-h-[120px] bg-background p-2 cursor-pointer hover:bg-accent/50 transition-colors",
-                !isCurrentMonth && "bg-muted/30 text-muted-foreground",
-                isCurrentDay && "bg-primary/10 ring-1 ring-primary/20"
-              )}
-              onClick={() => handleDayClick(day)}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className={cn(
-                  "text-sm font-medium",
-                  isCurrentDay && "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                )}>
-                  {format(day, 'd')}
-                </span>
-                {dayEvents.length > 0 && (
-                  <Badge variant="secondary" className="text-xs h-5">
-                    {dayEvents.length}
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="space-y-1 max-h-[80px] overflow-hidden">
-                {dayEvents.slice(0, 3).map((event) => (
-                  <EnhancedCalendarEventCard
-                    key={`${event.id}-${day.toString()}`}
-                    event={event}
-                    onClick={(e) => handleEventClick(event, e)}
-                    compact={true}
-                    showMultiDayBadge={false}
-                  />
-                ))}
-                
-                {dayEvents.length > 3 && (
-                  <div className="text-xs text-muted-foreground text-center py-1">
-                    +{dayEvents.length - 3} more
+            <ContextMenu key={day.toString()}>
+              <ContextMenuTrigger>
+                <div
+                  className={cn(
+                    "min-h-[120px] bg-background p-2 cursor-pointer hover:bg-accent/50 transition-colors",
+                    !isCurrentMonth && "bg-muted/30 text-muted-foreground",
+                    isCurrentDay && "bg-primary/10 ring-1 ring-primary/20"
+                  )}
+                  onClick={() => handleDayClick(day)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={cn(
+                      "text-sm font-medium",
+                      isCurrentDay && "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                    )}>
+                      {format(day, 'd')}
+                    </span>
+                    {dayEvents.length > 0 && (
+                      <Badge variant="secondary" className="text-xs h-5">
+                        {dayEvents.length}
+                      </Badge>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+                  
+                  <div className="space-y-1 max-h-[80px] overflow-hidden">
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <ContextMenu key={`${event.id}-${day.toString()}`}>
+                        <ContextMenuTrigger>
+                          <EnhancedCalendarEventCard
+                            event={event}
+                            onClick={(e) => handleEventClick(event, e)}
+                            compact={true}
+                            showMultiDayBadge={false}
+                          />
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleEventAction('edit', event)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit Event
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleEventAction('duplicate', event)}>
+                            <Copy className="w-4 h-4 mr-2" />
+                            Duplicate Event
+                          </ContextMenuItem>
+                          <ContextMenuSeparator />
+                          <ContextMenuItem 
+                            onClick={() => handleEventAction('delete', event)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Event
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
+                    ))}
+                    
+                    {dayEvents.length > 3 && (
+                      <div className="text-xs text-muted-foreground text-center py-1">
+                        +{dayEvents.length - 3} more
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem onClick={() => handleQuickCreate(day)}>
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Create Event
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                {EVENT_TEMPLATES.map((template) => (
+                  <ContextMenuItem 
+                    key={template.id}
+                    onClick={() => handleQuickCreate(day, template.id)}
+                  >
+                    <span className="mr-2">{template.icon}</span>
+                    {template.label}
+                  </ContextMenuItem>
+                ))}
+              </ContextMenuContent>
+            </ContextMenu>
           );
         })}
       </div>

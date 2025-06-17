@@ -9,6 +9,8 @@ import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
 import { CalendarFilters } from '@/components/calendar/CalendarFilters';
+import { QuickEventDialog } from '@/components/calendar/QuickEventDialog';
+import { KeyboardShortcuts } from '@/components/calendar/KeyboardShortcuts';
 import { useCalendarEventsData } from '@/hooks/calendar/useCalendarEventsData';
 import { useCalendarEventMutations } from '@/hooks/calendar/useCalendarEventMutations';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
@@ -18,18 +20,23 @@ import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { addDays, format, startOfDay, endOfDay, parseISO, setHours } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { scheduleEventNotification, cancelEventNotification, initNotificationListeners } from '@/utils/notificationUtils';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Keyboard } from 'lucide-react';
 
 export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' | 'month' }) {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<Date>(initialDate || today);
   const [view, setView] = useState<'day' | 'week' | 'month'>(initialView as 'day' | 'week' | 'month');
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isQuickEventDialogOpen, setIsQuickEventDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
   const [eventDefaults, setEventDefaults] = useState<Partial<CalendarFormValues>>({});
+  const [quickEventDate, setQuickEventDate] = useState<Date | undefined>();
+  const [quickEventTemplate, setQuickEventTemplate] = useState<string | undefined>();
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [keyboardShortcutsEnabled, setKeyboardShortcutsEnabled] = useState(true);
   const isMobile = useIsMobile();
 
   const { 
@@ -105,6 +112,13 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     setIsEventDialogOpen(true);
   };
 
+  const handleQuickEventCreate = (date: Date, template?: string) => {
+    console.log('Quick event create for:', date, 'template:', template);
+    setQuickEventDate(date);
+    setQuickEventTemplate(template);
+    setIsQuickEventDialogOpen(true);
+  };
+
   const handleTimeSlotClick = (date: Date, hour: number) => {
     handleAddEvent(date, hour);
   };
@@ -115,7 +129,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
       setSelectedDate(date);
       setView('day');
     } else {
-      handleAddEvent(date);
+      handleQuickEventCreate(date);
     }
   };
 
@@ -125,11 +139,67 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     setIsDetailsDialogOpen(true);
   };
 
-  const handleEditEvent = () => {
-    console.log('Edit event clicked for:', selectedEvent?.title);
-    setIsDetailsDialogOpen(false);
-    setIsEditMode(true);
-    setIsEventDialogOpen(true);
+  const handleEditEvent = (event?: CalendarEvent) => {
+    console.log('Edit event clicked for:', event?.title || selectedEvent?.title);
+    const eventToEdit = event || selectedEvent;
+    if (eventToEdit) {
+      setSelectedEvent(eventToEdit);
+      setIsDetailsDialogOpen(false);
+      setIsEditMode(true);
+      setIsEventDialogOpen(true);
+    }
+  };
+
+  const handleDeleteEvent = async (event?: CalendarEvent) => {
+    const eventToDelete = event || selectedEvent;
+    if (!eventToDelete) return;
+    
+    console.log('Deleting event:', eventToDelete.id);
+    try {
+      await cancelEventNotification(eventToDelete.id);
+      await deleteEvent(eventToDelete.id);
+      setIsDetailsDialogOpen(false);
+      toast({
+        title: "Event deleted",
+        description: "The event has been removed from your calendar."
+      });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem deleting the event. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDuplicateEvent = async (event: CalendarEvent) => {
+    console.log('Duplicating event:', event.title);
+    try {
+      const duplicatedEvent: CalendarFormValues = {
+        title: `${event.title} (Copy)`,
+        description: event.description || '',
+        start_date: parseISO(event.start_date),
+        end_date: parseISO(event.end_date),
+        color: event.color || '#7B68EE',
+        is_household_event: event.is_household_event,
+        is_public: event.is_public,
+        category: event.category || 'Other'
+      };
+      
+      await createEvent(duplicatedEvent);
+      toast({
+        title: "Event duplicated",
+        description: "A copy of the event has been created."
+      });
+    } catch (error) {
+      console.error("Error duplicating event:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem duplicating the event. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePersonToggle = (personId: string) => {
@@ -153,6 +223,54 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
       });
     } catch (error) {
       console.error("Manual refresh failed:", error);
+    }
+  };
+
+  const handleKeyboardShortcut = (action: string) => {
+    console.log('Keyboard shortcut:', action);
+    switch (action) {
+      case 'new-event':
+        handleQuickEventCreate(selectedDate);
+        break;
+      case 'today':
+        setSelectedDate(today);
+        break;
+      case 'day-view':
+        setView('day');
+        break;
+      case 'week-view':
+        setView('week');
+        break;
+      case 'month-view':
+        setView('month');
+        break;
+      case 'prev':
+        if (view === 'month') {
+          setSelectedDate(addDays(selectedDate, -30));
+        } else if (view === 'week') {
+          setSelectedDate(addDays(selectedDate, -7));
+        } else {
+          setSelectedDate(addDays(selectedDate, -1));
+        }
+        break;
+      case 'next':
+        if (view === 'month') {
+          setSelectedDate(addDays(selectedDate, 30));
+        } else if (view === 'week') {
+          setSelectedDate(addDays(selectedDate, 7));
+        } else {
+          setSelectedDate(addDays(selectedDate, 1));
+        }
+        break;
+      case 'refresh':
+        handleManualRefresh();
+        break;
+      case 'close':
+        setIsEventDialogOpen(false);
+        setIsQuickEventDialogOpen(false);
+        setIsDetailsDialogOpen(false);
+        setShowKeyboardShortcuts(false);
+        break;
     }
   };
 
@@ -202,36 +320,15 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
       }
 
       setIsEventDialogOpen(false);
+      setIsQuickEventDialogOpen(false);
       setEventDefaults({});
-      // Remove manual refetch since TanStack Query handles cache invalidation
+      setQuickEventDate(undefined);
+      setQuickEventTemplate(undefined);
     } catch (error) {
       console.error("Error saving event:", error);
       toast({
         title: "Error",
         description: "There was a problem saving your event. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteEvent = async () => {
-    if (!selectedEvent) return;
-    
-    console.log('Deleting event:', selectedEvent.id);
-    try {
-      await cancelEventNotification(selectedEvent.id);
-      await deleteEvent(selectedEvent.id);
-      setIsDetailsDialogOpen(false);
-      toast({
-        title: "Event deleted",
-        description: "The event has been removed from your calendar."
-      });
-      // Remove manual refetch since TanStack Query handles cache invalidation
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem deleting the event. Please try again.",
         variant: "destructive"
       });
     }
@@ -244,7 +341,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <CalendarHeader
               currentDate={selectedDate}
-              onAddEvent={() => handleAddEvent()}
+              onAddEvent={() => handleQuickEventCreate(selectedDate)}
               onDateChange={handleDateChange}
             />
             <div className="mt-2 sm:mt-0 flex items-center space-x-2">
@@ -258,9 +355,18 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isMobile ? '' : 'Refresh'}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowKeyboardShortcuts(!showKeyboardShortcuts)}
+                className="flex items-center gap-2"
+              >
+                <Keyboard className="h-4 w-4" />
+                {isMobile ? '' : 'Shortcuts'}
+              </Button>
               <button
                 className="p-2 rounded-md text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                onClick={() => handleAddEvent()}
+                onClick={() => handleQuickEventCreate(selectedDate)}
               >
                 + Event
               </button>
@@ -285,6 +391,15 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
             onPersonToggle={handlePersonToggle}
             onClearFilters={handleClearFilters}
           />
+
+          {showKeyboardShortcuts && (
+            <div className="flex justify-center">
+              <KeyboardShortcuts
+                onQuickAction={handleKeyboardShortcut}
+                isEnabled={keyboardShortcutsEnabled}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-hidden">
@@ -294,6 +409,10 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
               events={filteredEvents}
               onEventClick={handleSelectEvent}
               onDayClick={handleDayClick}
+              onQuickEventCreate={handleQuickEventCreate}
+              onEventEdit={handleEditEvent}
+              onEventDelete={handleDeleteEvent}
+              onEventDuplicate={handleDuplicateEvent}
             />
           </TabsContent>
           
@@ -319,6 +438,12 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
         </div>
       </Tabs>
 
+      {/* Keyboard shortcuts handler */}
+      <KeyboardShortcuts
+        onQuickAction={handleKeyboardShortcut}
+        isEnabled={keyboardShortcutsEnabled && !isEventDialogOpen && !isQuickEventDialogOpen && !isDetailsDialogOpen}
+      />
+
       <CalendarEventDialog
         open={isEventDialogOpen}
         onOpenChange={setIsEventDialogOpen}
@@ -335,14 +460,22 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
         } : eventDefaults}
         isSubmitting={isMutating}
       />
+
+      <QuickEventDialog
+        open={isQuickEventDialogOpen}
+        onOpenChange={setIsQuickEventDialogOpen}
+        onSubmit={handleSaveEvent}
+        selectedDate={quickEventDate}
+        selectedTemplate={quickEventTemplate}
+      />
       
       {selectedEvent && (
         <EventDetailsDialog
           open={isDetailsDialogOpen}
           onOpenChange={setIsDetailsDialogOpen}
           event={selectedEvent}
-          onEditClick={handleEditEvent}
-          onDeleteClick={handleDeleteEvent}
+          onEditClick={() => handleEditEvent()}
+          onDeleteClick={() => handleDeleteEvent()}
         />
       )}
     </div>
