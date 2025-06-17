@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { CalendarFormValues } from '@/types/calendar';
@@ -6,6 +7,24 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChildProfiles } from '@/hooks/household/useChildProfiles';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface EventDialogFormFieldsProps {
   form: UseFormReturn<CalendarFormValues>;
