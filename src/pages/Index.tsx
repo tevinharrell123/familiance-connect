@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { CalendarWidget } from '@/components/dashboard/Calendar';
+import { Calendar } from '@/components/dashboard/Calendar';
 import { BudgetSummary, GoalsSummary } from '@/components/dashboard/SummaryCards';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -56,7 +56,7 @@ const Dashboard = () => {
         </div>
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-4 sm:mb-6">
-          <CalendarWidget />
+          <Calendar />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
