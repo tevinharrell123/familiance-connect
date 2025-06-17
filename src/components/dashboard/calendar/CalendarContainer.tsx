@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { WeekView } from '@/components/calendar/WeekView';
-import { DayView } from '@/components/calendar/DayView';
+import { EnhancedWeekView } from '@/components/calendar/EnhancedWeekView';
+import { EnhancedDayView } from '@/components/calendar/EnhancedDayView';
+import { MonthView } from '@/components/calendar/MonthView';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
@@ -14,20 +14,21 @@ import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { useChildProfiles } from '@/hooks/household/useChildProfiles';
 import { toast } from '@/components/ui/use-toast';
 import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
-import { addDays, format, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { addDays, format, startOfDay, endOfDay, parseISO, setHours } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { scheduleEventNotification, cancelEventNotification, initNotificationListeners } from '@/utils/notificationUtils';
 import { RefreshCw } from 'lucide-react';
 
-export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' }) {
+export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' | 'month' }) {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<Date>(initialDate || today);
-  const [view, setView] = useState<'day' | 'week'>(initialView as 'day' | 'week');
+  const [view, setView] = useState<'day' | 'week' | 'month'>(initialView as 'day' | 'week' | 'month');
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
+  const [eventDefaults, setEventDefaults] = useState<Partial<CalendarFormValues>>({});
   const isMobile = useIsMobile();
 
   const { 
@@ -49,31 +50,25 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   const { members: householdMembers = [] } = useFamilyMembers();
   const { childProfiles } = useChildProfiles();
 
-  // Initialize notification listeners
   useEffect(() => {
     initNotificationListeners();
   }, []);
 
-  // Load calendar data immediately (removed the refresh interval since it's now handled in the hook)
   useEffect(() => {
     refetch();
   }, [refetch]);
 
-  // Filter events based on selected persons
   const filteredEvents = events?.filter(event => {
     if (selectedPersonIds.length === 0) return true;
     
-    // Check if event is assigned to any of the selected persons
     if (event.assigned_to_child && selectedPersonIds.includes(event.assigned_to_child)) {
       return true;
     }
     
-    // Check if event creator is in selected persons (for user events)
     if (event.user_id && selectedPersonIds.includes(event.user_id)) {
       return true;
     }
     
-    // For household events, show if any person is selected (since they affect everyone)
     if (event.is_household_event && selectedPersonIds.length > 0) {
       return true;
     }
@@ -85,13 +80,44 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     setSelectedDate(date);
   };
 
-  const handleAddEvent = (date?: Date) => {
+  const handleAddEvent = (date?: Date, hour?: number) => {
     setSelectedEvent(null);
     setIsEditMode(false);
+    
     if (date) {
       setSelectedDate(date);
+      if (hour !== undefined) {
+        // Set default time when clicking on a time slot
+        const startDate = setHours(date, hour);
+        const endDate = setHours(date, hour + 1);
+        setEventDefaults({
+          start_date: startDate,
+          end_date: endDate
+        });
+      } else {
+        setEventDefaults({
+          start_date: startOfDay(date),
+          end_date: endOfDay(date)
+        });
+      }
+    } else {
+      setEventDefaults({});
     }
+    
     setIsEventDialogOpen(true);
+  };
+
+  const handleTimeSlotClick = (date: Date, hour: number) => {
+    handleAddEvent(date, hour);
+  };
+
+  const handleDayClick = (date: Date) => {
+    if (view === 'month') {
+      setSelectedDate(date);
+      setView('day');
+    } else {
+      handleAddEvent(date);
+    }
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
@@ -132,7 +158,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   const handleSaveEvent = async (eventData: CalendarFormValues) => {
     try {
       if (isEditMode && selectedEvent) {
-        // Update existing event
         const updatedEvent = {
           ...selectedEvent,
           title: eventData.title,
@@ -146,7 +171,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
         
         await updateEvent(updatedEvent);
         
-        // Update the notification for the event
         await cancelEventNotification(selectedEvent.id);
         await scheduleEventNotification(updatedEvent);
         
@@ -155,7 +179,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
           description: "Your event has been updated successfully."
         });
       } else {
-        // Create new event
         const newEventData = {
           ...eventData,
           start_date: eventData.start_date || startOfDay(selectedDate),
@@ -165,7 +188,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
         const createdEvent = await createEvent(newEventData);
         
         if (createdEvent && typeof createdEvent === 'object' && 'id' in createdEvent) {
-          // Schedule notification for the new event
           await scheduleEventNotification(createdEvent);
         }
         
@@ -176,6 +198,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
       }
 
       setIsEventDialogOpen(false);
+      setEventDefaults({});
       refetch();
     } catch (error) {
       console.error("Error saving event:", error);
@@ -191,9 +214,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     if (!selectedEvent) return;
     
     try {
-      // Cancel any scheduled notifications
       await cancelEventNotification(selectedEvent.id);
-      
       await deleteEvent(selectedEvent.id);
       setIsDetailsDialogOpen(false);
       refetch();
@@ -212,13 +233,13 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   };
 
   return (
-    <div className="calendar-widget w-full h-full">
-      <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week')}>
-        <div className="flex flex-col space-y-2 px-4 py-2 border-b">
+    <div className="calendar-widget w-full h-full flex flex-col">
+      <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week' | 'month')}>
+        <div className="flex flex-col space-y-2 px-4 py-2 border-b bg-background">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <CalendarHeader
               currentDate={selectedDate}
-              onAddEvent={handleAddEvent}
+              onAddEvent={() => handleAddEvent()}
               onDateChange={handleDateChange}
             />
             <div className="mt-2 sm:mt-0 flex items-center space-x-2">
@@ -239,42 +260,58 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
                 + Event
               </button>
               <TabsList>
-                <TabsTrigger value="day" className={isMobile ? "px-3" : ""}>
-                  {isMobile ? "D" : "Day"}
+                <TabsTrigger value="month" className={isMobile ? "px-3" : ""}>
+                  {isMobile ? "M" : "Month"}
                 </TabsTrigger>
                 <TabsTrigger value="week" className={isMobile ? "px-3" : ""}>
                   {isMobile ? "W" : "Week"}
+                </TabsTrigger>
+                <TabsTrigger value="day" className={isMobile ? "px-3" : ""}>
+                  {isMobile ? "D" : "Day"}
                 </TabsTrigger>
               </TabsList>
             </div>
           </div>
           
           <CalendarFilters
-            householdMembers={householdMembers}
-            childProfiles={childProfiles}
+            householdMembers={householdMembers || []}
+            childProfiles={childProfiles || []}
             selectedPersonIds={selectedPersonIds}
             onPersonToggle={handlePersonToggle}
             onClearFilters={handleClearFilters}
           />
         </div>
 
-        <TabsContent value="day" className="h-full">
-          <DayView
-            currentDate={selectedDate}
-            events={filteredEvents}
-            isLoading={isLoading}
-            onEventClick={handleSelectEvent}
-          />
-        </TabsContent>
-        
-        <TabsContent value="week" className="h-full">
-          <WeekView
-            currentDate={selectedDate}
-            events={filteredEvents}
-            isLoading={isLoading}
-            onEventClick={handleSelectEvent}
-          />
-        </TabsContent>
+        <div className="flex-1 overflow-hidden">
+          <TabsContent value="month" className="h-full m-0 p-4">
+            <MonthView
+              currentDate={selectedDate}
+              events={filteredEvents}
+              onEventClick={handleSelectEvent}
+              onDayClick={handleDayClick}
+            />
+          </TabsContent>
+          
+          <TabsContent value="week" className="h-full m-0">
+            <EnhancedWeekView
+              currentDate={selectedDate}
+              events={filteredEvents}
+              isLoading={isLoading}
+              onEventClick={handleSelectEvent}
+              onTimeSlotClick={handleTimeSlotClick}
+            />
+          </TabsContent>
+          
+          <TabsContent value="day" className="h-full m-0">
+            <EnhancedDayView
+              currentDate={selectedDate}
+              events={filteredEvents}
+              isLoading={isLoading}
+              onEventClick={handleSelectEvent}
+              onTimeSlotClick={handleTimeSlotClick}
+            />
+          </TabsContent>
+        </div>
       </Tabs>
 
       <CalendarEventDialog
@@ -290,7 +327,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
           color: selectedEvent.color || '',
           is_household_event: selectedEvent.is_household_event,
           is_public: selectedEvent.is_public
-        } : undefined}
+        } : eventDefaults}
         isSubmitting={isMutating}
       />
       

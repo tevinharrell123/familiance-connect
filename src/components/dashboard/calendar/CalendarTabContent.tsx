@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -5,9 +6,9 @@ import { CalendarEvent, CalendarViewType } from '@/types/calendar';
 import { format, addMonths, subMonths, addDays, subDays, addWeeks, subWeeks } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { WeekView } from '@/components/calendar/WeekView';
-import { DayView } from '@/components/calendar/DayView';
-import { DashboardMonthView } from '@/components/calendar/DashboardMonthView';
+import { EnhancedWeekView } from '@/components/calendar/EnhancedWeekView';
+import { EnhancedDayView } from '@/components/calendar/EnhancedDayView';
+import { MonthView } from '@/components/calendar/MonthView';
 import { Button } from '@/components/ui/button';
 
 interface CalendarTabContentProps {
@@ -21,6 +22,7 @@ interface CalendarTabContentProps {
   onEventClick: (event: CalendarEvent) => void;
   onDateChange: (date: Date) => void;
   onDayClick?: (date: Date) => void;
+  onTimeSlotClick?: (date: Date, hour: number) => void;
 }
 
 export function CalendarTabContent({
@@ -33,6 +35,7 @@ export function CalendarTabContent({
   onViewChange,
   onEventClick,
   onDayClick,
+  onTimeSlotClick,
   days,
 }: CalendarTabContentProps) {
   const handlePrevious = () => {
@@ -56,9 +59,9 @@ export function CalendarTabContent({
   };
 
   return (
-    <CardContent className="p-4">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+    <CardContent className="p-0 h-full flex flex-col">
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between mb-4">
           <Button
             variant="outline"
             size="icon"
@@ -90,11 +93,15 @@ export function CalendarTabContent({
             <TabsTrigger value="week">Week</TabsTrigger>
             <TabsTrigger value="day">Day</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="month" className="mt-2">
+        </Tabs>
+      </div>
+      
+      <div className="flex-1 overflow-hidden">
+        {selectedView === 'month' && (
+          <div className="p-4 h-full">
             {isLoading ? (
               <div className="space-y-2">
-                <Skeleton className="h-[300px] w-full" />
+                <Skeleton className="h-[400px] w-full" />
               </div>
             ) : error ? (
               <div className="flex items-center gap-2 text-destructive">
@@ -102,41 +109,35 @@ export function CalendarTabContent({
                 <p>Error loading calendar events</p>
               </div>
             ) : (
-              <DashboardMonthView 
+              <MonthView 
                 currentDate={currentDate}
                 events={events}
                 onEventClick={onEventClick}
+                onDayClick={onDayClick}
               />
             )}
-          </TabsContent>
-          
-          <TabsContent value="week">
-            <WeekView 
-              currentDate={currentDate} 
-              events={events}
-              onEventClick={onEventClick}
-            />
-          </TabsContent>
-          
-          <TabsContent value="day">
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-[300px] w-full" />
-              </div>
-            ) : error ? (
-              <div className="text-center p-4 text-red-500 flex flex-col items-center">
-                <AlertTriangle className="h-8 w-8 mb-2" />
-                <p>Error loading calendar events</p>
-              </div>
-            ) : (
-              <DayView 
-                currentDate={currentDate} 
-                events={events} 
-                onEventClick={onEventClick}
-              />
-            )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
+        
+        {selectedView === 'week' && (
+          <EnhancedWeekView 
+            currentDate={currentDate} 
+            events={events}
+            isLoading={isLoading}
+            onEventClick={onEventClick}
+            onTimeSlotClick={onTimeSlotClick}
+          />
+        )}
+        
+        {selectedView === 'day' && (
+          <EnhancedDayView 
+            currentDate={currentDate} 
+            events={events}
+            isLoading={isLoading}
+            onEventClick={onEventClick}
+            onTimeSlotClick={onTimeSlotClick}
+          />
+        )}
       </div>
     </CardContent>
   );
