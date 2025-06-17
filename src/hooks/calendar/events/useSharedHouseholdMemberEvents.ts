@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calendarEventQueries } from '../mutations/calendarEventQueries';
 
 /**
- * Hook to fetch shared events from household members
+ * Hook to fetch shared events from household members with improved caching
  */
 export function useSharedHouseholdMemberEvents() {
   const { user, household } = useAuth();
@@ -51,7 +51,8 @@ export function useSharedHouseholdMemberEvents() {
             color,
             user_id,
             is_public,
-            created_at
+            created_at,
+            assigned_to_child
           `)
           .eq('is_public', true)
           .in('user_id', memberIds);
@@ -98,6 +99,7 @@ export function useSharedHouseholdMemberEvents() {
           created_at: event.created_at,
           user_id: event.user_id,
           is_public: event.is_public,
+          assigned_to_child: event.assigned_to_child,
           user_profile: profilesMap[event.user_id] ? {
             full_name: profilesMap[event.user_id].full_name,
             avatar_url: profilesMap[event.user_id].avatar_url
@@ -109,8 +111,8 @@ export function useSharedHouseholdMemberEvents() {
       }
     },
     enabled: !!user && !!household,
-    refetchInterval: 30 * 1000, // Reduce to 30 seconds to ensure more frequent syncing
-    refetchOnWindowFocus: true,
-    staleTime: 10 * 1000 // Reduce to 10 seconds to ensure fresher data
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes (increased from 10 seconds)
+    gcTime: 10 * 60 * 1000 // Keep in cache for 10 minutes
   });
 }

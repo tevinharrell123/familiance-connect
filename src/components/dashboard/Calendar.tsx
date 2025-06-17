@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { format, addDays, subDays } from 'date-fns';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DashboardMonthView } from '@/components/calendar/DashboardMonthView';
 import { CalendarFilters } from '@/components/calendar/CalendarFilters';
@@ -22,7 +22,7 @@ export function CalendarWidget() {
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
   
-  const { events, isLoading, refetch } = useCalendarEvents();
+  const { events, isLoading, refetch, manualRefresh, isRefreshing } = useCalendarEvents();
   const { members: householdMembers = [] } = useFamilyMembers();
   const { childProfiles } = useChildProfiles();
 
@@ -93,12 +93,33 @@ export function CalendarWidget() {
     setSelectedPersonIds([]);
   };
 
+  const handleManualRefresh = async () => {
+    try {
+      await manualRefresh();
+      toast({
+        title: "Calendar refreshed",
+        description: "Events have been updated with the latest data."
+      });
+    } catch (error) {
+      console.error("Manual refresh failed:", error);
+    }
+  };
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="pb-1">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Calendar</CardTitle>
           <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
             <Button variant="outline" size="sm" onClick={handlePrevious}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -114,7 +135,7 @@ export function CalendarWidget() {
           {format(currentDate, 'MMMM yyyy')}
         </p>
         <CalendarFilters
-          householdMembers={householdMembers}
+          householdMembers={householdMembers || []}
           childProfiles={childProfiles}
           selectedPersonIds={selectedPersonIds}
           onPersonToggle={handlePersonToggle}

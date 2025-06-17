@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calendarEventQueries } from '../mutations/calendarEventQueries';
 
 /**
- * Hook to fetch household events from Supabase
+ * Hook to fetch household events with improved caching
  */
 export function useHouseholdEvents() {
   const { user, household } = useAuth();
@@ -30,7 +30,8 @@ export function useHouseholdEvents() {
             color,
             created_by,
             created_at,
-            household_id
+            household_id,
+            assigned_to_child
           `)
           .eq('household_id', household.id);
 
@@ -78,6 +79,7 @@ export function useHouseholdEvents() {
           created_by: event.created_by,
           created_at: event.created_at,
           user_id: event.created_by,
+          assigned_to_child: event.assigned_to_child,
           user_profile: profilesMap[event.created_by] ? {
             full_name: profilesMap[event.created_by].full_name,
             avatar_url: profilesMap[event.created_by].avatar_url
@@ -89,6 +91,8 @@ export function useHouseholdEvents() {
       }
     },
     enabled: !!user && !!household,
-    staleTime: 30 * 1000 // 30 seconds
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes (increased from 30 seconds)
+    gcTime: 10 * 60 * 1000 // Keep in cache for 10 minutes
   });
 }

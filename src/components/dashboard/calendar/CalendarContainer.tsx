@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
@@ -16,6 +17,7 @@ import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { addDays, format, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { scheduleEventNotification, cancelEventNotification, initNotificationListeners } from '@/utils/notificationUtils';
+import { RefreshCw } from 'lucide-react';
 
 export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' }) {
   const today = new Date();
@@ -32,7 +34,9 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     events, 
     isLoading, 
     error, 
-    refetch 
+    refetch,
+    manualRefresh,
+    isRefreshing
   } = useCalendarEventsData();
   
   const { 
@@ -50,17 +54,9 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     initNotificationListeners();
   }, []);
 
-  // Load calendar data immediately and set up a refresh interval
+  // Load calendar data immediately (removed the refresh interval since it's now handled in the hook)
   useEffect(() => {
-    // Initial load
     refetch();
-    
-    // Set up a refresh interval (every 30 seconds)
-    const intervalId = setInterval(() => {
-      refetch();
-    }, 30000);
-    
-    return () => clearInterval(intervalId);
   }, [refetch]);
 
   // Filter events based on selected persons
@@ -119,6 +115,18 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
 
   const handleClearFilters = () => {
     setSelectedPersonIds([]);
+  };
+
+  const handleManualRefresh = async () => {
+    try {
+      await manualRefresh();
+      toast({
+        title: "Calendar refreshed",
+        description: "Events have been updated with the latest data."
+      });
+    } catch (error) {
+      console.error("Manual refresh failed:", error);
+    }
   };
 
   const handleSaveEvent = async (eventData: CalendarFormValues) => {
@@ -213,7 +221,17 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
               onAddEvent={handleAddEvent}
               onDateChange={handleDateChange}
             />
-            <div className="mt-2 sm:mt-0 flex space-x-1">
+            <div className="mt-2 sm:mt-0 flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isMobile ? '' : 'Refresh'}
+              </Button>
               <button
                 className="p-2 rounded-md text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
                 onClick={() => handleAddEvent()}

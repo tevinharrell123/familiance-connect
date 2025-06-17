@@ -10,8 +10,15 @@ import {
  * Main hook for calendar events - combines data fetching and mutations
  */
 export function useCalendarEvents() {
-  // Get event data
-  const { events, isLoading, error, refetch: refetchData } = useCalendarEventsData();
+  // Get event data with improved refresh capabilities
+  const { 
+    events, 
+    isLoading, 
+    error, 
+    refetch: refetchData, 
+    manualRefresh,
+    isRefreshing 
+  } = useCalendarEventsData();
   
   // Get mutation hooks
   const createEventMutation = useCreateCalendarEvent();
@@ -26,6 +33,8 @@ export function useCalendarEvents() {
       // This will trigger a refetch of all event data
       return refetchData();
     },
+    manualRefresh,
+    isRefreshing,
     createEvent: createEventMutation.mutate,
     updateEvent: updateEventMutation.mutate,
     deleteEvent: deleteEventMutation.mutate,

@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calendarEventQueries } from '../mutations/calendarEventQueries';
 
 /**
- * Hook to fetch personal events
+ * Hook to fetch personal events with improved caching
  */
 export function usePersonalEvents() {
   const { user, profile } = useAuth();
@@ -60,6 +60,7 @@ export function usePersonalEvents() {
           is_household_event: false,
           created_at: event.created_at,
           user_id: user.id,
+          assigned_to_child: event.assigned_to_child,
           user_profile: eventUserProfile ? {
             full_name: eventUserProfile.full_name,
             avatar_url: eventUserProfile.avatar_url
@@ -71,8 +72,8 @@ export function usePersonalEvents() {
       }
     },
     enabled: !!user,
-    refetchInterval: 1 * 60 * 1000, // Refresh every minute
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000 // Consider data stale after 30 seconds
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes (increased from 30 seconds)
+    gcTime: 10 * 60 * 1000 // Keep in cache for 10 minutes
   });
 }
