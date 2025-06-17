@@ -43,6 +43,18 @@ export function MonthView({ currentDate, events, onEventClick, onDayClick }: Mon
     });
   };
 
+  const handleDayClick = (day: Date) => {
+    console.log('Day clicked:', day);
+    onDayClick?.(day);
+  };
+
+  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
+    console.log('Event clicked:', event.title);
+    e.stopPropagation();
+    e.preventDefault();
+    onEventClick(event);
+  };
+
   return (
     <div className="month-view">
       {/* Header with day names */}
@@ -69,7 +81,7 @@ export function MonthView({ currentDate, events, onEventClick, onDayClick }: Mon
                 !isCurrentMonth && "bg-muted/30 text-muted-foreground",
                 isCurrentDay && "bg-primary/10 ring-1 ring-primary/20"
               )}
-              onClick={() => onDayClick?.(day)}
+              onClick={() => handleDayClick(day)}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className={cn(
@@ -90,10 +102,7 @@ export function MonthView({ currentDate, events, onEventClick, onDayClick }: Mon
                   <EnhancedCalendarEventCard
                     key={`${event.id}-${day.toString()}`}
                     event={event}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEventClick(event);
-                    }}
+                    onClick={(e) => handleEventClick(event, e)}
                     compact={true}
                     showMultiDayBadge={false}
                   />

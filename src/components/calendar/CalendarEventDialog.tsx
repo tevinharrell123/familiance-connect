@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { CalendarFormValues } from '@/types/calendar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,6 +50,42 @@ export function CalendarEventDialog({
     }
   });
 
+  // Reset form when dialog opens/closes or defaultValues change
+  useEffect(() => {
+    if (open && defaultValues) {
+      console.log('Resetting form with values:', defaultValues);
+      form.reset({
+        title: '',
+        description: '',
+        start_date: new Date(),
+        end_date: new Date(),
+        color: '#7B68EE',
+        is_household_event: false,
+        recurrence_type: 'none',
+        category: 'Other',
+        ...defaultValues
+      });
+    }
+  }, [open, defaultValues, form]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    console.log('Form submit handler called');
+    e.preventDefault();
+    e.stopPropagation();
+    
+    form.handleSubmit((values) => {
+      console.log('Form submitted with values:', values);
+      onSubmit(values);
+    })(e);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    console.log('Delete button clicked');
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete?.();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
@@ -62,7 +98,7 @@ export function CalendarEventDialog({
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <EnhancedEventDialogFormFields 
             form={form} 
             showHouseholdOption={!!household}
@@ -72,7 +108,7 @@ export function CalendarEventDialog({
             isEditing={isEditing}
             isSubmitting={isSubmitting}
             isDeleting={isDeleting}
-            onDelete={onDelete}
+            onDelete={handleDelete}
           />
         </form>
       </DialogContent>

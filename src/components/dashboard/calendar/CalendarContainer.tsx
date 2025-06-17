@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
@@ -54,10 +55,6 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     initNotificationListeners();
   }, []);
 
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
   const filteredEvents = events?.filter(event => {
     if (selectedPersonIds.length === 0) return true;
     
@@ -77,17 +74,18 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   }) || [];
 
   const handleDateChange = (date: Date) => {
+    console.log('Date changed to:', date);
     setSelectedDate(date);
   };
 
   const handleAddEvent = (date?: Date, hour?: number) => {
+    console.log('Adding event for date:', date, 'hour:', hour);
     setSelectedEvent(null);
     setIsEditMode(false);
     
     if (date) {
       setSelectedDate(date);
       if (hour !== undefined) {
-        // Set default time when clicking on a time slot
         const startDate = setHours(date, hour);
         const endDate = setHours(date, hour + 1);
         setEventDefaults({
@@ -112,6 +110,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   };
 
   const handleDayClick = (date: Date) => {
+    console.log('Day clicked:', date, 'Current view:', view);
     if (view === 'month') {
       setSelectedDate(date);
       setView('day');
@@ -121,11 +120,13 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
+    console.log('Event selected:', event.title);
     setSelectedEvent(event);
     setIsDetailsDialogOpen(true);
   };
 
   const handleEditEvent = () => {
+    console.log('Edit event clicked for:', selectedEvent?.title);
     setIsDetailsDialogOpen(false);
     setIsEditMode(true);
     setIsEventDialogOpen(true);
@@ -156,8 +157,10 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   };
 
   const handleSaveEvent = async (eventData: CalendarFormValues) => {
+    console.log('Saving event:', eventData);
     try {
       if (isEditMode && selectedEvent) {
+        console.log('Updating existing event:', selectedEvent.id);
         const updatedEvent = {
           ...selectedEvent,
           title: eventData.title,
@@ -179,6 +182,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
           description: "Your event has been updated successfully."
         });
       } else {
+        console.log('Creating new event');
         const newEventData = {
           ...eventData,
           start_date: eventData.start_date || startOfDay(selectedDate),
@@ -199,7 +203,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
 
       setIsEventDialogOpen(false);
       setEventDefaults({});
-      refetch();
+      // Remove manual refetch since TanStack Query handles cache invalidation
     } catch (error) {
       console.error("Error saving event:", error);
       toast({
@@ -213,15 +217,16 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
     
+    console.log('Deleting event:', selectedEvent.id);
     try {
       await cancelEventNotification(selectedEvent.id);
       await deleteEvent(selectedEvent.id);
       setIsDetailsDialogOpen(false);
-      refetch();
       toast({
         title: "Event deleted",
         description: "The event has been removed from your calendar."
       });
+      // Remove manual refetch since TanStack Query handles cache invalidation
     } catch (error) {
       console.error("Error deleting event:", error);
       toast({

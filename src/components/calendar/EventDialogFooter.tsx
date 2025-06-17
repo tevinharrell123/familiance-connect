@@ -8,7 +8,7 @@ interface EventDialogFooterProps {
   isEditing: boolean;
   isSubmitting?: boolean;
   isDeleting?: boolean;
-  onDelete?: () => void;
+  onDelete?: (e: React.MouseEvent) => void;
 }
 
 export function EventDialogFooter({ 
