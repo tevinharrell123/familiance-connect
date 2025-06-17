@@ -6,8 +6,11 @@ import { DayView } from '@/components/calendar/DayView';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
+import { CalendarFilters } from '@/components/calendar/CalendarFilters';
 import { useCalendarEventsData } from '@/hooks/calendar/useCalendarEventsData';
 import { useCalendarEventMutations } from '@/hooks/calendar/useCalendarEventMutations';
+import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
+import { useChildProfiles } from '@/hooks/household/useChildProfiles';
 import { toast } from '@/components/ui/use-toast';
 import { CalendarEvent, CalendarFormValues } from '@/types/calendar';
 import { addDays, format, startOfDay, endOfDay, parseISO } from 'date-fns';
@@ -22,6 +25,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
   const isMobile = useIsMobile();
 
   const { 
@@ -37,6 +41,9 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     deleteEvent, 
     isLoading: isMutating 
   } = useCalendarEventMutations();
+
+  const { members: householdMembers = [] } = useFamilyMembers();
+  const { childProfiles } = useChildProfiles();
 
   // Initialize notification listeners
   useEffect(() => {
@@ -55,6 +62,28 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     
     return () => clearInterval(intervalId);
   }, [refetch]);
+
+  // Filter events based on selected persons
+  const filteredEvents = events?.filter(event => {
+    if (selectedPersonIds.length === 0) return true;
+    
+    // Check if event is assigned to any of the selected persons
+    if (event.assigned_to_child && selectedPersonIds.includes(event.assigned_to_child)) {
+      return true;
+    }
+    
+    // Check if event creator is in selected persons (for user events)
+    if (event.user_id && selectedPersonIds.includes(event.user_id)) {
+      return true;
+    }
+    
+    // For household events, show if any person is selected (since they affect everyone)
+    if (event.is_household_event && selectedPersonIds.length > 0) {
+      return true;
+    }
+    
+    return false;
+  }) || [];
 
   const handleDateChange = (date: Date) => {
     setSelectedDate(date);
@@ -78,6 +107,18 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     setIsDetailsDialogOpen(false);
     setIsEditMode(true);
     setIsEventDialogOpen(true);
+  };
+
+  const handlePersonToggle = (personId: string) => {
+    setSelectedPersonIds(prev => 
+      prev.includes(personId)
+        ? prev.filter(id => id !== personId)
+        : [...prev, personId]
+    );
+  };
+
+  const handleClearFilters = () => {
+    setSelectedPersonIds([]);
   };
 
   const handleSaveEvent = async (eventData: CalendarFormValues) => {
@@ -165,34 +206,44 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   return (
     <div className="calendar-widget w-full h-full">
       <Tabs value={view} onValueChange={(v) => setView(v as 'day' | 'week')}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 border-b">
-          <CalendarHeader
-            currentDate={selectedDate}
-            onAddEvent={handleAddEvent}
-            onDateChange={handleDateChange}
-          />
-          <div className="mt-2 sm:mt-0 flex space-x-1">
-            <button
-              className="p-2 rounded-md text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-              onClick={() => handleAddEvent()}
-            >
-              + Event
-            </button>
-            <TabsList>
-              <TabsTrigger value="day" className={isMobile ? "px-3" : ""}>
-                {isMobile ? "D" : "Day"}
-              </TabsTrigger>
-              <TabsTrigger value="week" className={isMobile ? "px-3" : ""}>
-                {isMobile ? "W" : "Week"}
-              </TabsTrigger>
-            </TabsList>
+        <div className="flex flex-col space-y-2 px-4 py-2 border-b">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <CalendarHeader
+              currentDate={selectedDate}
+              onAddEvent={handleAddEvent}
+              onDateChange={handleDateChange}
+            />
+            <div className="mt-2 sm:mt-0 flex space-x-1">
+              <button
+                className="p-2 rounded-md text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                onClick={() => handleAddEvent()}
+              >
+                + Event
+              </button>
+              <TabsList>
+                <TabsTrigger value="day" className={isMobile ? "px-3" : ""}>
+                  {isMobile ? "D" : "Day"}
+                </TabsTrigger>
+                <TabsTrigger value="week" className={isMobile ? "px-3" : ""}>
+                  {isMobile ? "W" : "Week"}
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </div>
+          
+          <CalendarFilters
+            householdMembers={householdMembers}
+            childProfiles={childProfiles}
+            selectedPersonIds={selectedPersonIds}
+            onPersonToggle={handlePersonToggle}
+            onClearFilters={handleClearFilters}
+          />
         </div>
 
         <TabsContent value="day" className="h-full">
           <DayView
             currentDate={selectedDate}
-            events={events}
+            events={filteredEvents}
             isLoading={isLoading}
             onEventClick={handleSelectEvent}
           />
@@ -201,7 +252,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
         <TabsContent value="week" className="h-full">
           <WeekView
             currentDate={selectedDate}
-            events={events}
+            events={filteredEvents}
             isLoading={isLoading}
             onEventClick={handleSelectEvent}
           />
