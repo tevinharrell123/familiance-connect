@@ -16,6 +16,7 @@ export interface CalendarEvent {
   isMultiDay?: boolean;
   duration?: number;
   is_public?: boolean;
+  assigned_to_child?: string | null;
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month';
