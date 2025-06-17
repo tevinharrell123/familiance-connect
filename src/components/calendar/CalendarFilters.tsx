@@ -18,7 +18,7 @@ interface Person {
 
 interface CalendarFiltersProps {
   householdMembers: HouseholdMember[];
-  childProfiles: ChildProfile[];
+  childProfiles: ChildProfile[] | null;
   selectedPersonIds: string[];
   onPersonToggle: (personId: string) => void;
   onClearFilters: () => void;
@@ -33,13 +33,13 @@ export function CalendarFilters({
 }: CalendarFiltersProps) {
   // Combine household members and children into a single list
   const allPeople: Person[] = [
-    ...householdMembers.map(member => ({
+    ...(householdMembers || []).map(member => ({
       id: member.user_id,
       name: member.user_profiles?.full_name || `User ${member.user_id.substring(0, 8)}`,
       avatar_url: member.user_profiles?.avatar_url,
       type: 'member' as const
     })),
-    ...childProfiles.map(child => ({
+    ...(childProfiles || []).map(child => ({
       id: child.id,
       name: child.name,
       avatar_url: child.avatar_url,
