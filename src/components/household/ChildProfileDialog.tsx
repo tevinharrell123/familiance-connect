@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -55,20 +54,24 @@ export function ChildProfileDialog({
     if (open) {
       if (isEditing && childProfile) {
         // Reset form with existing child data
-        reset({
+        const formData = {
           name: childProfile.name || '',
           age: childProfile.age || undefined,
           avatar_url: childProfile.avatar_url || ''
-        });
+        };
+        reset(formData);
         setPreviewUrl(childProfile.avatar_url || '');
+        console.log('Editing mode - resetting form with:', formData);
       } else {
         // Reset form to empty for new child
-        reset({
+        const emptyData = {
           name: '',
           age: undefined,
           avatar_url: ''
-        });
+        };
+        reset(emptyData);
         setPreviewUrl('');
+        console.log('Add mode - resetting form to empty');
       }
     }
   }, [open, isEditing, childProfile, reset]);
