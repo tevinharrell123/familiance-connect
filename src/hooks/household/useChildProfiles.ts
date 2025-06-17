@@ -9,7 +9,7 @@ export function useChildProfiles() {
   const [childProfiles, setChildProfiles] = useState<ChildProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { household } = useAuth();
+  const { household, user } = useAuth();
 
   const fetchChildProfiles = async () => {
     if (!household) {
@@ -44,6 +44,10 @@ export function useChildProfiles() {
       throw new Error('No household found');
     }
 
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
     try {
       const { data: newProfile, error } = await supabase
         .from('child_profiles')
@@ -51,7 +55,8 @@ export function useChildProfiles() {
           household_id: household.id,
           name: data.name,
           age: data.age || null,
-          avatar_url: data.avatar_url || null
+          avatar_url: data.avatar_url || null,
+          created_by: user.id
         })
         .select()
         .single();
