@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { EventDialogFormFields } from './EventDialogFormFields';
+import { EnhancedEventDialogFormFields } from './EnhancedEventDialogFormFields';
 import { EventDialogFooter } from './EventDialogFooter';
 
 interface CalendarEventDialogProps {
@@ -44,13 +44,15 @@ export function CalendarEventDialog({
       end_date: new Date(),
       color: '#7B68EE',
       is_household_event: false,
+      recurrence_type: 'none',
+      category: 'Other',
       ...defaultValues
     }
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Event' : 'Create New Event'}</DialogTitle>
           <DialogDescription>
@@ -61,7 +63,7 @@ export function CalendarEventDialog({
         </DialogHeader>
         
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <EventDialogFormFields 
+          <EnhancedEventDialogFormFields 
             form={form} 
             showHouseholdOption={!!household}
           />

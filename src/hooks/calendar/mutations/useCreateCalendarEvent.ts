@@ -14,7 +14,20 @@ export function useCreateCalendarEvent() {
     mutationFn: async (values: CalendarFormValues): Promise<CalendarEvent | null> => {
       if (!user) throw new Error('User is not authenticated');
       
-      const { title, description, start_date, end_date, color, is_household_event, is_public = true } = values;
+      const { 
+        title, 
+        description, 
+        start_date, 
+        end_date, 
+        color, 
+        is_household_event, 
+        is_public = true,
+        assigned_to_child,
+        assigned_to_member,
+        recurrence_type = 'none',
+        recurrence_end,
+        category
+      } = values;
       
       if (is_household_event) {
         if (!household) throw new Error('User is not in a household');
@@ -28,7 +41,8 @@ export function useCreateCalendarEvent() {
             end_date: end_date.toISOString(),
             color,
             created_by: user.id,
-            household_id: household.id
+            household_id: household.id,
+            assigned_to_child: assigned_to_child || null
           })
           .select()
           .single();
@@ -41,7 +55,11 @@ export function useCreateCalendarEvent() {
         return {
           ...data,
           is_household_event: true,
-          user_profile: null
+          user_profile: null,
+          assigned_to_member: assigned_to_member || null,
+          recurrence_type: recurrence_type || null,
+          recurrence_end: recurrence_end?.toISOString() || null,
+          category: category || null
         };
       } else {
         const { data, error } = await supabase
@@ -53,7 +71,8 @@ export function useCreateCalendarEvent() {
             end_date: end_date.toISOString(),
             color,
             user_id: user.id,
-            is_public // Use the passed value or default to true
+            is_public,
+            assigned_to_child: assigned_to_child || null
           })
           .select()
           .single();
@@ -66,7 +85,11 @@ export function useCreateCalendarEvent() {
         return {
           ...data,
           is_household_event: false,
-          user_profile: null
+          user_profile: null,
+          assigned_to_member: assigned_to_member || null,
+          recurrence_type: recurrence_type || null,
+          recurrence_end: recurrence_end?.toISOString() || null,
+          category: category || null
         };
       }
     },

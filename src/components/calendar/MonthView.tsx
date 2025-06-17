@@ -3,8 +3,8 @@ import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameDay, parseISO, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { EnhancedCalendarEventCard } from './EnhancedCalendarEventCard';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -41,36 +41,6 @@ export function MonthView({ currentDate, events, onEventClick, onDayClick }: Mon
         isLastDay: isSameDay(day, eventEnd)
       };
     });
-  };
-
-  const getUserInitials = (event: CalendarEvent) => {
-    const fullName = event.user_profile?.full_name || '';
-    return fullName
-      ? fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-      : '?';
-  };
-
-  const getEventStyle = (event: CalendarEvent & { isMultiDay?: boolean; isFirstDay?: boolean; isLastDay?: boolean }) => {
-    const baseColor = event.color || '#7B68EE';
-    let borderRadius = 'rounded-sm';
-    
-    if (event.isMultiDay) {
-      if (event.isFirstDay && event.isLastDay) {
-        borderRadius = 'rounded-sm';
-      } else if (event.isFirstDay) {
-        borderRadius = 'rounded-l-sm rounded-r-none';
-      } else if (event.isLastDay) {
-        borderRadius = 'rounded-r-sm rounded-l-none';
-      } else {
-        borderRadius = 'rounded-none';
-      }
-    }
-    
-    return {
-      backgroundColor: `${baseColor}20`,
-      borderColor: baseColor,
-      className: `${borderRadius} border-l-2`
-    };
   };
 
   return (
@@ -116,48 +86,18 @@ export function MonthView({ currentDate, events, onEventClick, onDayClick }: Mon
               </div>
               
               <div className="space-y-1 max-h-[80px] overflow-hidden">
-                {dayEvents.slice(0, 3).map((event) => {
-                  const eventStyle = getEventStyle(event);
-                  
-                  return (
-                    <div
-                      key={`${event.id}-${day.toString()}`}
-                      className={cn(
-                        "text-xs p-1 cursor-pointer hover:opacity-80 transition-opacity",
-                        eventStyle.className
-                      )}
-                      style={{ 
-                        backgroundColor: eventStyle.backgroundColor,
-                        borderColor: eventStyle.borderColor
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
-                    >
-                      <div className="flex items-center gap-1 truncate">
-                        {event.isFirstDay && (
-                          <Avatar className="h-3 w-3 flex-shrink-0">
-                            {event.user_profile?.avatar_url ? (
-                              <AvatarImage src={event.user_profile.avatar_url} />
-                            ) : null}
-                            <AvatarFallback className="text-[8px]">
-                              {getUserInitials(event)}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <span className="truncate font-medium">
-                          {event.title}
-                        </span>
-                        {event.isMultiDay && event.isFirstDay && (
-                          <span className="text-[8px] opacity-70">
-                            {event.duration}d
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {dayEvents.slice(0, 3).map((event) => (
+                  <EnhancedCalendarEventCard
+                    key={`${event.id}-${day.toString()}`}
+                    event={event}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEventClick(event);
+                    }}
+                    compact={true}
+                    showMultiDayBadge={false}
+                  />
+                ))}
                 
                 {dayEvents.length > 3 && (
                   <div className="text-xs text-muted-foreground text-center py-1">
