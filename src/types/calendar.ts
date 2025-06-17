@@ -28,4 +28,5 @@ export interface CalendarFormValues {
   color?: string;
   is_household_event: boolean;
   is_public?: boolean;
+  assigned_to_child?: string;
 }

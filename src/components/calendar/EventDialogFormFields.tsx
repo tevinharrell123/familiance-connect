@@ -1,26 +1,11 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { CalendarFormValues } from '@/types/calendar';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { useChildProfiles } from '@/hooks/household/useChildProfiles';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EventDialogFormFieldsProps {
   form: UseFormReturn<CalendarFormValues>;
@@ -28,6 +13,9 @@ interface EventDialogFormFieldsProps {
 }
 
 export function EventDialogFormFields({ form, showHouseholdOption }: EventDialogFormFieldsProps) {
+  const { childProfiles } = useChildProfiles();
+  const { household } = useAuth();
+
   return (
     <Form {...form}>
       <div className="space-y-4">
@@ -157,6 +145,34 @@ export function EventDialogFormFields({ form, showHouseholdOption }: EventDialog
             </FormItem>
           )}
         />
+
+        {/* Child Assignment Field */}
+        {household && childProfiles.length > 0 && (
+          <FormField
+            control={form.control}
+            name="assigned_to_child"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assign to Child (optional)</FormLabel>
+                <FormControl>
+                  <select 
+                    {...field} 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={field.value || ''}
+                  >
+                    <option value="">Not assigned to any child</option>
+                    {childProfiles.map((child) => (
+                      <option key={child.id} value={child.id}>
+                        {child.name} {child.age ? `(Age ${child.age})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         {showHouseholdOption && (
           <FormField

@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      child_profiles: {
+        Row: {
+          age: number | null
+          avatar_url: string | null
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          age?: number | null
+          avatar_url?: string | null
+          created_at?: string
+          created_by: string
+          household_id: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          age?: number | null
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_profiles_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_goals: {
         Row: {
           assigned_to: string | null
@@ -188,6 +229,7 @@ export type Database = {
       }
       household_events: {
         Row: {
+          assigned_to_child: string | null
           color: string | null
           created_at: string
           created_by: string
@@ -200,6 +242,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_to_child?: string | null
           color?: string | null
           created_at?: string
           created_by: string
@@ -212,6 +255,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_to_child?: string | null
           color?: string | null
           created_at?: string
           created_by?: string
@@ -224,6 +268,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "household_events_assigned_to_child_fkey"
+            columns: ["assigned_to_child"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "household_events_household_id_fkey"
             columns: ["household_id"]
@@ -351,6 +402,7 @@ export type Database = {
       }
       user_events: {
         Row: {
+          assigned_to_child: string | null
           color: string | null
           created_at: string
           description: string | null
@@ -363,6 +415,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_to_child?: string | null
           color?: string | null
           created_at?: string
           description?: string | null
@@ -375,6 +428,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_to_child?: string | null
           color?: string | null
           created_at?: string
           description?: string | null
@@ -386,7 +440,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_events_assigned_to_child_fkey"
+            columns: ["assigned_to_child"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

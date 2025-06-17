@@ -1,9 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Plus } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
+import { useChildProfiles } from '@/hooks/household/useChildProfiles';
+import { ChildProfileDialog } from '@/components/household/ChildProfileDialog';
+import { ChildProfileItem } from '@/components/household/ChildProfileItem';
+import { CreateChildProfileData } from '@/types/child-profiles';
 
 type FamilyMember = {
   id: number;
@@ -38,11 +44,62 @@ const familyMembers: FamilyMember[] = [
 
 export function FamilyMembersWidget() {
   const isMobile = useIsMobile();
+  const { household, userRole } = useAuth();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingChild, setEditingChild] = useState(null);
   
+  const { 
+    childProfiles, 
+    createChildProfile, 
+    updateChildProfile, 
+    deleteChildProfile,
+    isLoading: isChildProfilesLoading 
+  } = useChildProfiles();
+
+  const canManageChildren = userRole === 'admin' || userRole === 'adult';
+
+  const handleCreateChild = async (data: CreateChildProfileData) => {
+    await createChildProfile(data);
+  };
+
+  const handleEditChild = (childProfile) => {
+    setEditingChild(childProfile);
+    setIsDialogOpen(true);
+  };
+
+  const handleUpdateChild = async (data: CreateChildProfileData) => {
+    if (editingChild) {
+      await updateChildProfile(editingChild.id, data);
+      setEditingChild(null);
+    }
+  };
+
+  const handleDeleteChild = async (id: string) => {
+    if (confirm('Are you sure you want to remove this child profile?')) {
+      await deleteChildProfile(id);
+    }
+  };
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="p-3 sm:p-4">
-        <CardTitle className="text-base sm:text-lg">Family Members</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base sm:text-lg">Family Members</CardTitle>
+          {canManageChildren && household && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditingChild(null);
+                setIsDialogOpen(true);
+              }}
+              className="h-8 px-2"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              {isMobile ? 'Add' : 'Add Child'}
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="p-3 sm:p-4 pt-0">
         <div className="flex justify-center mb-3 sm:mb-4">
@@ -58,6 +115,34 @@ export function FamilyMembersWidget() {
             </div>
           ))}
         </div>
+
+        {/* Child Profiles Section */}
+        {household && (
+          <div className="space-y-2 mb-4">
+            <h3 className="text-sm font-medium">Children</h3>
+            {isChildProfilesLoading ? (
+              <p className="text-xs text-muted-foreground">Loading children...</p>
+            ) : childProfiles.length > 0 ? (
+              <div className="space-y-2">
+                {childProfiles.map((child) => (
+                  <ChildProfileItem
+                    key={child.id}
+                    childProfile={child}
+                    onEdit={handleEditChild}
+                    onDelete={handleDeleteChild}
+                    canManage={canManageChildren}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {canManageChildren 
+                  ? 'No children added yet. Click "Add Child" to get started.' 
+                  : 'No children in this household yet.'}
+              </p>
+            )}
+          </div>
+        )}
         
         <div className="space-y-2 sm:space-y-3">
           <h3 className="text-sm sm:text-base font-medium mb-1 sm:mb-2">Add Request</h3>
@@ -71,6 +156,14 @@ export function FamilyMembersWidget() {
             Trip Proposal
           </Button>
         </div>
+
+        <ChildProfileDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
+          childProfile={editingChild}
+          isEditing={!!editingChild}
+        />
       </CardContent>
     </Card>
   );
