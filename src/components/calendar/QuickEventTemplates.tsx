@@ -11,6 +11,7 @@ interface EventTemplate {
   duration: number;
   description?: string;
   color?: string;
+  defaultTime?: string;
 }
 
 interface QuickEventTemplatesProps {
@@ -23,9 +24,10 @@ const EVENT_TEMPLATES: EventTemplate[] = [
     id: 'school-pickup', 
     label: 'School Pickup', 
     icon: '🚗', 
-    duration: 1,
+    duration: 0.5,
     description: 'Pick up kids from school',
-    color: '#4A90E2'
+    color: '#4A90E2',
+    defaultTime: '15:00'
   },
   { 
     id: 'doctor-appointment', 
@@ -33,7 +35,8 @@ const EVENT_TEMPLATES: EventTemplate[] = [
     icon: '🏥', 
     duration: 2,
     description: 'Medical appointment',
-    color: '#E74C3C'
+    color: '#E74C3C',
+    defaultTime: '10:00'
   },
   { 
     id: 'meeting', 
@@ -41,7 +44,8 @@ const EVENT_TEMPLATES: EventTemplate[] = [
     icon: '💼', 
     duration: 1,
     description: 'Business meeting',
-    color: '#8E44AD'
+    color: '#8E44AD',
+    defaultTime: '14:00'
   },
   { 
     id: 'dentist', 
@@ -49,7 +53,8 @@ const EVENT_TEMPLATES: EventTemplate[] = [
     icon: '🦷', 
     duration: 1.5,
     description: 'Dental appointment',
-    color: '#27AE60'
+    color: '#27AE60',
+    defaultTime: '11:00'
   },
   { 
     id: 'grocery-shopping', 
@@ -57,7 +62,8 @@ const EVENT_TEMPLATES: EventTemplate[] = [
     icon: '🛒', 
     duration: 1,
     description: 'Weekly grocery run',
-    color: '#F39C12'
+    color: '#F39C12',
+    defaultTime: '10:00'
   },
   { 
     id: 'workout', 
@@ -65,7 +71,8 @@ const EVENT_TEMPLATES: EventTemplate[] = [
     icon: '💪', 
     duration: 1,
     description: 'Exercise session',
-    color: '#E91E63'
+    color: '#E91E63',
+    defaultTime: '07:00'
   },
   { 
     id: 'birthday-party', 
@@ -73,7 +80,8 @@ const EVENT_TEMPLATES: EventTemplate[] = [
     icon: '🎂', 
     duration: 3,
     description: 'Birthday celebration',
-    color: '#FF6B6B'
+    color: '#FF6B6B',
+    defaultTime: '15:00'
   },
   { 
     id: 'study-session', 
@@ -81,7 +89,8 @@ const EVENT_TEMPLATES: EventTemplate[] = [
     icon: '📚', 
     duration: 2,
     description: 'Study time',
-    color: '#16A085'
+    color: '#16A085',
+    defaultTime: '19:00'
   }
 ];
 
@@ -114,6 +123,12 @@ export function QuickEventTemplates({ onTemplateSelect, selectedDate }: QuickEve
                 <div className="text-sm text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {template.duration}h
+                  {template.defaultTime && (
+                    <>
+                      <span className="mx-1">•</span>
+                      {template.defaultTime}
+                    </>
+                  )}
                   {template.description && (
                     <>
                       <span className="mx-1">•</span>

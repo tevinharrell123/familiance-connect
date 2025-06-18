@@ -31,7 +31,83 @@ interface EventTemplate {
   duration: number;
   description?: string;
   color?: string;
+  defaultTime?: string;
 }
+
+const QUICK_EVENT_TEMPLATES: EventTemplate[] = [
+  { 
+    id: 'school-pickup', 
+    label: 'School Pickup', 
+    icon: '🚗', 
+    duration: 0.5,
+    description: 'Pick up kids from school',
+    color: '#4A90E2',
+    defaultTime: '15:00'
+  },
+  { 
+    id: 'doctor-appointment', 
+    label: 'Doctor Appointment', 
+    icon: '🏥', 
+    duration: 2,
+    description: 'Medical appointment',
+    color: '#E74C3C',
+    defaultTime: '10:00'
+  },
+  { 
+    id: 'meeting', 
+    label: 'Work Meeting', 
+    icon: '💼', 
+    duration: 1,
+    description: 'Business meeting',
+    color: '#8E44AD',
+    defaultTime: '14:00'
+  },
+  { 
+    id: 'dentist', 
+    label: 'Dentist', 
+    icon: '🦷', 
+    duration: 1.5,
+    description: 'Dental appointment',
+    color: '#27AE60',
+    defaultTime: '11:00'
+  },
+  { 
+    id: 'grocery-shopping', 
+    label: 'Grocery Shopping', 
+    icon: '🛒', 
+    duration: 1,
+    description: 'Weekly grocery run',
+    color: '#F39C12',
+    defaultTime: '10:00'
+  },
+  { 
+    id: 'workout', 
+    label: 'Workout', 
+    icon: '💪', 
+    duration: 1,
+    description: 'Exercise session',
+    color: '#E91E63',
+    defaultTime: '07:00'
+  },
+  { 
+    id: 'birthday-party', 
+    label: 'Birthday Party', 
+    icon: '🎂', 
+    duration: 3,
+    description: 'Birthday celebration',
+    color: '#FF6B6B',
+    defaultTime: '15:00'
+  },
+  { 
+    id: 'study-session', 
+    label: 'Study Session', 
+    icon: '📚', 
+    duration: 2,
+    description: 'Study time',
+    color: '#16A085',
+    defaultTime: '19:00'
+  }
+];
 
 export function QuickEventDialog({ 
   open, 
@@ -49,21 +125,13 @@ export function QuickEventDialog({
 
   React.useEffect(() => {
     if (selectedTemplate) {
-      // Set default values based on template
-      const templates: Record<string, Partial<EventTemplate>> = {
-        'school-pickup': { label: 'School Pickup', duration: 1, description: 'Pick up kids from school', color: '#4A90E2' },
-        'doctor-appointment': { label: 'Doctor Appointment', duration: 2, description: 'Medical appointment', color: '#E74C3C' },
-        'meeting': { label: 'Work Meeting', duration: 1, description: 'Business meeting', color: '#8E44AD' },
-        'dentist': { label: 'Dentist Appointment', duration: 1.5, description: 'Dental checkup', color: '#27AE60' },
-        'grocery-shopping': { label: 'Grocery Shopping', duration: 1, description: 'Weekly grocery run', color: '#F39C12' },
-      };
-      
-      const template = templates[selectedTemplate];
+      const template = QUICK_EVENT_TEMPLATES.find(t => t.id === selectedTemplate);
       if (template) {
-        setTitle(template.label || '');
+        setTitle(template.label);
         setDescription(template.description || '');
-        setDuration(template.duration || 1);
+        setDuration(template.duration);
         setColor(template.color || '#7B68EE');
+        setSelectedTime(template.defaultTime || '09:00');
         setShowTemplates(false);
       }
     }
@@ -106,6 +174,7 @@ export function QuickEventDialog({
     setDescription(template.description || '');
     setDuration(template.duration);
     setColor(template.color || '#7B68EE');
+    setSelectedTime(template.defaultTime || '09:00');
     setShowTemplates(false);
   };
 
@@ -128,13 +197,35 @@ export function QuickEventDialog({
 
         {showTemplates ? (
           <div className="space-y-4">
-            <QuickEventTemplates 
-              onTemplateSelect={handleTemplateSelect}
-              selectedDate={selectedDate}
-            />
-            <div className="text-center">
+            <div className="grid grid-cols-2 gap-3">
+              {QUICK_EVENT_TEMPLATES.map((template) => (
+                <Button
+                  key={template.id}
+                  variant="outline"
+                  className="h-auto p-3 flex flex-col items-start gap-2"
+                  onClick={() => handleTemplateSelect(template)}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <span className="text-lg">{template.icon}</span>
+                    <span className="font-medium text-left flex-1">{template.label}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {template.duration}h
+                    {template.defaultTime && (
+                      <>
+                        <span className="mx-1">•</span>
+                        {template.defaultTime}
+                      </>
+                    )}
+                  </div>
+                </Button>
+              ))}
+            </div>
+            
+            <div className="text-center pt-2">
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 onClick={() => setShowTemplates(false)}
                 className="w-full"
               >

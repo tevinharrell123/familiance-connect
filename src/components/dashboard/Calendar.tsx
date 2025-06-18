@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarTabContent } from './calendar/CalendarTabContent';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
+import { QuickEventDialog } from '@/components/calendar/QuickEventDialog';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
 import { CalendarFilters } from '@/components/calendar/CalendarFilters';
 import { useCalendarEventsData } from '@/hooks/calendar/useCalendarEventsData';
@@ -18,11 +20,13 @@ export function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [selectedView, setSelectedView] = useState<CalendarViewType>('month');
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isQuickEventDialogOpen, setIsQuickEventDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
   const [eventDefaults, setEventDefaults] = useState<Partial<CalendarFormValues>>({});
+  const [quickEventDate, setQuickEventDate] = useState<Date | undefined>();
 
   const { events, isLoading, error, refetch } = useCalendarEventsData();
   const { createEvent, updateEvent, deleteEvent, isLoading: isMutating } = useCalendarEventMutations();
@@ -76,8 +80,9 @@ export function Calendar() {
   };
 
   const handleDateClick = (date: Date) => {
-    // For month view, open event dialog instead of navigating
-    handleAddEvent(date);
+    // Open quick event dialog for date clicks in month view
+    setQuickEventDate(date);
+    setIsQuickEventDialogOpen(true);
   };
 
   const handleTimeSlotClick = (date: Date, hour: number) => {
@@ -170,7 +175,9 @@ export function Calendar() {
       }
 
       setIsEventDialogOpen(false);
+      setIsQuickEventDialogOpen(false);
       setEventDefaults({});
+      setQuickEventDate(undefined);
       refetch();
     } catch (error) {
       console.error("Error saving event:", error);
@@ -211,9 +218,9 @@ export function Calendar() {
           <CardTitle>Calendar</CardTitle>
           <button
             className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-            onClick={() => handleAddEvent()}
+            onClick={() => setIsQuickEventDialogOpen(true)}
           >
-            + Add Event
+            + Quick Event
           </button>
         </div>
         
@@ -239,6 +246,7 @@ export function Calendar() {
           onDateChange={handleDateChange}
           onDayClick={handleDayClick}
           onDateClick={handleDateClick}
+          onTimeSlotClick={handleTimeSlotClick}
         />
       </div>
 
@@ -257,6 +265,13 @@ export function Calendar() {
           is_public: selectedEvent.is_public
         } : eventDefaults}
         isSubmitting={isMutating}
+      />
+
+      <QuickEventDialog
+        open={isQuickEventDialogOpen}
+        onOpenChange={setIsQuickEventDialogOpen}
+        onSubmit={handleSaveEvent}
+        selectedDate={quickEventDate || selectedDate}
       />
       
       {selectedEvent && (
