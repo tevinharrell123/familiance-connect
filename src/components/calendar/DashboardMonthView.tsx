@@ -9,6 +9,7 @@ interface DashboardMonthViewProps {
   currentDate: Date;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
+  onDateClick?: (date: Date) => void;
 }
 
 const getEventIcon = (title: string) => {
@@ -22,10 +23,28 @@ const getEventIcon = (title: string) => {
   return <DollarSign className="h-4 w-4 text-gray-500" />; // Default icon
 };
 
-export function DashboardMonthView({ currentDate, events, onEventClick }: DashboardMonthViewProps) {
+export function DashboardMonthView({ currentDate, events, onEventClick, onDateClick }: DashboardMonthViewProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  const handleDateClick = (day: Date, e: React.MouseEvent) => {
+    // Check if the click was on an event element
+    const target = e.target as HTMLElement;
+    const isEventClick = target.closest('[data-event-id]') || 
+                        target.classList.contains('event-item') ||
+                        target.closest('.event-item');
+    
+    if (!isEventClick && onDateClick) {
+      onDateClick(day);
+    }
+  };
+
+  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onEventClick(event);
+  };
 
   return (
     <div className="dashboard-month-view">
@@ -47,18 +66,20 @@ export function DashboardMonthView({ currentDate, events, onEventClick }: Dashbo
             <div
               key={day.toString()}
               className={cn(
-                "min-h-[80px] p-1 border rounded-sm",
+                "min-h-[80px] p-1 border rounded-sm cursor-pointer hover:bg-accent/50 transition-colors",
                 !isSameMonth(day, currentDate) && "bg-muted/50",
                 isToday(day) && "bg-accent/50"
               )}
+              onClick={(e) => handleDateClick(day, e)}
             >
               <div className="text-xs font-medium">{format(day, 'd')}</div>
               <div className="mt-1 space-y-1 max-h-[60px] overflow-y-auto">
                 {dayEvents.map((event) => (
                   <button
                     key={event.id}
-                    onClick={() => onEventClick(event)}
-                    className="w-full flex items-center gap-1 p-1 text-xs rounded hover:bg-accent truncate"
+                    data-event-id={event.id}
+                    onClick={(e) => handleEventClick(event, e)}
+                    className="event-item w-full flex items-center gap-1 p-1 text-xs rounded hover:bg-accent truncate"
                   >
                     {getEventIcon(event.title)}
                     <span className="truncate">{event.title}</span>

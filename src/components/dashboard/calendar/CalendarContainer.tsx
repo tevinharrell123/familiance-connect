@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs } from "@/components/ui/tabs";
 import { MobileCalendarContainer } from '@/components/calendar/MobileCalendarContainer';
@@ -58,6 +57,15 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     handlers.handleSaveEvent(eventData, containerState.selectedEvent, containerState.isEditMode);
   };
 
+  const handleDateClick = (date: Date) => {
+    // For month view, open quick event dialog instead of navigating
+    if (containerState.view === 'month') {
+      handlers.handleQuickEventCreate(date);
+    } else {
+      handlers.handleDayClick(date);
+    }
+  };
+
   // Add debugging for QuickEventDialog state
   console.log('QuickEventDialog state - open:', containerState.isQuickEventDialogOpen, 'date:', containerState.quickEventDate);
 
@@ -95,7 +103,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
             filteredEvents={containerState.filteredEvents}
             isLoading={containerState.isLoading}
             onSelectEvent={handlers.handleSelectEvent}
-            onDayClick={handlers.handleDayClick}
+            onDayClick={handleDateClick}
             onTimeSlotClick={handlers.handleTimeSlotClick}
             onQuickEventCreate={handlers.handleQuickEventCreate}
             onEventEdit={handlers.handleEditEvent}

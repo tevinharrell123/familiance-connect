@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarTabContent } from './calendar/CalendarTabContent';
@@ -74,6 +73,11 @@ export function Calendar() {
     } else {
       handleAddEvent(date);
     }
+  };
+
+  const handleDateClick = (date: Date) => {
+    // For month view, open event dialog instead of navigating
+    handleAddEvent(date);
   };
 
   const handleTimeSlotClick = (date: Date, hour: number) => {
@@ -234,7 +238,7 @@ export function Calendar() {
           onEventClick={handleEventClick}
           onDateChange={handleDateChange}
           onDayClick={handleDayClick}
-          onTimeSlotClick={handleTimeSlotClick}
+          onDateClick={handleDateClick}
         />
       </div>
 

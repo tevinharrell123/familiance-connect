@@ -1,144 +1,93 @@
 
 import React from 'react';
-import { CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DashboardMonthView } from '@/components/calendar/DashboardMonthView';
+import { WeekView } from '@/components/calendar/WeekView';
+import { DayView } from '@/components/calendar/DayView';
 import { CalendarEvent, CalendarViewType } from '@/types/calendar';
-import { format, addMonths, subMonths, addDays, subDays, addWeeks, subWeeks } from 'date-fns';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { EnhancedWeekView } from '@/components/calendar/EnhancedWeekView';
-import { EnhancedDayView } from '@/components/calendar/EnhancedDayView';
-import { MonthView } from '@/components/calendar/MonthView';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface CalendarTabContentProps {
   currentDate: Date;
   days: Date[];
   events: CalendarEvent[];
   isLoading: boolean;
-  error: any;
+  error: Error | null;
   selectedView: CalendarViewType;
   onViewChange: (view: string) => void;
   onEventClick: (event: CalendarEvent) => void;
   onDateChange: (date: Date) => void;
-  onDayClick?: (date: Date) => void;
+  onDayClick: (date: Date) => void;
+  onDateClick?: (date: Date) => void;
   onTimeSlotClick?: (date: Date, hour: number) => void;
 }
 
 export function CalendarTabContent({
   currentDate,
-  selectedView,
   events,
   isLoading,
   error,
-  onDateChange,
+  selectedView,
   onViewChange,
   onEventClick,
+  onDateChange,
   onDayClick,
-  onTimeSlotClick,
-  days,
+  onDateClick,
+  onTimeSlotClick
 }: CalendarTabContentProps) {
-  const handlePrevious = () => {
-    if (selectedView === 'month') {
-      onDateChange(subMonths(currentDate, 1));
-    } else if (selectedView === 'week') {
-      onDateChange(subWeeks(currentDate, 1));
-    } else if (selectedView === 'day') {
-      onDateChange(subDays(currentDate, 1));
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
-  const handleNext = () => {
-    if (selectedView === 'month') {
-      onDateChange(addMonths(currentDate, 1));
-    } else if (selectedView === 'week') {
-      onDateChange(addWeeks(currentDate, 1));
-    } else if (selectedView === 'day') {
-      onDateChange(addDays(currentDate, 1));
-    }
-  };
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64 text-red-500">
+        Error loading calendar: {error.message}
+      </div>
+    );
+  }
 
   return (
-    <CardContent className="p-0 h-full flex flex-col">
-      <div className="p-4 border-b">
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handlePrevious}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <h3 className="text-lg font-semibold">
-            {selectedView === 'day' 
-              ? format(currentDate, 'MMMM d, yyyy')
-              : selectedView === 'week'
-                ? `Week of ${format(currentDate, 'MMM d, yyyy')}`
-                : format(currentDate, 'MMMM yyyy')}
-          </h3>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleNext}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <Tabs defaultValue="month" value={selectedView} onValueChange={onViewChange}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="month">Month</TabsTrigger>
-            <TabsTrigger value="week">Week</TabsTrigger>
-            <TabsTrigger value="day">Day</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+    <Tabs value={selectedView} onValueChange={onViewChange} className="h-full flex flex-col">
+      <TabsList className="grid w-full grid-cols-3 mx-4">
+        <TabsTrigger value="month">Month</TabsTrigger>
+        <TabsTrigger value="week">Week</TabsTrigger>
+        <TabsTrigger value="day">Day</TabsTrigger>
+      </TabsList>
       
       <div className="flex-1 overflow-hidden">
-        {selectedView === 'month' && (
-          <div className="p-4 h-full">
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-[400px] w-full" />
-              </div>
-            ) : error ? (
-              <div className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <p>Error loading calendar events</p>
-              </div>
-            ) : (
-              <MonthView 
-                currentDate={currentDate}
-                events={events}
-                onEventClick={onEventClick}
-                onDayClick={onDayClick}
-              />
-            )}
-          </div>
-        )}
-        
-        {selectedView === 'week' && (
-          <EnhancedWeekView 
-            currentDate={currentDate} 
+        <TabsContent value="month" className="h-full m-0 p-4">
+          <DashboardMonthView
+            currentDate={currentDate}
             events={events}
-            isLoading={isLoading}
+            onEventClick={onEventClick}
+            onDateClick={onDateClick}
+          />
+        </TabsContent>
+        
+        <TabsContent value="week" className="h-full m-0">
+          <WeekView
+            currentDate={currentDate}
+            events={events}
+            onEventClick={onEventClick}
+            onDateChange={onDateChange}
+            onTimeSlotClick={onTimeSlotClick}
+          />
+        </TabsContent>
+        
+        <TabsContent value="day" className="h-full m-0">
+          <DayView
+            currentDate={currentDate}
+            events={events}
             onEventClick={onEventClick}
             onTimeSlotClick={onTimeSlotClick}
           />
-        )}
-        
-        {selectedView === 'day' && (
-          <EnhancedDayView 
-            currentDate={currentDate} 
-            events={events}
-            isLoading={isLoading}
-            onEventClick={onEventClick}
-            onTimeSlotClick={onTimeSlotClick}
-          />
-        )}
+        </TabsContent>
       </div>
-    </CardContent>
+    </Tabs>
   );
 }
