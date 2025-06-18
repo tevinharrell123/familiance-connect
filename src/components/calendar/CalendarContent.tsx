@@ -39,7 +39,7 @@ export function CalendarContent({
 
   return (
     <div className="flex-1 overflow-hidden">
-      <TabsContent value="month" className="h-full m-0 p-4">
+      <TabsContent value="month" className={`h-full m-0 p-4 ${view === 'month' ? 'block' : 'hidden'}`}>
         {isMobile ? (
           <MobileMonthView
             currentDate={selectedDate}
@@ -61,7 +61,7 @@ export function CalendarContent({
         )}
       </TabsContent>
       
-      <TabsContent value="week" className="h-full m-0">
+      <TabsContent value="week" className={`h-full m-0 ${view === 'week' ? 'block' : 'hidden'}`}>
         <EnhancedWeekView
           currentDate={selectedDate}
           events={filteredEvents}
@@ -71,7 +71,7 @@ export function CalendarContent({
         />
       </TabsContent>
       
-      <TabsContent value="day" className="h-full m-0">
+      <TabsContent value="day" className={`h-full m-0 ${view === 'day' ? 'block' : 'hidden'}`}>
         <EnhancedDayView
           currentDate={selectedDate}
           events={filteredEvents}
