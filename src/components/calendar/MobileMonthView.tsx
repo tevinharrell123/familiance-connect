@@ -38,10 +38,12 @@ export function MobileMonthView({
   };
 
   const handleDayClick = (day: Date) => {
+    console.log('Mobile day clicked:', day);
     onDayClick?.(day);
   };
 
   const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
+    console.log('Mobile event clicked:', event.title);
     e.stopPropagation();
     e.preventDefault();
     onEventClick(event);
@@ -93,14 +95,15 @@ export function MobileMonthView({
                 )}
               </div>
               
-              {/* Show event indicators */}
+              {/* Show event indicators with proper click handling */}
               <div className="space-y-0.5">
                 {dayEvents.slice(0, 2).map((event) => (
                   <div
                     key={event.id}
-                    className="h-1.5 rounded-full cursor-pointer"
+                    className="h-1.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                     style={{ backgroundColor: event.color || '#7B68EE' }}
                     onClick={(e) => handleEventClick(event, e)}
+                    title={event.title}
                   />
                 ))}
                 

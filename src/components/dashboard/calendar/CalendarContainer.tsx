@@ -128,12 +128,9 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
 
   const handleDayClick = (date: Date) => {
     console.log('Day clicked:', date, 'Current view:', view);
-    if (view === 'month') {
-      setSelectedDate(date);
-      setView('day');
-    } else {
-      handleQuickEventCreate(date);
-    }
+    // Always open the quick event dialog when clicking on a day, regardless of view
+    setSelectedDate(date);
+    handleQuickEventCreate(date);
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
