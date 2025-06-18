@@ -117,9 +117,14 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
 
   const handleQuickEventCreate = (date: Date, template?: string) => {
     console.log('Quick event create for:', date, 'template:', template);
+    console.log('Setting quickEventDate to:', date);
+    console.log('Current isQuickEventDialogOpen:', isQuickEventDialogOpen);
+    
     setQuickEventDate(date);
     setQuickEventTemplate(template);
     setIsQuickEventDialogOpen(true);
+    
+    console.log('After setting - quickEventDate:', date, 'isQuickEventDialogOpen should be true');
   };
 
   const handleTimeSlotClick = (date: Date, hour: number) => {
@@ -127,7 +132,9 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   };
 
   const handleDayClick = (date: Date) => {
-    console.log('Day clicked:', date, 'Current view:', view);
+    console.log('Day clicked in CalendarContainer:', date, 'Current view:', view);
+    console.log('About to call handleQuickEventCreate...');
+    
     // Always open the quick event dialog when clicking on a day, regardless of view
     setSelectedDate(date);
     handleQuickEventCreate(date);
@@ -342,6 +349,9 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
       });
     }
   };
+
+  // Add debugging for QuickEventDialog state
+  console.log('QuickEventDialog state - open:', isQuickEventDialogOpen, 'date:', quickEventDate);
 
   return (
     <MobileCalendarContainer

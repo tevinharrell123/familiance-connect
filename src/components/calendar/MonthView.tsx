@@ -88,13 +88,29 @@ export function MonthView({
     });
   };
 
-  const handleDayClick = (day: Date) => {
-    console.log('Day clicked:', day);
-    onDayClick?.(day);
+  const handleDayClick = (day: Date, e: React.MouseEvent) => {
+    console.log('MonthView day clicked:', day);
+    console.log('Event target:', e.target);
+    console.log('Current target:', e.currentTarget);
+    
+    // Check if the click was on an event element
+    const target = e.target as HTMLElement;
+    const isEventClick = target.closest('[data-event-id]') || 
+                        target.classList.contains('event-card') ||
+                        target.closest('.event-card');
+    
+    console.log('Is event click?', isEventClick);
+    
+    if (!isEventClick) {
+      console.log('Calling onDayClick for empty day space');
+      onDayClick?.(day);
+    }
   };
 
-  const handleEventClick = (event: CalendarEvent) => {
-    console.log('Event clicked:', event.title);
+  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
+    console.log('MonthView event clicked:', event.title);
+    e.stopPropagation();
+    e.preventDefault();
     onEventClick(event);
   };
 
@@ -144,7 +160,7 @@ export function MonthView({
                     !isCurrentMonth && "bg-muted/30 text-muted-foreground",
                     isCurrentDay && "bg-primary/10 ring-1 ring-primary/20"
                   )}
-                  onClick={() => handleDayClick(day)}
+                  onClick={(e) => handleDayClick(day, e)}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className={cn(
@@ -164,12 +180,18 @@ export function MonthView({
                     {dayEvents.slice(0, 3).map((event) => (
                       <ContextMenu key={`${event.id}-${day.toString()}`}>
                         <ContextMenuTrigger>
-                          <EnhancedCalendarEventCard
-                            event={event}
-                            onClick={handleEventClick}
-                            compact={true}
-                            showMultiDayBadge={false}
-                          />
+                          <div 
+                            data-event-id={event.id}
+                            className="event-card"
+                            onClick={(e) => handleEventClick(event, e)}
+                          >
+                            <EnhancedCalendarEventCard
+                              event={event}
+                              onClick={handleEventClick}
+                              compact={true}
+                              showMultiDayBadge={false}
+                            />
+                          </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent>
                           <ContextMenuItem onClick={() => handleEventAction('edit', event)}>
