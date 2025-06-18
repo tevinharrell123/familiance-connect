@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameDay, parseISO, differenceInDays } from 'date-fns';
@@ -180,18 +179,12 @@ export function MonthView({
                     {dayEvents.slice(0, 3).map((event) => (
                       <ContextMenu key={`${event.id}-${day.toString()}`}>
                         <ContextMenuTrigger>
-                          <div 
-                            data-event-id={event.id}
-                            className="event-card"
-                            onClick={(e) => handleEventClick(event, e)}
-                          >
-                            <EnhancedCalendarEventCard
-                              event={event}
-                              onClick={handleEventClick}
-                              compact={true}
-                              showMultiDayBadge={false}
-                            />
-                          </div>
+                          <EnhancedCalendarEventCard
+                            event={event}
+                            onClick={handleEventClick}
+                            compact={true}
+                            showMultiDayBadge={false}
+                          />
                         </ContextMenuTrigger>
                         <ContextMenuContent>
                           <ContextMenuItem onClick={() => handleEventAction('edit', event)}>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { 
@@ -15,7 +14,7 @@ import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 
 interface EnhancedCalendarEventCardProps {
   event: CalendarEvent & { isMultiDay?: boolean; duration?: number };
-  onClick?: (event: CalendarEvent) => void;
+  onClick?: (event: CalendarEvent, e: React.MouseEvent) => void;
   showMultiDayBadge?: boolean;
   compact?: boolean;
 }
@@ -108,7 +107,7 @@ export function EnhancedCalendarEventCard({
     e.stopPropagation();
     if (onClick) {
       console.log('Enhanced calendar event card clicked:', event.id);
-      onClick(event);
+      onClick(event, e);
     }
   };
   
