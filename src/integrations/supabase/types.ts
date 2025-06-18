@@ -230,6 +230,7 @@ export type Database = {
       household_events: {
         Row: {
           assigned_to_child: string | null
+          assigned_to_member: string | null
           color: string | null
           created_at: string
           created_by: string
@@ -243,6 +244,7 @@ export type Database = {
         }
         Insert: {
           assigned_to_child?: string | null
+          assigned_to_member?: string | null
           color?: string | null
           created_at?: string
           created_by: string
@@ -256,6 +258,7 @@ export type Database = {
         }
         Update: {
           assigned_to_child?: string | null
+          assigned_to_member?: string | null
           color?: string | null
           created_at?: string
           created_by?: string
@@ -403,6 +406,7 @@ export type Database = {
       user_events: {
         Row: {
           assigned_to_child: string | null
+          assigned_to_member: string | null
           color: string | null
           created_at: string
           description: string | null
@@ -416,6 +420,7 @@ export type Database = {
         }
         Insert: {
           assigned_to_child?: string | null
+          assigned_to_member?: string | null
           color?: string | null
           created_at?: string
           description?: string | null
@@ -429,6 +434,7 @@ export type Database = {
         }
         Update: {
           assigned_to_child?: string | null
+          assigned_to_member?: string | null
           color?: string | null
           created_at?: string
           description?: string | null

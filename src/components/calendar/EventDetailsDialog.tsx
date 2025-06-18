@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { CalendarEvent } from '@/types/calendar';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
-import { User, Users, Calendar, Clock } from 'lucide-react';
+import { User, Users, Calendar, Clock, House } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,10 +43,16 @@ export function EventDetailsDialog({
   
   const isCurrentUserEvent = event.user_id === user?.id;
   
-  // Get user initials for avatar - handle cases where full_name might be null or undefined
-  const fullName = event.user_profile?.full_name || '';
-  const userInitials = fullName
-    ? fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+  // Determine assigned person info - prioritize assigned child, then member, then show household
+  const assignedPerson = event.assigned_child_profile 
+    ? { name: event.assigned_child_profile.name, avatar_url: event.assigned_child_profile.avatar_url, type: 'child' }
+    : event.assigned_member_profile 
+    ? { name: event.assigned_member_profile.full_name || 'Unknown Member', avatar_url: event.assigned_member_profile.avatar_url, type: 'member' }
+    : null;
+  
+  // Get user initials for avatar - handle cases where name might be null or undefined
+  const userInitials = assignedPerson?.name
+    ? assignedPerson.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
     : '?';
   
   const handleEditClick = () => {
@@ -111,23 +117,39 @@ export function EventDetailsDialog({
           </div>
           
           <div className="flex items-center gap-2 pt-2">
-            <Avatar className="h-8 w-8">
-              {event.user_profile?.avatar_url ? (
-                <AvatarImage 
-                  src={event.user_profile.avatar_url} 
-                  alt={event.user_profile.full_name || 'User'} 
-                />
-              ) : null}
-              <AvatarFallback>{userInitials}</AvatarFallback>
-            </Avatar>
-            <div className="text-sm">
-              <div className="font-medium">
-                {event.user_profile?.full_name || 'Unknown User'}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {isCurrentUserEvent ? 'Created by you' : 'Event owner'}
-              </div>
-            </div>
+            {assignedPerson ? (
+              <>
+                <Avatar className="h-8 w-8">
+                  {assignedPerson.avatar_url ? (
+                    <AvatarImage 
+                      src={assignedPerson.avatar_url} 
+                      alt={assignedPerson.name} 
+                    />
+                  ) : null}
+                  <AvatarFallback>{userInitials}</AvatarFallback>
+                </Avatar>
+                <div className="text-sm">
+                  <div className="font-medium">
+                    {assignedPerson.name}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Assigned to
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <House className="h-8 w-8 p-1 rounded-full bg-muted text-muted-foreground" />
+                <div className="text-sm">
+                  <div className="font-medium">
+                    Household Event
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Not assigned to anyone
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
         

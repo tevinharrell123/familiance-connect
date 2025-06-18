@@ -16,7 +16,17 @@ export function useUpdateCalendarEvent() {
   const updateEvent = async (event: CalendarEvent): Promise<CalendarEvent> => {
     if (!user) throw new Error('User not authenticated');
     
-    const { id, title, description, start_date, end_date, color, is_household_event } = event;
+    const { 
+      id, 
+      title, 
+      description, 
+      start_date, 
+      end_date, 
+      color, 
+      is_household_event,
+      assigned_to_child,
+      assigned_to_member
+    } = event;
     
     if (is_household_event) {
       const { data, error } = await supabase
@@ -27,6 +37,8 @@ export function useUpdateCalendarEvent() {
           start_date,
           end_date,
           color,
+          assigned_to_child,
+          assigned_to_member,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -63,6 +75,8 @@ export function useUpdateCalendarEvent() {
           start_date,
           end_date,
           color,
+          assigned_to_child,
+          assigned_to_member,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)

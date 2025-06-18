@@ -47,6 +47,56 @@ export function usePersonalEvents() {
           console.error('Error fetching user profile for personal events:', profileError);
         }
         
+        // Fetch assigned member profiles
+        const assignedMemberIds = data
+          .map(event => event.assigned_to_member)
+          .filter(id => id != null);
+        
+        let assignedMemberProfiles = [];
+        if (assignedMemberIds.length > 0) {
+          const { data: memberProfiles, error: memberProfilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .in('id', assignedMemberIds);
+
+          if (memberProfilesError) {
+            console.error('Error fetching assigned member profiles:', memberProfilesError);
+          } else {
+            assignedMemberProfiles = memberProfiles || [];
+          }
+        }
+
+        // Fetch child profiles for assigned children
+        const assignedChildIds = data
+          .map(event => event.assigned_to_child)
+          .filter(id => id != null);
+        
+        let childProfilesData = [];
+        if (assignedChildIds.length > 0) {
+          const { data: childProfiles, error: childProfilesError } = await supabase
+            .from('child_profiles')
+            .select('id, name, avatar_url')
+            .in('id', assignedChildIds);
+
+          if (childProfilesError) {
+            console.error('Error fetching child profiles for personal events:', childProfilesError);
+          } else {
+            childProfilesData = childProfiles || [];
+          }
+        }
+
+        // Create maps for quick lookup
+        const memberProfilesMap = {};
+        const childProfilesMap = {};
+        
+        assignedMemberProfiles.forEach(profile => {
+          memberProfilesMap[profile.id] = profile;
+        });
+        
+        childProfilesData.forEach(child => {
+          childProfilesMap[child.id] = child;
+        });
+        
         // Use the fetched profile or fall back to the context profile
         const eventUserProfile = userProfile || profile;
         
@@ -61,9 +111,20 @@ export function usePersonalEvents() {
           created_at: event.created_at,
           user_id: user.id,
           assigned_to_child: event.assigned_to_child,
+          assigned_to_member: event.assigned_to_member,
           user_profile: eventUserProfile ? {
             full_name: eventUserProfile.full_name,
             avatar_url: eventUserProfile.avatar_url
+          } : null,
+          assigned_child_profile: event.assigned_to_child && childProfilesMap[event.assigned_to_child] ? {
+            id: childProfilesMap[event.assigned_to_child].id,
+            name: childProfilesMap[event.assigned_to_child].name,
+            avatar_url: childProfilesMap[event.assigned_to_child].avatar_url
+          } : null,
+          assigned_member_profile: event.assigned_to_member && memberProfilesMap[event.assigned_to_member] ? {
+            id: memberProfilesMap[event.assigned_to_member].id,
+            full_name: memberProfilesMap[event.assigned_to_member].full_name,
+            avatar_url: memberProfilesMap[event.assigned_to_member].avatar_url
           } : null
         }));
       } catch (error) {

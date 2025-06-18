@@ -52,7 +52,8 @@ export function useSharedHouseholdMemberEvents() {
             user_id,
             is_public,
             created_at,
-            assigned_to_child
+            assigned_to_child,
+            assigned_to_member
           `)
           .eq('is_public', true)
           .in('user_id', memberIds);
@@ -69,24 +70,55 @@ export function useSharedHouseholdMemberEvents() {
 
         console.log(`Found ${sharedEvents.length} shared events from household members`);
 
+        // Get all unique user IDs for profile fetching
+        const assignedMemberIds = sharedEvents
+          .map(event => event.assigned_to_member)
+          .filter(id => id != null);
+        const allUserIds = [...new Set([...memberIds, ...assignedMemberIds])];
+
         // Immediately fetch profile data for all members in a single query
         const { data: memberProfiles, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url')
-          .in('id', memberIds);
+          .in('id', allUserIds);
 
         if (profilesError) {
           console.error('Error fetching member profiles:', profilesError);
           throw profilesError;
         }
 
-        // Create a map of profiles for faster lookup
+        // Fetch child profiles for assigned children
+        const assignedChildIds = sharedEvents
+          .map(event => event.assigned_to_child)
+          .filter(id => id != null);
+        
+        let childProfilesData = [];
+        if (assignedChildIds.length > 0) {
+          const { data: childProfiles, error: childProfilesError } = await supabase
+            .from('child_profiles')
+            .select('id, name, avatar_url')
+            .in('id', assignedChildIds);
+
+          if (childProfilesError) {
+            console.error('Error fetching child profiles for shared events:', childProfilesError);
+          } else {
+            childProfilesData = childProfiles || [];
+          }
+        }
+
+        // Create maps of profiles for faster lookup
         const profilesMap = {};
+        const childProfilesMap = {};
+        
         if (memberProfiles) {
           memberProfiles.forEach(profile => {
             profilesMap[profile.id] = profile;
           });
         }
+        
+        childProfilesData.forEach(child => {
+          childProfilesMap[child.id] = child;
+        });
         
         return sharedEvents.map((event) => ({
           id: event.id,
@@ -100,9 +132,20 @@ export function useSharedHouseholdMemberEvents() {
           user_id: event.user_id,
           is_public: event.is_public,
           assigned_to_child: event.assigned_to_child,
+          assigned_to_member: event.assigned_to_member,
           user_profile: profilesMap[event.user_id] ? {
             full_name: profilesMap[event.user_id].full_name,
             avatar_url: profilesMap[event.user_id].avatar_url
+          } : null,
+          assigned_child_profile: event.assigned_to_child && childProfilesMap[event.assigned_to_child] ? {
+            id: childProfilesMap[event.assigned_to_child].id,
+            name: childProfilesMap[event.assigned_to_child].name,
+            avatar_url: childProfilesMap[event.assigned_to_child].avatar_url
+          } : null,
+          assigned_member_profile: event.assigned_to_member && profilesMap[event.assigned_to_member] ? {
+            id: profilesMap[event.assigned_to_member].id,
+            full_name: profilesMap[event.assigned_to_member].full_name,
+            avatar_url: profilesMap[event.assigned_to_member].avatar_url
           } : null
         }));
       } catch (error) {

@@ -42,7 +42,8 @@ export function useCreateCalendarEvent() {
             color,
             created_by: user.id,
             household_id: household.id,
-            assigned_to_child: assigned_to_child || null
+            assigned_to_child: assigned_to_child || null,
+            assigned_to_member: assigned_to_member || null
           })
           .select()
           .single();
@@ -56,7 +57,6 @@ export function useCreateCalendarEvent() {
           ...data,
           is_household_event: true,
           user_profile: null,
-          assigned_to_member: assigned_to_member || null,
           recurrence_type: recurrence_type || null,
           recurrence_end: recurrence_end?.toISOString() || null,
           category: category || null
@@ -72,7 +72,8 @@ export function useCreateCalendarEvent() {
             color,
             user_id: user.id,
             is_public,
-            assigned_to_child: assigned_to_child || null
+            assigned_to_child: assigned_to_child || null,
+            assigned_to_member: assigned_to_member || null
           })
           .select()
           .single();
@@ -86,7 +87,6 @@ export function useCreateCalendarEvent() {
           ...data,
           is_household_event: false,
           user_profile: null,
-          assigned_to_member: assigned_to_member || null,
           recurrence_type: recurrence_type || null,
           recurrence_end: recurrence_end?.toISOString() || null,
           category: category || null
