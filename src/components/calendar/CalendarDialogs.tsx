@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { QuickEventDialog } from '@/components/calendar/QuickEventDialog';
@@ -70,10 +71,12 @@ export function CalendarDialogs({
         />
       )}
 
+      {/* Full Event Dialog */}
       <CalendarEventDialog
         open={isEventDialogOpen}
         onOpenChange={setIsEventDialogOpen}
         onSubmit={onSaveEvent}
+        onDelete={selectedEvent && isEditMode ? onDeleteEvent : undefined}
         isEditing={isEditMode}
         defaultValues={isEditMode && selectedEvent ? {
           title: selectedEvent.title,
@@ -82,11 +85,18 @@ export function CalendarDialogs({
           end_date: parseISO(selectedEvent.end_date),
           color: selectedEvent.color || '',
           is_household_event: selectedEvent.is_household_event,
-          is_public: selectedEvent.is_public
+          is_public: selectedEvent.is_public,
+          assigned_to_member: selectedEvent.assigned_to_member,
+          assigned_to_child: selectedEvent.assigned_to_child,
+          recurrence_type: selectedEvent.recurrence_type || 'none',
+          recurrence_end: selectedEvent.recurrence_end ? parseISO(selectedEvent.recurrence_end) : undefined,
+          category: selectedEvent.category || 'Other'
         } : eventDefaults}
         isSubmitting={isMutating}
+        isDeleting={isMutating}
       />
 
+      {/* Quick Event Dialog */}
       <QuickEventDialog
         open={isQuickEventDialogOpen}
         onOpenChange={setIsQuickEventDialogOpen}

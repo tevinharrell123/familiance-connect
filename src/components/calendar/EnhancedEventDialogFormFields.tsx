@@ -3,7 +3,7 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { CalendarFormValues, EVENT_CATEGORIES, CATEGORY_COLORS, PERSON_COLORS } from '@/types/calendar';
 import { format } from 'date-fns';
-import { CalendarIcon, User } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChildProfiles } from '@/hooks/household/useChildProfiles';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
@@ -43,15 +43,32 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
   const allAssignablePersons = React.useMemo(() => {
     const persons = [];
     
-    // Add household members
+    // Add current user first if they are part of household
+    if (user && household) {
+      const currentMember = householdMembers?.find(m => m.user_id === user.id);
+      if (currentMember) {
+        persons.push({
+          id: user.id,
+          name: currentMember.user_profiles?.full_name || 'You',
+          avatar_url: currentMember.user_profiles?.avatar_url,
+          type: 'member' as const,
+          isCurrent: true
+        });
+      }
+    }
+    
+    // Add other household members
     if (householdMembers) {
       householdMembers.forEach((member) => {
-        persons.push({
-          id: member.user_id,
-          name: member.user_profiles?.full_name || 'Unknown Member',
-          avatar_url: member.user_profiles?.avatar_url,
-          type: 'member' as const
-        });
+        if (member.user_id !== user?.id) {
+          persons.push({
+            id: member.user_id,
+            name: member.user_profiles?.full_name || 'Unknown Member',
+            avatar_url: member.user_profiles?.avatar_url,
+            type: 'member' as const,
+            isCurrent: false
+          });
+        }
       });
     }
     
@@ -62,13 +79,14 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
           id: child.id,
           name: child.name,
           avatar_url: child.avatar_url,
-          type: 'child' as const
+          type: 'child' as const,
+          isCurrent: false
         });
       });
     }
     
     return persons;
-  }, [householdMembers, childProfiles]);
+  }, [householdMembers, childProfiles, user]);
 
   const getPersonColor = (personId: string) => {
     const index = allAssignablePersons.findIndex(p => p.id === personId);
@@ -77,8 +95,7 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
 
   const selectedCategory = form.watch('category');
   const selectedPerson = form.watch('assigned_to_member') || form.watch('assigned_to_child');
-  const colorSource = form.watch('color');
-
+  
   // Auto-set color based on category or person
   React.useEffect(() => {
     if (selectedCategory && selectedCategory !== 'Other') {
@@ -87,6 +104,25 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
       form.setValue('color', getPersonColor(selectedPerson));
     }
   }, [selectedCategory, selectedPerson, form]);
+
+  // Set default assignment to current user if not already set
+  React.useEffect(() => {
+    const currentAssigned = form.getValues('assigned_to_member') || form.getValues('assigned_to_child');
+    if (!currentAssigned && user && allAssignablePersons.length > 0) {
+      const currentUserPerson = allAssignablePersons.find(p => p.id === user.id);
+      if (currentUserPerson) {
+        form.setValue('assigned_to_member', user.id);
+      } else if (allAssignablePersons.length > 0) {
+        // If current user is not in the list, assign to first person
+        const firstPerson = allAssignablePersons[0];
+        if (firstPerson.type === 'child') {
+          form.setValue('assigned_to_child', firstPerson.id);
+        } else {
+          form.setValue('assigned_to_member', firstPerson.id);
+        }
+      }
+    }
+  }, [form, user, allAssignablePersons]);
 
   return (
     <Form {...form}>
@@ -236,23 +272,16 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
           )}
         />
 
-        {/* Assign to Person */}
+        {/* Assign to Person - REQUIRED */}
         {household && allAssignablePersons.length > 0 && (
           <FormField
             control={form.control}
             name="assigned_to_member"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assign to Person (optional)</FormLabel>
+                <FormLabel>Assign to Person *</FormLabel>
                 <Select 
                   onValueChange={(value) => {
-                    // Handle unassigned case
-                    if (value === 'unassigned' || !value) {
-                      field.onChange(undefined);
-                      form.setValue('assigned_to_child', undefined);
-                      return;
-                    }
-                    
                     // Find the person and determine if they're a child or member
                     const person = allAssignablePersons.find(p => p.id === value);
                     if (person?.type === 'child') {
@@ -263,15 +292,15 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
                       form.setValue('assigned_to_child', undefined);
                     }
                   }} 
-                  value={field.value || form.watch('assigned_to_child') || 'unassigned'}
+                  value={field.value || form.watch('assigned_to_child') || ''}
+                  required
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Not assigned to anyone" />
+                      <SelectValue placeholder="Select a person" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="unassigned">Not assigned to anyone</SelectItem>
                     {allAssignablePersons.map((person) => (
                       <SelectItem key={person.id} value={person.id}>
                         <div className="flex items-center gap-2">
@@ -284,6 +313,7 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
                             </AvatarFallback>
                           </Avatar>
                           <span>{person.name}</span>
+                          {person.isCurrent && <span className="text-xs text-muted-foreground">(You)</span>}
                           <span className="text-xs text-muted-foreground">
                             ({person.type === 'child' ? 'Child' : 'Member'})
                           </span>

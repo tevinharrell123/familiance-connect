@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarHeader } from '@/components/calendar/CalendarHeader';
-import { CalendarFilters } from '@/components/calendar/CalendarFilters';
-import { KeyboardShortcuts } from '@/components/calendar/KeyboardShortcuts';
-import { RefreshCw, Keyboard } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { CalendarNavigation } from '@/components/calendar/CalendarNavigation';
+import { PersonFilterDropdown } from '@/components/calendar/PersonFilterDropdown';
+import { KeyboardShortcutsDialog } from '@/components/calendar/KeyboardShortcutsDialog';
+import { RefreshCw, Plus, Keyboard } from 'lucide-react';
+import { HouseholdMember } from '@/types/household';
+import { ChildProfile } from '@/types/child-profiles';
 
 interface CalendarWidgetHeaderProps {
   selectedDate: Date;
@@ -15,8 +16,8 @@ interface CalendarWidgetHeaderProps {
   onDateChange: (date: Date) => void;
   onManualRefresh: () => void;
   isRefreshing: boolean;
-  householdMembers: any[];
-  childProfiles: any[];
+  householdMembers: HouseholdMember[];
+  childProfiles: ChildProfile[] | null;
   selectedPersonIds: string[];
   onPersonToggle: (personId: string) => void;
   onClearFilters: () => void;
@@ -28,6 +29,7 @@ interface CalendarWidgetHeaderProps {
 
 export function CalendarWidgetHeader({
   selectedDate,
+  view,
   onQuickEventCreate,
   onDateChange,
   onManualRefresh,
@@ -42,74 +44,68 @@ export function CalendarWidgetHeader({
   onKeyboardShortcut,
   keyboardShortcutsEnabled
 }: CalendarWidgetHeaderProps) {
-  const isMobile = useIsMobile();
-
   return (
-    <div className="flex flex-col space-y-2 px-4 py-2 border-b bg-background">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <CalendarHeader
-          currentDate={selectedDate}
-          onAddEvent={() => onQuickEventCreate(selectedDate)}
-          onDateChange={onDateChange}
-        />
-        <div className="mt-2 sm:mt-0 flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onManualRefresh}
-            disabled={isRefreshing}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isMobile ? '' : 'Refresh'}
-          </Button>
-          {!isMobile && (
+    <>
+      <div className="flex flex-col space-y-3 pb-3 border-b">
+        <div className="flex items-center justify-between">
+          <CalendarNavigation
+            selectedDate={selectedDate}
+            view={view}
+            onDateChange={onDateChange}
+          />
+          
+          <div className="flex items-center gap-2">
+            <PersonFilterDropdown
+              householdMembers={householdMembers}
+              childProfiles={childProfiles}
+              selectedPersonIds={selectedPersonIds}
+              onPersonToggle={onPersonToggle}
+              onClearFilters={onClearFilters}
+            />
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onManualRefresh}
+              disabled={isRefreshing}
+              className="hidden sm:flex"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+            
             <Button
               variant="outline"
               size="sm"
               onClick={onToggleKeyboardShortcuts}
-              className="flex items-center gap-2"
+              className="hidden md:flex"
             >
               <Keyboard className="h-4 w-4" />
-              Shortcuts
             </Button>
-          )}
-          <button
-            className="p-2 rounded-md text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-            onClick={() => onQuickEventCreate(selectedDate)}
-          >
-            + Event
-          </button>
-          <TabsList>
-            <TabsTrigger value="month" className={isMobile ? "px-3" : ""}>
-              {isMobile ? "M" : "Month"}
-            </TabsTrigger>
-            <TabsTrigger value="week" className={isMobile ? "px-3" : ""}>
-              {isMobile ? "W" : "Week"}
-            </TabsTrigger>
-            <TabsTrigger value="day" className={isMobile ? "px-3" : ""}>
-              {isMobile ? "D" : "Day"}
-            </TabsTrigger>
-          </TabsList>
+            
+            <Button
+              size="sm"
+              onClick={() => onQuickEventCreate(selectedDate)}
+              className="flex items-center gap-1"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Event</span>
+            </Button>
+          </div>
         </div>
+        
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="day">Day</TabsTrigger>
+          <TabsTrigger value="week">Week</TabsTrigger>
+          <TabsTrigger value="month">Month</TabsTrigger>
+        </TabsList>
       </div>
-      
-      <CalendarFilters
-        householdMembers={householdMembers || []}
-        childProfiles={childProfiles || []}
-        selectedPersonIds={selectedPersonIds}
-        onPersonToggle={onPersonToggle}
-        onClearFilters={onClearFilters}
-      />
 
-      {showKeyboardShortcuts && !isMobile && (
-        <div className="flex justify-center">
-          <KeyboardShortcuts
-            onQuickAction={onKeyboardShortcut}
-            isEnabled={keyboardShortcutsEnabled}
-          />
-        </div>
-      )}
-    </div>
+      <KeyboardShortcutsDialog
+        open={showKeyboardShortcuts}
+        onOpenChange={onToggleKeyboardShortcuts}
+        onShortcut={onKeyboardShortcut}
+        isEnabled={keyboardShortcutsEnabled}
+      />
+    </>
   );
 }
