@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { format, isSameDay, parseISO, differenceInDays } from 'date-fns';
@@ -9,9 +8,10 @@ interface DayViewProps {
   events?: CalendarEvent[];
   isLoading?: boolean;
   onEventClick?: (event: CalendarEvent) => void;
+  onTimeSlotClick?: (date: Date, hour: number) => void;
 }
 
-export function DayView({ currentDate, events = [], isLoading, onEventClick }: DayViewProps) {
+export function DayView({ currentDate, events = [], isLoading, onEventClick, onTimeSlotClick }: DayViewProps) {
   // Filter events for the current day
   const dayEvents = events.filter(event => {
     if (!event) return false;

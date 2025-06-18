@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, differenceInDays } from 'date-fns';
@@ -9,9 +8,11 @@ interface WeekViewProps {
   events?: CalendarEvent[];
   isLoading?: boolean;
   onEventClick?: (event: CalendarEvent) => void;
+  onDateChange?: (date: Date) => void;
+  onTimeSlotClick?: (date: Date, hour: number) => void;
 }
 
-export function WeekView({ currentDate, events = [], isLoading, onEventClick }: WeekViewProps) {
+export function WeekView({ currentDate, events = [], isLoading, onEventClick, onDateChange, onTimeSlotClick }: WeekViewProps) {
   // Get start and end of the week
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // 0 = Sunday
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
