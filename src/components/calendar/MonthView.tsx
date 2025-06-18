@@ -93,10 +93,8 @@ export function MonthView({
     onDayClick?.(day);
   };
 
-  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
+  const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked:', event.title);
-    e.stopPropagation();
-    e.preventDefault();
     onEventClick(event);
   };
 
@@ -168,7 +166,7 @@ export function MonthView({
                         <ContextMenuTrigger>
                           <EnhancedCalendarEventCard
                             event={event}
-                            onClick={(e) => handleEventClick(event, e)}
+                            onClick={handleEventClick}
                             compact={true}
                             showMultiDayBadge={false}
                           />
