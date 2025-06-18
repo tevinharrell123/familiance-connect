@@ -5,6 +5,8 @@ import { format, isSameMonth, isToday, startOfMonth, endOfMonth, eachDayOfInterv
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { EnhancedCalendarEventCard } from './EnhancedCalendarEventCard';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileMonthView } from './MobileMonthView';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -43,6 +45,20 @@ export function MonthView({
   onEventDelete,
   onEventDuplicate
 }: MonthViewProps) {
+  const isMobile = useIsMobile();
+  
+  // Use mobile view for mobile devices
+  if (isMobile) {
+    return (
+      <MobileMonthView
+        currentDate={currentDate}
+        events={events}
+        onEventClick={onEventClick}
+        onDayClick={onDayClick}
+      />
+    );
+  }
+  
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
