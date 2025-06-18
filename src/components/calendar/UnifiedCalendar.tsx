@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CalendarTabContent } from '../dashboard/calendar/CalendarTabContent';
 import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { QuickEventDialog } from '@/components/calendar/QuickEventDialog';
@@ -12,7 +13,7 @@ import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { useChildProfiles } from '@/hooks/household/useChildProfiles';
 import { toast } from '@/components/ui/use-toast';
 import { CalendarEvent, CalendarFormValues, CalendarViewType } from '@/types/calendar';
-import { addDays, format, startOfDay, endOfDay, parseISO, setHours, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { addDays, format, startOfDay, endOfDay, parseISO, setHours, startOfMonth, endOfMonth, eachDayOfInterval, addWeeks, subWeeks, addMonths, subMonths, subDays } from 'date-fns';
 import { scheduleEventNotification, cancelEventNotification } from '@/utils/notificationUtils';
 
 interface UnifiedCalendarProps {
@@ -254,20 +255,30 @@ export function UnifiedCalendar({ hideNavigation, fullHeight }: UnifiedCalendarP
       </CardHeader>
 
       <div className="flex-1 overflow-hidden">
-        <CalendarTabContent
-          currentDate={selectedDate}
-          days={days}
-          events={filteredEvents}
-          isLoading={isLoading}
-          error={error}
-          selectedView={selectedView}
-          onViewChange={handleViewChange}
-          onEventClick={handleEventClick}
-          onDateChange={handleDateChange}
-          onDayClick={handleDayClick}
-          onDateClick={handleDateClick}
-          onTimeSlotClick={handleTimeSlotClick}
-        />
+        <Tabs value={selectedView} onValueChange={handleViewChange} className="h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-3 mb-4 mx-4">
+            <TabsTrigger value="month">Month</TabsTrigger>
+            <TabsTrigger value="week">Week</TabsTrigger>
+            <TabsTrigger value="day">Day</TabsTrigger>
+          </TabsList>
+          
+          <div className="flex-1 overflow-hidden">
+            <CalendarTabContent
+              currentDate={selectedDate}
+              days={days}
+              events={filteredEvents}
+              isLoading={isLoading}
+              error={error}
+              selectedView={selectedView}
+              onViewChange={handleViewChange}
+              onEventClick={handleEventClick}
+              onDateChange={handleDateChange}
+              onDayClick={handleDayClick}
+              onDateClick={handleDateClick}
+              onTimeSlotClick={handleTimeSlotClick}
+            />
+          </div>
+        </Tabs>
       </div>
 
       <CalendarEventDialog
