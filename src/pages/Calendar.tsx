@@ -2,7 +2,7 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarWidget } from '@/components/dashboard/calendar/CalendarContainer';
+import { UnifiedCalendar } from '@/components/calendar/UnifiedCalendar';
 
 const CalendarPage = () => {
   return (
@@ -13,9 +13,7 @@ const CalendarPage = () => {
             <CardTitle className="text-lg md:text-2xl">Calendar</CardTitle>
           </CardHeader>
           <CardContent className="p-0 h-[calc(100%-4rem)]">
-            <div className="calendar-container w-full h-full">
-              <CalendarWidget key="calendar-page-widget" initialView="month" />
-            </div>
+            <UnifiedCalendar fullHeight={true} />
           </CardContent>
         </Card>
       </div>
