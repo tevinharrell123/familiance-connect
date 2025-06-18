@@ -211,7 +211,7 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value || 'Other'}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -246,19 +246,24 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
                 <FormLabel>Assign to Person (optional)</FormLabel>
                 <Select 
                   onValueChange={(value) => {
-                    field.onChange(value || undefined);
-                    // Clear child assignment if member is selected
-                    if (value) {
-                      const person = allAssignablePersons.find(p => p.id === value);
-                      if (person?.type === 'child') {
-                        form.setValue('assigned_to_child', value);
-                        form.setValue('assigned_to_member', undefined);
-                      } else {
-                        form.setValue('assigned_to_child', undefined);
-                      }
+                    // Handle unassigned case
+                    if (value === 'unassigned' || !value) {
+                      field.onChange(undefined);
+                      form.setValue('assigned_to_child', undefined);
+                      return;
+                    }
+                    
+                    // Find the person and determine if they're a child or member
+                    const person = allAssignablePersons.find(p => p.id === value);
+                    if (person?.type === 'child') {
+                      form.setValue('assigned_to_child', value);
+                      form.setValue('assigned_to_member', undefined);
+                    } else {
+                      field.onChange(value);
+                      form.setValue('assigned_to_child', undefined);
                     }
                   }} 
-                  value={field.value || form.watch('assigned_to_child') || ''}
+                  value={field.value || form.watch('assigned_to_child') || 'unassigned'}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -266,7 +271,7 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Not assigned to anyone</SelectItem>
+                    <SelectItem value="unassigned">Not assigned to anyone</SelectItem>
                     {allAssignablePersons.map((person) => (
                       <SelectItem key={person.id} value={person.id}>
                         <div className="flex items-center gap-2">
@@ -300,7 +305,7 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
           render={({ field }) => (
             <FormItem>
               <FormLabel>Repeat</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value || 'none'}>
+              <Select onValueChange={field.onChange} value={field.value || 'none'}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Does not repeat" />
@@ -399,7 +404,7 @@ export function EnhancedEventDialogFormFields({ form, showHouseholdOption }: Enh
                 <FormControl>
                   <RadioGroup
                     onValueChange={(value) => field.onChange(value === 'household')}
-                    defaultValue={field.value ? 'household' : 'personal'}
+                    value={field.value ? 'household' : 'personal'}
                     className="flex flex-col space-y-1"
                   >
                     <FormItem className="flex items-center space-x-3 space-y-0">
