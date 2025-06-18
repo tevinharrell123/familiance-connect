@@ -12,6 +12,26 @@ import { parseISO } from 'date-fns';
 export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' | 'month' }) {
   const containerState = useCalendarContainer(initialDate, initialView);
   
+  // Wrap mutation functions to match expected signatures
+  const wrappedCreateEvent = async (data: any) => {
+    return await containerState.createEvent(data);
+  };
+
+  const wrappedUpdateEvent = async (event: any) => {
+    containerState.updateEvent(event);
+    return event; // Return the event to match expected signature
+  };
+
+  const wrappedDeleteEvent = async (id: string) => {
+    containerState.deleteEvent(id);
+    return Promise.resolve(); // Return void promise
+  };
+
+  const wrappedManualRefresh = async () => {
+    await containerState.manualRefresh();
+    return Promise.resolve(); // Return void promise
+  };
+  
   const handlers = useCalendarHandlers({
     selectedDate: containerState.selectedDate,
     setSelectedDate: containerState.setSelectedDate,
@@ -27,10 +47,10 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
     setIsDetailsDialogOpen: containerState.setIsDetailsDialogOpen,
     setIsMobileEventSheetOpen: containerState.setIsMobileEventSheetOpen,
     setSelectedPersonIds: containerState.setSelectedPersonIds,
-    createEvent: containerState.createEvent,
-    updateEvent: containerState.updateEvent,
-    deleteEvent: containerState.deleteEvent,
-    manualRefresh: containerState.manualRefresh,
+    createEvent: wrappedCreateEvent,
+    updateEvent: wrappedUpdateEvent,
+    deleteEvent: wrappedDeleteEvent,
+    manualRefresh: wrappedManualRefresh,
     today: containerState.today
   });
 
