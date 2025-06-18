@@ -31,6 +31,13 @@ export interface CalendarEvent {
     full_name: string | null;
     avatar_url?: string | null;
   } | null;
+  // Legacy support - unified assigned person
+  assigned_to?: string;
+  assigned_user_profile?: {
+    id: string;
+    full_name: string | null;
+    avatar_url?: string | null;
+  } | null;
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month';
@@ -48,6 +55,8 @@ export interface CalendarFormValues {
   recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly';
   recurrence_end?: Date;
   category?: string;
+  // Legacy support
+  assigned_to?: string;
 }
 
 export const EVENT_CATEGORIES = [

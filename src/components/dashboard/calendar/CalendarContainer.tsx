@@ -8,11 +8,26 @@ import { CalendarDialogs } from '@/components/calendar/CalendarDialogs';
 import { TouchCalendar } from '@/components/calendar/TouchCalendar';
 import { useCalendarContainer } from '@/hooks/calendar/useCalendarContainer';
 import { useCalendarHandlers } from '@/hooks/calendar/useCalendarHandlers';
+import { useSharedCalendarData } from '@/hooks/calendar/useSharedCalendarData';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export function CalendarWidget({ initialDate, initialView = 'week' }: { initialDate?: Date, initialView?: 'day' | 'week' | 'month' }) {
   const isMobile = useIsMobile();
+  
+  // Use shared calendar data instead of local state
+  const { events, isLoading, refetch, manualRefresh, isRefreshing } = useSharedCalendarData();
+  
   const containerState = useCalendarContainer(initialDate, initialView);
+  
+  // Override container state with shared data
+  const enhancedContainerState = {
+    ...containerState,
+    events,
+    isLoading,
+    refetch,
+    manualRefresh,
+    isRefreshing
+  };
   
   // Wrap mutation functions to match expected signatures
   const wrappedCreateEvent = async (data: any) => {
@@ -30,7 +45,7 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   };
 
   const wrappedManualRefresh = async () => {
-    await containerState.manualRefresh();
+    await manualRefresh();
     return Promise.resolve();
   };
   
@@ -57,7 +72,13 @@ export function CalendarWidget({ initialDate, initialView = 'week' }: { initialD
   });
 
   const handleSaveEvent = (eventData: any) => {
-    handlers.handleSaveEvent(eventData, containerState.selectedEvent, containerState.isEditMode);
+    console.log('CalendarContainer handleSaveEvent called with:', eventData);
+    // Add assigned_to field for backward compatibility
+    const enhancedEventData = {
+      ...eventData,
+      assigned_to: eventData.assigned_to_member || eventData.assigned_to_child || eventData.assigned_to
+    };
+    handlers.handleSaveEvent(enhancedEventData, containerState.selectedEvent, containerState.isEditMode);
   };
 
   const handleDateClick = (date: Date) => {

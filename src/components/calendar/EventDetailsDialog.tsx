@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { CalendarEvent } from '@/types/calendar';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
-import { User, Users, Calendar, Clock, House } from 'lucide-react';
+import { User, Users, Calendar, Clock, House, UserCheck } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,11 +43,13 @@ export function EventDetailsDialog({
   
   const isCurrentUserEvent = event.user_id === user?.id;
   
-  // Determine assigned person info - prioritize assigned child, then member, then show household
-  const assignedPerson = event.assigned_child_profile 
-    ? { name: event.assigned_child_profile.name, avatar_url: event.assigned_child_profile.avatar_url, type: 'child' }
+  // Determine assigned person info - prioritize assigned_user_profile, then member, then child
+  const assignedPerson = event.assigned_user_profile 
+    ? { name: event.assigned_user_profile.full_name || 'Unknown User', avatar_url: event.assigned_user_profile.avatar_url, type: 'assigned' }
     : event.assigned_member_profile 
     ? { name: event.assigned_member_profile.full_name || 'Unknown Member', avatar_url: event.assigned_member_profile.avatar_url, type: 'member' }
+    : event.assigned_child_profile 
+    ? { name: event.assigned_child_profile.name, avatar_url: event.assigned_child_profile.avatar_url, type: 'child' }
     : null;
   
   // Get user initials for avatar - handle cases where name might be null or undefined
@@ -129,7 +131,8 @@ export function EventDetailsDialog({
                   <AvatarFallback>{userInitials}</AvatarFallback>
                 </Avatar>
                 <div className="text-sm">
-                  <div className="font-medium">
+                  <div className="font-medium flex items-center gap-1">
+                    <UserCheck className="h-3 w-3" />
                     {assignedPerson.name}
                   </div>
                   <div className="text-xs text-muted-foreground">

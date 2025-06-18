@@ -6,7 +6,7 @@ import { CalendarEventDialog } from '@/components/calendar/CalendarEventDialog';
 import { QuickEventDialog } from '@/components/calendar/QuickEventDialog';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
 import { CalendarFilters } from '@/components/calendar/CalendarFilters';
-import { useCalendarEventsData } from '@/hooks/calendar/useCalendarEventsData';
+import { useSharedCalendarData } from '@/hooks/calendar/useSharedCalendarData';
 import { useCalendarEventMutations } from '@/hooks/calendar/useCalendarEventMutations';
 import { useFamilyMembers } from '@/hooks/household/useFamilyMembers';
 import { useChildProfiles } from '@/hooks/household/useChildProfiles';
@@ -28,7 +28,7 @@ export function Calendar() {
   const [eventDefaults, setEventDefaults] = useState<Partial<CalendarFormValues>>({});
   const [quickEventDate, setQuickEventDate] = useState<Date | undefined>();
 
-  const { events, isLoading, error, refetch } = useCalendarEventsData();
+  const { events, isLoading, error, refetch } = useSharedCalendarData();
   const { createEvent, updateEvent, deleteEvent, isLoading: isMutating } = useCalendarEventMutations();
   const { members: householdMembers = [] } = useFamilyMembers();
   const { childProfiles = [] } = useChildProfiles();
@@ -42,7 +42,15 @@ export function Calendar() {
   const filteredEvents = events?.filter(event => {
     if (selectedPersonIds.length === 0) return true;
     
+    if (event.assigned_to && selectedPersonIds.includes(event.assigned_to)) {
+      return true;
+    }
+    
     if (event.assigned_to_child && selectedPersonIds.includes(event.assigned_to_child)) {
+      return true;
+    }
+    
+    if (event.assigned_to_member && selectedPersonIds.includes(event.assigned_to_member)) {
       return true;
     }
     
@@ -144,9 +152,13 @@ export function Calendar() {
           start_date: format(eventData.start_date, "yyyy-MM-dd'T'HH:mm:ss"),
           end_date: format(eventData.end_date, "yyyy-MM-dd'T'HH:mm:ss"),
           is_household_event: eventData.is_household_event,
-          is_public: eventData.is_public
+          is_public: eventData.is_public,
+          assigned_to_child: eventData.assigned_to_child,
+          assigned_to_member: eventData.assigned_to_member,
+          assigned_to: eventData.assigned_to
         };
         
+        console.log('Updating event with data:', updatedEvent);
         await updateEvent(updatedEvent);
         await cancelEventNotification(selectedEvent.id);
         await scheduleEventNotification(updatedEvent);
@@ -162,6 +174,7 @@ export function Calendar() {
           end_date: eventData.end_date || endOfDay(selectedDate)
         };
         
+        console.log('Creating event with data:', newEventData);
         const createdEvent = await createEvent(newEventData);
         
         if (createdEvent && typeof createdEvent === 'object' && 'id' in createdEvent) {
@@ -262,7 +275,10 @@ export function Calendar() {
           end_date: parseISO(selectedEvent.end_date),
           color: selectedEvent.color || '',
           is_household_event: selectedEvent.is_household_event,
-          is_public: selectedEvent.is_public
+          is_public: selectedEvent.is_public,
+          assigned_to_child: selectedEvent.assigned_to_child || undefined,
+          assigned_to_member: selectedEvent.assigned_to_member || undefined,
+          assigned_to: selectedEvent.assigned_to || selectedEvent.assigned_to_member || selectedEvent.assigned_to_child || undefined
         } : eventDefaults}
         isSubmitting={isMutating}
       />
