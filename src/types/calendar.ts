@@ -1,4 +1,3 @@
-
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -22,6 +21,16 @@ export interface CalendarEvent {
   recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly' | null;
   recurrence_end?: string | null;
   category?: string | null;
+  assigned_child_profile?: {
+    id: string;
+    name: string;
+    avatar_url?: string | null;
+  } | null;
+  assigned_member_profile?: {
+    id: string;
+    full_name: string | null;
+    avatar_url?: string | null;
+  } | null;
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month';

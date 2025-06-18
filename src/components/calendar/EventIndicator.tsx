@@ -2,7 +2,7 @@
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronRight, ChevronLeft, Calendar } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Calendar, House } from 'lucide-react';
 import { parseISO, format, differenceInDays } from 'date-fns';
 
 interface EventIndicatorProps {
@@ -20,10 +20,17 @@ export function EventIndicator({
   isFirstDay = true,
   isLastDay = true
 }: EventIndicatorProps) {
-  // Handle cases where user_profile or full_name might be null or undefined
-  const fullName = event.user_profile?.full_name || '';
-  const userInitials = fullName
-    ? fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+  // Determine assigned person info - prioritize assigned child, then member, then creator
+  const assignedPerson = event.assigned_child_profile 
+    ? { name: event.assigned_child_profile.name, avatar_url: event.assigned_child_profile.avatar_url, type: 'child' }
+    : event.assigned_member_profile 
+    ? { name: event.assigned_member_profile.full_name || 'Unknown Member', avatar_url: event.assigned_member_profile.avatar_url, type: 'member' }
+    : event.user_profile
+    ? { name: event.user_profile.full_name || 'Unknown User', avatar_url: event.user_profile.avatar_url, type: 'creator' }
+    : null;
+  
+  const userInitials = assignedPerson?.name
+    ? assignedPerson.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
     : '?';
   
   // Calculate duration for multi-day events
@@ -94,19 +101,24 @@ export function EventIndicator({
       }}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
+      title={assignedPerson ? `Assigned to: ${assignedPerson.name}` : 'Household event'}
     >
       {isMultiDay && !isFirstDay && getMultiDayIndicator()}
       
       {isFirstDay && (
-        <Avatar className="h-3 w-3 mr-1 flex-shrink-0">
-          {event.user_profile?.avatar_url ? (
-            <AvatarImage 
-              src={event.user_profile.avatar_url} 
-              alt={event.user_profile.full_name || 'User'} 
-            />
-          ) : null}
-          <AvatarFallback className="text-[7px]">{userInitials}</AvatarFallback>
-        </Avatar>
+        assignedPerson ? (
+          <Avatar className="h-3 w-3 mr-1 flex-shrink-0">
+            {assignedPerson.avatar_url ? (
+              <AvatarImage 
+                src={assignedPerson.avatar_url} 
+                alt={assignedPerson.name} 
+              />
+            ) : null}
+            <AvatarFallback className="text-[7px]">{userInitials}</AvatarFallback>
+          </Avatar>
+        ) : (
+          <House className="h-3 w-3 mr-1 flex-shrink-0 opacity-70" />
+        )
       )}
       
       <span className="truncate text-[10px] font-medium">

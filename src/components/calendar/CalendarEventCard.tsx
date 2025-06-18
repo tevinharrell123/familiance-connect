@@ -7,7 +7,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Users, User, Calendar } from 'lucide-react';
+import { Users, User, Calendar, House } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 
@@ -24,6 +24,8 @@ export function CalendarEventCard({ event, onClick, showMultiDayBadge = false }:
     start_date, 
     end_date, 
     is_household_event,
+    assigned_child_profile,
+    assigned_member_profile,
     user_profile,
     isMultiDay,
     duration
@@ -42,10 +44,17 @@ export function CalendarEventCard({ event, onClick, showMultiDayBadge = false }:
   const eventDuration = duration || 
     (isMultiDayEvent ? differenceInDays(parseISO(end_date), parseISO(start_date)) + 1 : 1);
   
-  // Handle cases where user_profile or full_name might be null or undefined
-  const fullName = user_profile?.full_name || '';
-  const userInitials = fullName
-    ? fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+  // Determine assigned person info - prioritize assigned child, then member, then creator
+  const assignedPerson = assigned_child_profile 
+    ? { name: assigned_child_profile.name, avatar_url: assigned_child_profile.avatar_url, type: 'child' }
+    : assigned_member_profile 
+    ? { name: assigned_member_profile.full_name || 'Unknown Member', avatar_url: assigned_member_profile.avatar_url, type: 'member' }
+    : user_profile
+    ? { name: user_profile.full_name || 'Unknown User', avatar_url: user_profile.avatar_url, type: 'creator' }
+    : null;
+    
+  const userInitials = assignedPerson?.name
+    ? assignedPerson.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
     : '?';
     
   const cardStyle = {
@@ -93,12 +102,20 @@ export function CalendarEventCard({ event, onClick, showMultiDayBadge = false }:
         <div className="text-xs text-muted-foreground">
           {isSameDay ? 'All day' : format(startDate, 'p')}
         </div>
-        <Avatar className="h-5 w-5">
-          {user_profile?.avatar_url ? (
-            <AvatarImage src={user_profile.avatar_url} alt={user_profile.full_name || 'User'} />
-          ) : null}
-          <AvatarFallback className="text-[10px]">{userInitials}</AvatarFallback>
-        </Avatar>
+        {assignedPerson ? (
+          <div className="flex items-center gap-1" title={`Assigned to: ${assignedPerson.name}`}>
+            <Avatar className="h-5 w-5">
+              {assignedPerson.avatar_url ? (
+                <AvatarImage src={assignedPerson.avatar_url} alt={assignedPerson.name} />
+              ) : null}
+              <AvatarFallback className="text-[10px]">{userInitials}</AvatarFallback>
+            </Avatar>
+          </div>
+        ) : (
+          <div className="flex items-center" title="Household event">
+            <House className="h-5 w-5 text-muted-foreground" />
+          </div>
+        )}
       </CardFooter>
     </Card>
   );
