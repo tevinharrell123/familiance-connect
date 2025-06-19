@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, getHours, getMinutes, differenceInMinutes, isAfter, isBefore, isWithinInterval } from 'date-fns';
@@ -26,7 +27,7 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
   // Get all days in the week
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
   
-  // Generate hours array (24 hours)
+  // Generate hours array (24 hours: 0-23)
   const hours = Array.from({ length: 24 }, (_, i) => i);
   
   // Separate all-day events from time-specific events
@@ -75,24 +76,49 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
   
   // Get events that START in a specific hour on a specific day
   const getEventsStartingInHour = (day: Date, hour: number) => {
-    console.log(`Looking for events on ${format(day, 'yyyy-MM-dd')} at hour ${hour}`);
-    
     const { timeEvents } = separateEvents(day);
     
     const eventsInHour = timeEvents.filter(event => {
-      const eventStart = parseISO(event.start_date);
-      const eventHour = getHours(eventStart);
-      const eventDay = format(eventStart, 'yyyy-MM-dd');
-      const targetDay = format(day, 'yyyy-MM-dd');
+      if (!event || !event.start_date) return false;
       
-      console.log(`Event: ${event.title}, Date: ${eventDay}, Hour: ${eventHour}, Target Date: ${targetDay}, Target Hour: ${hour}`);
-      
-      // Must be on the same day AND start in this hour
-      return eventDay === targetDay && eventHour === hour;
+      try {
+        const eventStart = parseISO(event.start_date);
+        const eventHour = getHours(eventStart);
+        
+        // Check if event is on the same day AND starts in this hour
+        return isSameDay(day, eventStart) && eventHour === hour;
+      } catch (error) {
+        console.error('Error parsing event date:', event.start_date, error);
+        return false;
+      }
     });
     
-    console.log(`Found ${eventsInHour.length} events for ${format(day, 'yyyy-MM-dd')} at hour ${hour}`);
     return eventsInHour;
+  };
+
+  // Get events that span through a specific hour (for multi-hour events)
+  const getEventsSpanningHour = (day: Date, hour: number) => {
+    const { timeEvents } = separateEvents(day);
+    
+    return timeEvents.filter(event => {
+      if (!event || !event.start_date || !event.end_date) return false;
+      
+      try {
+        const eventStart = parseISO(event.start_date);
+        const eventEnd = parseISO(event.end_date);
+        const eventStartHour = getHours(eventStart);
+        const eventEndHour = getHours(eventEnd);
+        
+        // Only show spanning events if they don't start in this hour (to avoid duplication)
+        // and if the current hour is within the event's time range
+        return isSameDay(day, eventStart) && 
+               eventStartHour < hour && 
+               hour < eventEndHour;
+      } catch (error) {
+        console.error('Error parsing event dates:', event.start_date, event.end_date, error);
+        return false;
+      }
+    });
   };
   
   // Get assigned person info
@@ -209,7 +235,7 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
         </div>
       </div>
 
-      {/* Time Grid */}
+      {/* Time Grid - 24 hour format from 12 AM to 11 PM */}
       <div className="border rounded-lg overflow-hidden">
         <div className="grid grid-cols-8 gap-0">
           {/* Time labels column */}
@@ -217,7 +243,10 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
             <div className="h-8 border-b"></div> {/* Header spacer */}
             {hours.map((hour) => (
               <div key={hour} className="h-16 border-b text-xs p-1 flex items-start justify-end pr-2">
-                {format(new Date().setHours(hour, 0, 0, 0), 'h a')}
+                {hour === 0 ? '12 AM' : 
+                 hour < 12 ? `${hour} AM` : 
+                 hour === 12 ? '12 PM' : 
+                 `${hour - 12} PM`}
               </div>
             ))}
           </div>
@@ -232,7 +261,10 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
               
               {/* Hour slots */}
               {hours.map((hour) => {
-                const slotEvents = getEventsStartingInHour(day, hour);
+                const startingEvents = getEventsStartingInHour(day, hour);
+                const spanningEvents = getEventsSpanningHour(day, hour);
+                const allSlotEvents = [...startingEvents, ...spanningEvents];
+                
                 return (
                   <div
                     key={`${day.toISOString()}-${hour}`}
@@ -242,28 +274,78 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
                     {/* 30-minute line for visual reference */}
                     <div className="absolute left-0 right-0 h-px bg-muted/30" style={{ top: '32px' }}></div>
                     
-                    {slotEvents.map((event, index) => {
-                      const eventStart = parseISO(event.start_date);
-                      const eventEnd = parseISO(event.end_date);
-                      const startMinutes = getMinutes(eventStart);
-                      const durationMinutes = differenceInMinutes(eventEnd, eventStart);
+                    {startingEvents.map((event, index) => {
+                      if (!event.start_date || !event.end_date) return null;
                       
-                      // Calculate precise positioning within the hour
-                      const topOffset = (startMinutes / 60) * 64; // 64px per hour
-                      const height = Math.max(12, (durationMinutes / 60) * 64); // Minimum 12px height
-                      
+                      try {
+                        const eventStart = parseISO(event.start_date);
+                        const eventEnd = parseISO(event.end_date);
+                        const startMinutes = getMinutes(eventStart);
+                        const durationMinutes = differenceInMinutes(eventEnd, eventStart);
+                        
+                        // Calculate precise positioning within the hour
+                        const topOffset = (startMinutes / 60) * 64; // 64px per hour
+                        const height = Math.max(12, Math.min((durationMinutes / 60) * 64, 64 - topOffset)); // Min 12px, max remaining space in slot
+                        
+                        const assignedPerson = getAssignedPerson(event);
+                        
+                        return (
+                          <div
+                            key={event.id}
+                            className="absolute left-0.5 right-0.5 p-1 text-xs rounded cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
+                            style={{ 
+                              backgroundColor: `${event.color || '#7B68EE'}90`,
+                              borderLeft: `3px solid ${event.color || '#7B68EE'}`,
+                              height: `${height}px`,
+                              top: `${topOffset + (index * 2)}px`, // Slight offset for overlapping events
+                              zIndex: 10 + index
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEventClick(event);
+                            }}
+                          >
+                            <div className="flex items-center gap-1">
+                              {assignedPerson && (
+                                <Avatar className="h-3 w-3 flex-shrink-0">
+                                  {assignedPerson.avatar_url ? (
+                                    <AvatarImage src={assignedPerson.avatar_url} />
+                                  ) : null}
+                                  <AvatarFallback className="text-[7px]">
+                                    {assignedPerson.initials}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                              <div className="truncate flex-1">
+                                <div className="font-medium truncate text-white">{event.title}</div>
+                                <div className="text-[10px] text-white/80">
+                                  {format(eventStart, 'h:mm a')}
+                                  {durationMinutes > 30 && ` - ${format(eventEnd, 'h:mm a')}`}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } catch (error) {
+                        console.error('Error rendering event:', event.title, error);
+                        return null;
+                      }
+                    })}
+
+                    {/* Show spanning events with reduced opacity */}
+                    {spanningEvents.map((event, index) => {
                       const assignedPerson = getAssignedPerson(event);
                       
                       return (
                         <div
-                          key={event.id}
-                          className="absolute left-0.5 right-0.5 p-1 text-xs rounded cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
+                          key={`${event.id}-span`}
+                          className="absolute left-0.5 right-0.5 p-1 text-xs rounded cursor-pointer hover:opacity-80 transition-opacity overflow-hidden opacity-60"
                           style={{ 
-                            backgroundColor: `${event.color || '#7B68EE'}90`,
+                            backgroundColor: `${event.color || '#7B68EE'}60`,
                             borderLeft: `3px solid ${event.color || '#7B68EE'}`,
-                            height: `${Math.min(height, 64 - topOffset)}px`, // Don't exceed slot boundary
-                            top: `${topOffset + (index * 2)}px`, // Slight offset for overlapping events
-                            zIndex: 10 + index
+                            height: '60px',
+                            top: `${2 + (index * 2)}px`,
+                            zIndex: 5 + index
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -283,10 +365,7 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
                             )}
                             <div className="truncate flex-1">
                               <div className="font-medium truncate text-white">{event.title}</div>
-                              <div className="text-[10px] text-white/80">
-                                {format(eventStart, 'h:mm a')}
-                                {durationMinutes > 30 && ` - ${format(eventEnd, 'h:mm a')}`}
-                              </div>
+                              <div className="text-[10px] text-white/80">continues...</div>
                             </div>
                           </div>
                         </div>
