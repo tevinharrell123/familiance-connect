@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, getHours, getMinutes, differenceInMinutes, isAfter, isBefore, isWithinInterval } from 'date-fns';
@@ -74,15 +73,26 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
     return { allDayEvents, timeEvents };
   };
   
-  // Get events that START in a specific hour (to prevent duplication)
+  // Get events that START in a specific hour on a specific day
   const getEventsStartingInHour = (day: Date, hour: number) => {
+    console.log(`Looking for events on ${format(day, 'yyyy-MM-dd')} at hour ${hour}`);
+    
     const { timeEvents } = separateEvents(day);
     
-    return timeEvents.filter(event => {
+    const eventsInHour = timeEvents.filter(event => {
       const eventStart = parseISO(event.start_date);
       const eventHour = getHours(eventStart);
-      return eventHour === hour && isSameDay(day, eventStart);
+      const eventDay = format(eventStart, 'yyyy-MM-dd');
+      const targetDay = format(day, 'yyyy-MM-dd');
+      
+      console.log(`Event: ${event.title}, Date: ${eventDay}, Hour: ${eventHour}, Target Date: ${targetDay}, Target Hour: ${hour}`);
+      
+      // Must be on the same day AND start in this hour
+      return eventDay === targetDay && eventHour === hour;
     });
+    
+    console.log(`Found ${eventsInHour.length} events for ${format(day, 'yyyy-MM-dd')} at hour ${hour}`);
+    return eventsInHour;
   };
   
   // Get assigned person info
