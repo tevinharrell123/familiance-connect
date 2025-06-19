@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { CalendarEvent } from '@/types/calendar';
-import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, getHours, getMinutes, differenceInMinutes, isAfter, isBefore } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, getHours, getMinutes, differenceInMinutes, isAfter, isBefore, isWithinInterval } from 'date-fns';
 import { EnhancedCalendarEventCard } from './EnhancedCalendarEventCard';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useChildProfiles } from '@/hooks/household/useChildProfiles';
@@ -74,8 +74,8 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
     return { allDayEvents, timeEvents };
   };
   
-  // Get events for a specific time slot
-  const getEventsForTimeSlot = (day: Date, hour: number) => {
+  // Get events that START in a specific hour (to prevent duplication)
+  const getEventsStartingInHour = (day: Date, hour: number) => {
     const { timeEvents } = separateEvents(day);
     
     return timeEvents.filter(event => {
@@ -222,30 +222,38 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
               
               {/* Hour slots */}
               {hours.map((hour) => {
-                const slotEvents = getEventsForTimeSlot(day, hour);
+                const slotEvents = getEventsStartingInHour(day, hour);
                 return (
                   <div
                     key={`${day.toISOString()}-${hour}`}
                     className="h-16 border-b relative cursor-pointer hover:bg-muted/20 transition-colors"
                     onClick={() => handleTimeSlotClick(day, hour)}
                   >
+                    {/* 30-minute line for visual reference */}
+                    <div className="absolute left-0 right-0 h-px bg-muted/30" style={{ top: '32px' }}></div>
+                    
                     {slotEvents.map((event, index) => {
                       const eventStart = parseISO(event.start_date);
                       const eventEnd = parseISO(event.end_date);
+                      const startMinutes = getMinutes(eventStart);
                       const durationMinutes = differenceInMinutes(eventEnd, eventStart);
-                      const height = Math.max(16, (durationMinutes / 60) * 64); // 64px per hour
+                      
+                      // Calculate precise positioning within the hour
+                      const topOffset = (startMinutes / 60) * 64; // 64px per hour
+                      const height = Math.max(12, (durationMinutes / 60) * 64); // Minimum 12px height
+                      
                       const assignedPerson = getAssignedPerson(event);
                       
                       return (
                         <div
                           key={event.id}
-                          className="absolute left-0 right-0 mx-0.5 p-1 text-xs rounded cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
+                          className="absolute left-0.5 right-0.5 p-1 text-xs rounded cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
                           style={{ 
-                            backgroundColor: `${event.color || '#7B68EE'}80`,
+                            backgroundColor: `${event.color || '#7B68EE'}90`,
                             borderLeft: `3px solid ${event.color || '#7B68EE'}`,
-                            height: `${Math.min(height, 60)}px`,
-                            top: `${index * 2}px`,
-                            zIndex: 10
+                            height: `${Math.min(height, 64 - topOffset)}px`, // Don't exceed slot boundary
+                            top: `${topOffset + (index * 2)}px`, // Slight offset for overlapping events
+                            zIndex: 10 + index
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -263,10 +271,11 @@ export function WeekView({ currentDate, events = [], isLoading, onEventClick, on
                                 </AvatarFallback>
                               </Avatar>
                             )}
-                            <div className="truncate">
-                              <div className="font-medium truncate">{event.title}</div>
-                              <div className="text-[10px] opacity-75">
+                            <div className="truncate flex-1">
+                              <div className="font-medium truncate text-white">{event.title}</div>
+                              <div className="text-[10px] text-white/80">
                                 {format(eventStart, 'h:mm a')}
+                                {durationMinutes > 30 && ` - ${format(eventEnd, 'h:mm a')}`}
                               </div>
                             </div>
                           </div>
